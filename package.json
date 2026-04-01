@@ -1,17 +1,19 @@
 {
-  "name": "my-app",
+  "name": "gma-web-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint my-app",
+    "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "firebase": "^12.11.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
