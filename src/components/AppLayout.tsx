@@ -13,6 +13,7 @@ const linkStyle = ({ isActive }: { isActive: boolean }) => ({
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = profile?.role === "admin";
 
   return (
     <div className="app-shell">
@@ -22,6 +23,17 @@ export function AppLayout() {
           <NavLink to="/dashboard" style={linkStyle} end>
             Dashboard
           </NavLink>
+          <NavLink to="/analytics" style={linkStyle}>
+            Analytics
+          </NavLink>
+          <NavLink to="/events/register" style={linkStyle}>
+            Register event
+          </NavLink>
+          {isAdmin && (
+            <NavLink to="/events/approval" style={linkStyle}>
+              Approve events
+            </NavLink>
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="sidebar-user">

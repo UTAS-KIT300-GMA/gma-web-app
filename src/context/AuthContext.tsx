@@ -32,7 +32,12 @@ const AuthContext = createContext<AuthState | null>(null);
 const allowedRoles: UserRole[] = ["admin", "partner"];
 
 function parseProfile(data: Record<string, unknown>): UserProfile {
-  const role = (data.role as UserRole) ?? "general";
+  const raw = String(data.role ?? "general").toLowerCase().trim();
+  const role: UserRole =
+      raw === "admin" || raw === "partner" || raw === "general"
+          ? (raw as UserRole)
+          : "general";
+
   return {
     email: String(data.email ?? ""),
     firstName: data.firstName as string | undefined,
@@ -51,47 +56,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const a = auth();
-    const unsub = onAuthStateChanged(a, async (u) => {
+    const unsub = onAuthStateChanged(auth(), async (u) => {
       setUser(u);
-      setError(null);
+
       if (!u) {
         setProfile(null);
+        setError(null);
         setLoading(false);
         return;
       }
+
       try {
-        const snap = await getDoc(doc(db(), "users", u.uid));
+        const userDocRef = doc(db(), "users", u.uid);
+        const snap = await getDoc(userDocRef);
+
+        console.log("snap", snap);
+
         if (!snap.exists()) {
           setProfile(null);
-          setError(
-            "No user profile in Firestore. Create users/{uid} with role admin or partner.",
-          );
-          await signOut(a);
-          setLoading(false);
+          setError("No user profile found in Firestore.");
+          await signOut(auth());
           return;
         }
+
         const p = parseProfile(snap.data() as Record<string, unknown>);
+
         if (!allowedRoles.includes(p.role)) {
           setProfile(null);
-          setError(
-            "This portal is for Admin and Partner accounts only. Set role to admin or partner on users/" +
-              u.uid,
-          );
-          await signOut(a);
-          setLoading(false);
+          setError(`Access denied. Role "${p.role}" is not authorized.`);
+          await signOut(auth());
           return;
         }
+
         setProfile(p);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "Failed to load profile.";
-        setError(msg);
+        setError(null);
+      } catch (e: any) {
+        console.error("Auth Watcher Error:", e);
+        setError(e.code === "permission-denied"
+            ? "Firestore permission denied. Check your Security Rules."
+            : "Failed to load user profile.");
         setProfile(null);
-        await signOut(a);
       } finally {
         setLoading(false);
       }
     });
+
     return () => unsub();
   }, []);
 
@@ -100,38 +109,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth(), email.trim(), password);
-    } catch (e: unknown) {
-      const code = (e as { code?: string })?.code;
+    } catch (e: any) {
       const map: Record<string, string> = {
         "auth/invalid-credential": "Invalid email or password.",
         "auth/user-not-found": "No account found.",
         "auth/wrong-password": "Incorrect password.",
         "auth/too-many-requests": "Too many attempts. Try again later.",
       };
+      const errorMessage = map[e.code] || e.message || "Sign-in failed.";
+      setError(errorMessage);
       setLoading(false);
-      setError(map[code ?? ""] ?? (e instanceof Error ? e.message : "Sign-in failed."));
       throw e;
     }
   }, []);
 
   const signOutUser = useCallback(async () => {
-    await signOut(auth());
-    setProfile(null);
+    try {
+      await signOut(auth());
+      setProfile(null);
+      setUser(null);
+    } catch (e) {
+      console.error("Sign out error", e);
+    }
   }, []);
 
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo(
-    () => ({
-      user,
-      profile,
-      loading,
-      error,
-      signIn,
-      signOutUser,
-      clearError,
-    }),
-    [user, profile, loading, error, signIn, signOutUser, clearError],
+      () => ({
+        user,
+        profile,
+        loading,
+        error,
+        signIn,
+        signOutUser,
+        clearError,
+      }),
+      [user, profile, loading, error, signIn, signOutUser, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,15 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme";
 
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const from =
-    (location.state as { from?: { pathname?: string } })?.from?.pathname ??
-    "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +15,8 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await signIn(email, password);
-      navigate(from, { replace: true });
+      /* Do not navigate here. React state updates after onAuthStateChanged + Firestore;
+         LoginRoute redirects when user && profile are ready (avoids race with ProtectedRoute). */
     } catch {
       /* surfaced in context */
     } finally {
