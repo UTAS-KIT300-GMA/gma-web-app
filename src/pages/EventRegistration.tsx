@@ -1,16 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   serverTimestamp,
   Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../hooks/useAuth"
+import { useAuth } from "../hooks/useAuth";
 import { INTEREST_TAG_OPTIONS } from "../constants/interests";
-import { CATEGORIES, type Category } from "../types/event-types";
+import {
+  CATEGORIES,
+  type Category,
+  type EventRecord,
+} from "../types/event-types";
+
+function toDatetimeLocalValue(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function EventRegistrationPage() {
+  const { eventId } = useParams<{ eventId?: string }>();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -27,8 +42,93 @@ export function EventRegistrationPage() {
     null,
   );
   const [saving, setSaving] = useState(false);
+  const [loadState, setLoadState] = useState<"idle" | "loading" | "error">(
+    eventId ? "loading" : "idle",
+  );
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const prevEventIdRef = useRef<string | undefined>(undefined);
 
   const isAdmin = profile?.role === "admin";
+  const isEdit = Boolean(eventId);
+
+  const isValidCategory = (value: unknown): value is (typeof CATEGORIES)[number] => {
+    return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
+  };
+
+  useEffect(() => {
+    if (!eventId) {
+      setLoadState("idle");
+      setLoadError(null);
+      if (prevEventIdRef.current !== undefined) {
+        setTitle("");
+        setDescription("");
+        setCategory("connect");
+        setAddress("");
+        setImage("");
+        setDateTime("");
+        setTotalTickets(50);
+        setMemberPrice(0);
+        setNonMemberPrice(0);
+        setInterestTags([]);
+        setPublishNow(profile?.role === "admin");
+      }
+      prevEventIdRef.current = undefined;
+      return;
+    }
+
+    if (!user) return;
+
+    prevEventIdRef.current = eventId;
+
+    let cancelled = false;
+
+    (async () => {
+      setLoadState("loading");
+      setLoadError(null);
+      try {
+        const ref = doc(db, "events", eventId);
+        const snap = await getDoc(ref);
+        if (cancelled) return;
+        if (!snap.exists()) {
+          setLoadError("Event not found.");
+          setLoadState("error");
+          return;
+        }
+        const data = snap.data() as Omit<EventRecord, "eventId">;
+        const canEdit =
+          isAdmin || data.submittedBy === user.uid;
+        if (!canEdit) {
+          setLoadError("You do not have permission to edit this event.");
+          setLoadState("error");
+          return;
+        }
+
+        setTitle(data.title ?? "");
+        setDescription(data.description ?? "");
+        setCategory(isValidCategory(data.category) ? data.category : "connect");
+        setAddress(data.address ?? "");
+        setImage(data.image ?? "");
+        if (data.dateTime?.toDate) {
+          setDateTime(toDatetimeLocalValue(data.dateTime.toDate()));
+        }
+        setTotalTickets(data.totalTickets ?? 50);
+        setMemberPrice(data.memberPrice ?? 0);
+        setNonMemberPrice(data.nonMemberPrice ?? 0);
+        setInterestTags(data.interestTags ?? []);
+        setPublishNow(data.approvalStatus === "approved");
+        setLoadState("idle");
+      } catch {
+        if (!cancelled) {
+          setLoadError("Could not load this event.");
+          setLoadState("error");
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, user, isAdmin]);
 
   function toggleTag(key: string) {
     setInterestTags((prev) =>
@@ -39,6 +139,7 @@ export function EventRegistrationPage() {
   async function onSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!user) return;
+    if (isEdit && loadState === "loading") return;
     setMessage(null);
     setSaving(true);
     try {
@@ -52,9 +153,7 @@ export function EventRegistrationPage() {
       const type: "free" | "paid" =
         memberPrice === 0 && nonMemberPrice === 0 ? "free" : "paid";
 
-      const approvalStatus = isAdmin && publishNow ? "approved" : "pending";
-
-      await addDoc(collection(db, "events"), {
+      const baseFields = {
         title: title.trim(),
         description: description.trim(),
         category,
@@ -66,26 +165,39 @@ export function EventRegistrationPage() {
         memberPrice,
         nonMemberPrice,
         ticketPrices: { member: memberPrice, nonMember: nonMemberPrice },
-        attendees: [],
         interestTags,
-        submittedBy: user.uid,
-        approvalStatus,
-        createdAt: serverTimestamp(),
-      });
+      };
 
-      setMessage({
-        type: "ok",
-        text:
-          approvalStatus === "approved"
-            ? "Event published."
-            : "Submitted for admin approval.",
-      });
-      setTitle("");
-      setDescription("");
-      setAddress("");
-      setImage("");
-      setDateTime("");
-      setInterestTags([]);
+      if (isEdit && eventId) {
+        const patch: Record<string, unknown> = { ...baseFields };
+        if (isAdmin) {
+          patch.approvalStatus = publishNow ? "approved" : "pending";
+        }
+        await updateDoc(doc(db, "events", eventId), patch);
+        navigate("/events/manage");
+      } else {
+        const approvalStatus = isAdmin && publishNow ? "approved" : "pending";
+        await addDoc(collection(db, "events"), {
+          ...baseFields,
+          attendees: [],
+          submittedBy: user.uid,
+          approvalStatus,
+          createdAt: serverTimestamp(),
+        });
+        setMessage({
+          type: "ok",
+          text:
+            approvalStatus === "approved"
+              ? "Event published."
+              : "Submitted for admin approval.",
+        });
+        setTitle("");
+        setDescription("");
+        setAddress("");
+        setImage("");
+        setDateTime("");
+        setInterestTags([]);
+      }
     } catch (err) {
       setMessage({
         type: "err",
@@ -96,12 +208,46 @@ export function EventRegistrationPage() {
     }
   }
 
+  if (isEdit && loadState === "loading") {
+    return (
+      <div className="page">
+        <div className="centered">
+          <div className="spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isEdit && loadState === "error") {
+    return (
+      <div className="page">
+        <h1>Edit event</h1>
+        <div className="alert error" role="alert">
+          {loadError ?? "Something went wrong."}
+        </div>
+        <p>
+          <Link to="/events/manage">Back to manage events</Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
-      <h1>Register event</h1>
+      <h1>{isEdit ? "Edit event" : "Register event"}</h1>
       <p className="muted">
-        Creates a document in <code>events</code> with the same shape as the mobile
-        app. Partners submit as <strong>pending</strong> until an admin approves.
+        {isEdit ? (
+          <>
+            Update this event in <code>events</code>.{" "}
+            <Link to="/events/manage">Back to manage events</Link>
+          </>
+        ) : (
+          <>
+            Creates a document in <code>events</code> with the same shape as the
+            mobile app. Partners submit as <strong>pending</strong> until an admin
+            approves.
+          </>
+        )}
       </p>
 
       {message && (
@@ -238,7 +384,7 @@ export function EventRegistrationPage() {
 
         <div className="form-actions span-2">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? "Saving…" : "Submit event"}
+            {saving ? "Saving…" : isEdit ? "Save changes" : "Submit event"}
           </button>
         </div>
       </form>

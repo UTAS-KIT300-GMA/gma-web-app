@@ -11,6 +11,7 @@ import { DashboardPage } from "./pages/Dashboard";
 import { AnalyticsPage } from "./pages/Analytics";
 import { EventRegistrationPage } from "./pages/EventRegistration";
 import { EventApprovalPage } from "./pages/EventApproval";
+import { EventManagePage } from "./pages/EventManage";
 import { PendingApprovalPage } from "./pages/PendingApproval"; 
 import { VerifyEmailPage } from "./pages/VerifyEmail";       
 import { ApplicationPage } from "./pages/Application";
@@ -59,6 +60,8 @@ export default function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="events/manage" element={<EventManagePage />} />
+        <Route path="events/register/:eventId" element={<EventRegistrationPage />} />
         <Route path="events/register" element={<EventRegistrationPage />} />
         <Route
           path="events/approval"
