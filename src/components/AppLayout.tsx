@@ -35,6 +35,10 @@ export function AppLayout() {
             Register event
           </NavLink>
 
+          <NavLink to="/events/manage" style={linkStyle}>
+            Manage events
+          </NavLink>
+
           {/* Clean Security: RoleGate handles the logic and the logging */}
           <RoleGate roles={["admin"]}>
             <NavLink to="/events/approval" style={linkStyle}>

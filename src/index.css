@@ -538,3 +538,119 @@ p {
   background: rgba(241, 148, 33, 0.2);
   color: var(--gma-text);
 }
+
+.event-manage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: center;
+}
+
+.event-manage-actions .btn-inline {
+  width: auto;
+  margin-top: 0;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.event-manage-actions a.btn-primary {
+  background: var(--gma-save);
+  color: var(--gma-text);
+}
+
+/* Management Page Thumbnails */
+.event-manage-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.event-manage-thumb {
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+}
+
+/* Form Preview */
+.image-preview-wrapper {
+  margin-top: 8px;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f9f9f9;
+  min-height: 200px;
+}
+
+.form-image-preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.image-placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.image-upload-zone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.image-upload-zone:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+}
+
+.upload-placeholder {
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-container {
+  position: relative;
+  width: 100%;
+}
+
+.form-image-preview {
+  max-height: 300px;
+  width: auto;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.btn-remove-image {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.small {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 5px;
+}
