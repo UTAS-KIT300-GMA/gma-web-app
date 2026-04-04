@@ -1,5 +1,4 @@
 import { useAuth } from "../hooks/useAuth";
-import { colors } from "../theme";
 
 /**
  * @summary The "Waiting Room" for new Partners.
@@ -10,36 +9,34 @@ export function PendingApprovalPage() {
 
   return (
     <div className="login-page">
-      <div className="login-vignette" aria-hidden />
+      {/* Visual background element */}
+      <div className="login-vignette" aria-hidden="true" />
       
-      <div className="login-inner" style={{ textAlign: "center" }}>
+      <div className="login-inner centered-text">
         <div className="login-card">
           <div className="centered">
-            {/* Using your spinner class for a "Processing" feel */}
+            {/* Spinning indicator to show the 'Review' process is active */}
             <div className="spinner"></div>
             
-            <h1 style={{ marginTop: "1rem" }}>Email Verified!</h1>
+            <h1 className="title-spacing">Email Verified!</h1>
             
             <p className="login-sub">
               Thanks, <strong>{profile?.representativeName || "Partner"}</strong>. 
-              Your account for <strong>{profile?.orgName}</strong> is now being reviewed by our administration team.
+              Your account for <strong>{profile?.orgName || "your organization"}</strong> is now being reviewed by our administration team.
             </p>
 
-            <div className="alert ok" style={{ textAlign: "left" }}>
+            <div className="alert ok left-text">
               <strong>Status: Waiting for Admin Approval</strong>
-              <p className="small" style={{ marginTop: "0.5rem" }}>
+              <p className="small status-detail">
                 GMA Admins usually review new partnerships within 24–48 hours. 
                 You will receive an email once your portal access is granted.
               </p>
             </div>
 
+            {/* Logout button allows users to leave the 'Waiting Room' safely */}
             <button 
-              className="btn-ghost" 
-              style={{
-                color: colors.primary, // Using your theme object
-                borderColor: 'rgba(0,0,0,0.1)', 
-                marginTop: "1rem"
-              }}
+              type="button"
+              className="btn-ghost theme-primary-text" 
               onClick={signOutUser}
             >
               Sign out & Check later
@@ -47,7 +44,7 @@ export function PendingApprovalPage() {
           </div>
         </div>
         
-        <p className="small" style={{ color: "white", marginTop: "1.5rem", opacity: 0.8 }}>
+        <p className="small help-text">
           Need help? Contact support@gmaconnect.org.au
         </p>
       </div>

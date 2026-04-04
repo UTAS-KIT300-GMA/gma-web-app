@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import React, { useState, type FormEvent } from "react";
 import {
   addDoc,
   collection,
@@ -6,15 +6,9 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth"
 import { INTEREST_TAG_OPTIONS } from "../constants/interests";
-import type { Category } from "../types/event-types";
-
-const categories: { value: Category; label: string }[] = [
-  { value: "connect", label: "Connect" },
-  { value: "growth", label: "Growth" },
-  { value: "thrive", label: "Thrive" },
-];
+import { CATEGORIES, type Category } from "../types/event-types";
 
 export function EventRegistrationPage() {
   const { user, profile } = useAuth();
@@ -42,7 +36,7 @@ export function EventRegistrationPage() {
     );
   }
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!user) return;
     setMessage(null);
@@ -60,7 +54,7 @@ export function EventRegistrationPage() {
 
       const approvalStatus = isAdmin && publishNow ? "approved" : "pending";
 
-      await addDoc(collection(db(), "events"), {
+      await addDoc(collection(db, "events"), {
         title: title.trim(),
         description: description.trim(),
         category,
@@ -143,10 +137,10 @@ export function EventRegistrationPage() {
             onChange={(e) => setCategory(e.target.value as Category)}
             disabled={saving}
           >
-            {categories.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </option>
             ))}
           </select>
         </label>

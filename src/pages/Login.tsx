@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth"; 
-import { colors } from "../theme";
 
 /**
  * @summary Login page for the GMA Partner Portal.
- * Uses explicit SyntheticEvent and ChangeEvent types to satisfy React 19+ standards.
+ * Optimized for React 19 with inferred ChangeEvents and explicit FormEvents.
  */
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
@@ -14,11 +13,10 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   /**
-   * @summary Processes the login form submission.
-   * @param {React.SyntheticEvent<HTMLFormElement>} e The base React event type for forms.
+   * Handles the login form submission.
+   * Using React.FormEvent is the standard for React 19 to prevent page refresh.
    */
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    // Standard practice to prevent page refresh
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     
     clearError();
@@ -27,52 +25,70 @@ export function LoginPage() {
     try {
       await signIn(email, password);
     } catch (err) {
-      console.error("Login component caught error:", err);
+      // The auth hook usually handles the error state, 
+      // but we log here for debugging during development.
+      console.error("Login attempt failed:", err);
     } finally {
       setSubmitting(false);
     }
   }
 
+  // A helper to disable UI elements while waiting for Firebase
   const busy = loading || submitting;
 
   return (
     <div className="login-page">
       <div className="login-inner">
         <form className="login-card" onSubmit={handleSubmit}>
-          {error && <div className="alert error" style={{ color: colors.error }}>{error}</div>}
+          <h2>Partner Portal Login</h2>
+          
+          {/* Error display with conditional rendering */}
+          {error && (
+            <div className="alert error" role="alert">
+              {error}
+            </div>
+          )}
 
-          <label className="field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              // Using ChangeEvent as suggested by the compiler warning
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              required
+          <div className="form-fields">
+            <label className="field">
+              <span>Email Address</span>
+              <input
+                type="email"
+                value={email}
+                // In React 19, 'e' is automatically inferred as ChangeEvent<HTMLInputElement>
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                required
+                disabled={busy}
+              />
+            </label>
+
+            <label className="field">
+              <span>Password</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={busy}
+              />
+            </label>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="submit"
+              className="btn-primary"
               disabled={busy}
-            />
-          </label>
-
-          <label className="field">
-            <span>Password</span>
-            <input
-              type="password"
-              value={password}
-              // Using ChangeEvent for the password input as well
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              required
-              disabled={busy}
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={busy}
-            style={{ backgroundColor: colors.primary, color: colors.textOnPrimary }}
-          >
-            {busy ? "Signing in…" : "Log in"}
-          </button>
+            >
+              {busy ? "Signing in..." : "Log in"}
+            </button>
+          </div>
+          
+          <p className="small muted">
+            Need an account? Please contact the GMA Admin team.
+          </p>
         </form>
       </div>
     </div>

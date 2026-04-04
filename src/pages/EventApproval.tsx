@@ -31,13 +31,13 @@ export function EventApprovalPage() {
     setLoading(true);
     try {
       const q = query(
-        collection(db(), "events"),
+        collection(db, "events"),
         where("approvalStatus", "==", "pending"),
       );
       const snap = await getDocs(q);
       const rows: EventRecord[] = snap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<EventRecord, "id">),
+        eventId: d.id,
+        ...(d.data() as Omit<EventRecord, "eventId">),
       }));
       setPending(rows);
     } catch {
@@ -51,10 +51,10 @@ export function EventApprovalPage() {
     load();
   }, []);
 
-  async function approve(id: string) {
-    setBusyId(id);
+  async function approve(ev: string) {
+    setBusyId(ev);
     try {
-      await updateDoc(doc(db(), "events", id), {
+      await updateDoc(doc(db, "events", ev), {
         approvalStatus: "approved",
         rejectionReason: deleteField(),
       });
@@ -68,7 +68,7 @@ export function EventApprovalPage() {
     const reason = (rejectReason[ev.eventId] ?? "").trim() || "Rejected by admin";
     setBusyId(ev.eventId);
     try {
-      await updateDoc(doc(db(), "events", ev.eventId), {
+      await updateDoc(doc(db, "events", ev.eventId), {
         approvalStatus: "rejected",
         rejectionReason: reason,
       });

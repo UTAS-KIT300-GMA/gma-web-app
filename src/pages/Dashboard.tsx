@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, collectionGroup } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import type { EventRecord } from "../types/event-types";
 
 export function DashboardPage() {
@@ -20,10 +20,10 @@ export function DashboardPage() {
     (async () => {
       setLoading(true);
       try {
-        const eventsSnap = await getDocs(collection(db(), "events"));
+        const eventsSnap = await getDocs(collection(db, "events"));
         const events: EventRecord[] = eventsSnap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Omit<EventRecord, "id">),
+          eventId: d.id,
+          ...(d.data() as Omit<EventRecord, "eventId">),
         }));
 
         const pending = events.filter((e) => e.approvalStatus === "pending").length;
@@ -33,7 +33,7 @@ export function DashboardPage() {
 
         let usersCount = 0;
         try {
-          const usersSnap = await getDocs(collection(db(), "users"));
+          const usersSnap = await getDocs(collection(db, "users"));
           usersCount = usersSnap.size;
         } catch {
           usersCount = 0;
@@ -41,7 +41,7 @@ export function DashboardPage() {
 
         let bookingsCount: number | null = null;
         try {
-          const bookSnap = await getDocs(collectionGroup(db(), "bookings"));
+          const bookSnap = await getDocs(collectionGroup(db, "bookings"));
           bookingsCount = bookSnap.size;
         } catch {
           bookingsCount = null;
