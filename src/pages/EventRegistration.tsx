@@ -55,6 +55,40 @@ export function EventRegistrationPage() {
     return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
   };
 
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (file: File) => {
+    const MAX_SIZE = 500 * 1024; // 500KB limit
+
+    if (file.size > MAX_SIZE) {
+      setMessage({ type: "err", text: "Image is too large. Please select a file under 500KB." });
+      return;
+    }
+
+    try {
+      const base64 = await convertToBase64(file);
+      setImage(base64); // This updates your existing 'image' state
+      setMessage(null);
+    } catch (err) {
+      setMessage({ type: "err", text: "Failed to process image." });
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      handleFileChange(file);
+    }
+  };
+
   useEffect(() => {
     if (!eventId) {
       setLoadState("idle");
@@ -299,30 +333,37 @@ export function EventRegistrationPage() {
             disabled={saving}
           />
         </label>
-        <label className="field">
-          <span>Image URL</span>
-          <input
-            type="url"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            required
-            disabled={saving}
-          />
-        </label>
-        <div className="field span-2 image-preview-container">
-          <span>Image Preview</span>
-          <div className="image-preview-wrapper">
+        <div className="field span-2">
+          <span>Event Image</span>
+          <div
+              className={`image-upload-zone ${image ? 'has-image' : ''}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop}
+          >
             {image ? (
-                <img
-                    src={image}
-                    alt="Preview"
-                    className="form-image-preview"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://placehold.co/600x400?text=Invalid+Image+URL';
-                    }}
-                />
+                <div className="preview-container">
+                  <img src={image} alt="Preview" className="form-image-preview" />
+                  <button
+                      type="button"
+                      className="btn-remove-image"
+                      onClick={() => setImage("")}
+                  >
+                    Remove & Upload New
+                  </button>
+                </div>
             ) : (
-                <div className="image-placeholder">No image URL provided</div>
+                <label className="upload-placeholder">
+                  <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
+                      style={{ display: 'none' }}
+                  />
+                  <div className="upload-text">
+                    <strong>Click to upload</strong> or drag and drop
+                    <p className="small">PNG, JPG (Max 500KB for Firestore optimization)</p>
+                  </div>
+                </label>
             )}
           </div>
         </div>
