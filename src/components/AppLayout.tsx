@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth"; 
+import { RoleGate } from "./RoleGate"; // Use the component you just built!
 
 const linkStyle = ({ isActive }: { isActive: boolean }) => ({
   color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.85)",
@@ -8,38 +9,46 @@ const linkStyle = ({ isActive }: { isActive: boolean }) => ({
   padding: "10px 14px",
   borderRadius: 8,
   background: isActive ? "rgba(0,0,0,0.15)" : "transparent",
+  display: "block",
+  marginBottom: "4px"
 });
 
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = profile?.role === "admin";
 
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="sidebar-brand">GMA Portal</div>
+        
         <nav className="sidebar-nav">
           <NavLink to="/dashboard" style={linkStyle} end>
             Dashboard
           </NavLink>
+          
           <NavLink to="/analytics" style={linkStyle}>
             Analytics
           </NavLink>
+          
           <NavLink to="/events/register" style={linkStyle}>
             Register event
           </NavLink>
-          {isAdmin && (
+
+          {/* Clean Security: RoleGate handles the logic and the logging */}
+          <RoleGate roles={["admin"]}>
             <NavLink to="/events/approval" style={linkStyle}>
               Approve events
             </NavLink>
-          )}
+          </RoleGate>
         </nav>
+
         <div className="sidebar-footer">
           <div className="sidebar-user">
             {profile?.firstName ?? profile?.email ?? "User"}{" "}
             <span className="role-pill">{profile?.role}</span>
           </div>
+          
           <button
             type="button"
             className="btn-ghost"
@@ -52,6 +61,7 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
+
       <main className="app-main">
         <Outlet />
       </main>

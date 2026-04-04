@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, collectionGroup, query } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
-import type { Category, EventRecord } from "../types";
+import { useAuth } from "../hooks/useAuth";
+import type { EventRecord, Category } from "../types/event-types";
 
 type CatCount = Record<string, number>;
 
@@ -18,10 +18,10 @@ export function AnalyticsPage() {
     (async () => {
       setLoading(true);
       try {
-        const evSnap = await getDocs(collection(db(), "events"));
+        const evSnap = await getDocs(collection(db, "events"));
         const rows: EventRecord[] = evSnap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Omit<EventRecord, "id">),
+          ...(d.data() as Omit<EventRecord, "eventId">),
+          eventId: d.id,
         }));
         const visible =
           profile?.role === "admin"
@@ -31,7 +31,7 @@ export function AnalyticsPage() {
 
         const tags: Record<string, number> = {};
         try {
-          const usersSnap = await getDocs(collection(db(), "users"));
+          const usersSnap = await getDocs(collection(db, "users"));
           usersSnap.forEach((docSnap) => {
             const t = docSnap.data().selectedTags as string[] | undefined;
             if (!Array.isArray(t)) return;
@@ -47,11 +47,11 @@ export function AnalyticsPage() {
         let bc: number | null = null;
         try {
           if (profile?.role === "admin") {
-            const bg = await getDocs(collectionGroup(db(), "bookings"));
+            const bg = await getDocs(collectionGroup(db, "bookings"));
             bc = bg.size;
           } else if (user) {
             const mine = await getDocs(
-              query(collection(db(), "users", user.uid, "bookings")),
+              query(collection(db, "users", user.uid, "bookings")),
             );
             bc = mine.size;
           }
@@ -71,17 +71,21 @@ export function AnalyticsPage() {
   const byCategory = useMemo(() => {
     const m: CatCount = { connect: 0, growth: 0, thrive: 0, other: 0 };
     for (const e of events) {
-      const c = e.category;
-      if (c === "connect" || c === "growth" || c === "thrive") m[c] += 1;
-      else m.other += 1;
+    const c = e.category;
+    
+    if (c === "connect" || c === "growth" || c === "thrive") {
+      m[c] += 1;
+    } else {
+      m.other += 1;
     }
-    return m;
-  }, [events]);
+  }
+  return m;
+}, [events]);
 
   const approvedForDisplay = useMemo(
     () =>
       events.filter(
-        (e) => e.approvalStatus === "approved" || e.approvalStatus === undefined,
+        (e) => e.approvalStatus === "approved" || e.approvalStatus,
       ),
     [events],
   );

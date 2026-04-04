@@ -1,34 +1,43 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import type { UserRole } from "../types";
+import { useAuth } from "../hooks/useAuth"; 
+import type { UserRole } from "../types/user-types";
 
-export function ProtectedRoute({
-  children,
-  roles,
-}: {
+interface ProtectedRouteProps {
   children: ReactNode;
-  roles?: UserRole[];
-}) {
+  roles?: UserRole[]; 
+}
+
+/**
+ * @summary Master Gatekeeper for Authentication and Authorization.
+ * Specific stage-based redirects are handled in AppRoutes.
+ */
+export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
+  // 1. System Integrity: Wait for Firebase/Firestore to finish loading
   if (loading) {
     return (
-      <div className="centered">
+      <div className="centered" style={{ minHeight: '100vh' }}>
         <div className="spinner" />
-        <p>Loading…</p>
+        <p>Verifying Security...</p>
       </div>
     );
   }
 
-  if (!user || !profile) {
+  // 2. Authentication Gate: If no user is logged in at all, kick to Login
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles && !roles.includes(profile.role)) {
-    return <Navigate to="/dashboard" replace />;
+  // 3. Authorization Gate: Check if the user has the required Role (Admin/Partner)
+  // This prevents a Partner from manually typing "/events/approval" in the URL
+  if (roles && (!profile || !roles.includes(profile.role))) {
+    console.warn(`Security: Role [${profile?.role || "none"}] attempted unauthorized access to a protected route.`);
+    return <Navigate to="/" replace />;
   }
 
+  // 4. Success: If they are logged in and authorized, let them pass to the AppRoutes logic
   return <>{children}</>;
 }

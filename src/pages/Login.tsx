@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from "react";
-import { useAuth } from "../context/AuthContext";
-import { colors } from "../theme";
+import React, { useState } from "react";
+import { useAuth } from "../hooks/useAuth"; 
+import { Link } from "react-router-dom";
 
+/**
+ * @summary Renders the login interface for the GMA Partner Portal.
+ */
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
 
@@ -9,16 +12,21 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  /**
+   * @summary Processes the login form submission by authenticating user credentials.
+   * @param  e - The form submission event.
+   * @throws {Error} Throws if the sign-in process fails.
+   */
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
+    
     clearError();
     setSubmitting(true);
+    
     try {
       await signIn(email, password);
-      /* Do not navigate here. React state updates after onAuthStateChanged + Firestore;
-         LoginRoute redirects when user && profile are ready (avoids race with ProtectedRoute). */
-    } catch {
-      /* surfaced in context */
+    } catch (err) {
+      console.error("Login attempt failed:", err);
     } finally {
       setSubmitting(false);
     }
@@ -28,53 +36,55 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-vignette" aria-hidden />
       <div className="login-inner">
-        <div className="login-logo-wrap">
-          <img
-            src="/gma-in-app-white-logo.png"
-            alt="GMA"
-            width={200}
-            height={120}
-            className="login-logo"
-          />
-        </div>
-
         <form className="login-card" onSubmit={handleSubmit}>
-          <p className="login-sub">
-            Admin &amp; Partner portal
+          <h2>Partner Portal Login</h2>
+          
+          {error && (
+            <div className="alert error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="form-fields">
+            <label className="field">
+              <span>Email Address</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                required
+                disabled={busy}
+              />
+            </label>
+
+            <label className="field">
+              <span>Password</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={busy}
+              />
+            </label>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={busy}
+            >
+              {busy ? "Signing in..." : "Log in"}
+            </button>
+          </div>
+          
+          <p className="small muted">
+            New Partner? <Link to="/register">Create an Account</Link>
           </p>
-          {error && <div className="alert error">{error}</div>}
-          <label className="field">
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={busy}
-            />
-          </label>
-          <label className="field">
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={busy}
-            />
-          </label>
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={busy}
-            style={{ background: colors.primary, color: colors.textOnPrimary }}
-          >
-            {busy ? "Signing in…" : "Log in"}
-          </button>
         </form>
       </div>
     </div>
