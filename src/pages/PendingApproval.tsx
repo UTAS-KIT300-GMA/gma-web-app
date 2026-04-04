@@ -21,14 +21,14 @@ export function PendingApprovalPage() {
             <h1 className="title-spacing">Email Verified!</h1>
             
             <p className="login-sub">
-              Thanks, <strong>{profile?.representativeName || "Partner"}</strong>. 
+              Thanks, <strong>{profile?.firstName && profile?.lastName || "Partner"}</strong>. 
               Your account for <strong>{profile?.orgName || "your organization"}</strong> is now being reviewed by our administration team.
             </p>
 
             <div className="alert ok left-text">
               <strong>Status: Waiting for Admin Approval</strong>
               <p className="small status-detail">
-                GMA Admins usually review new partnerships within 24–48 hours. 
+                GMA Admins usually review new partnerships within 48 hours. 
                 You will receive an email once your portal access is granted.
               </p>
             </div>

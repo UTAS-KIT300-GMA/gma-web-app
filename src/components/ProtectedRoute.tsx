@@ -9,13 +9,14 @@ interface ProtectedRouteProps {
 }
 
 /**
- * @summary Secures routes by verifying Auth, Email Verification, and Admin Approval.
+ * @summary Master Gatekeeper for Authentication and Authorization.
+ * Specific stage-based redirects are handled in AppRoutes.
  */
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  // 1. System Integrity: Wait for Firebase/Firestore
+  // 1. System Integrity: Wait for Firebase/Firestore to finish loading
   if (loading) {
     return (
       <div className="centered" style={{ minHeight: '100vh' }}>
@@ -25,26 +26,18 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     );
   }
 
-  // 2. Authentication Gate: No login = Back to Login
+  // 2. Authentication Gate: If no user is logged in at all, kick to Login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 3. Email Verification Gate
-  if (!user.emailVerified && location.pathname !== "/verify-email") {
-    return <Navigate to="/verify-email" replace />;
+  // 3. Authorization Gate: Check if the user has the required Role (Admin/Partner)
+  // This prevents a Partner from manually typing "/events/approval" in the URL
+  if (roles && (!profile || !roles.includes(profile.role))) {
+    console.warn(`Security: Role [${profile?.role || "none"}] attempted unauthorized access to a protected route.`);
+    return <Navigate to="/" replace />;
   }
 
-  // 4. Admin Approval Gate
-  // Only redirect if they aren't already on the pending page
-  if (profile?.status === "pending_approval" && location.pathname !== "/pending-approval") {
-    return <Navigate to="/pending-approval" replace />;
-  }
-
-  // 5. Authorization Gate: Role Check
-  if (roles && profile && !roles.includes(profile.role)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // 4. Success: If they are logged in and authorized, let them pass to the AppRoutes logic
   return <>{children}</>;
 }

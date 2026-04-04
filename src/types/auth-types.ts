@@ -6,16 +6,18 @@ export interface PartnerRegistrationData {
   email: string;
   password: string;
   orgName: string;
+  orgType: string;
   abn: string;
-  representativeName: string;
+  address: string;
+  firstName: string;
+  lastName: string;
+  position: string;
+  phoneNumber: string;
 }
 
 /** * Standardized response for the registerPartner service 
  */
-export type RegisterPartnerResponse = {
-  success: boolean;
-  user: User;
-};
+export type RegisterPartnerResponse = User;
 
 /**
  * Standardized response for Login functionality

@@ -1,10 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-// FIX: Use the custom hook for consistency and cleaner code
 import { useAuth } from "../hooks/useAuth"; 
+import { RoleGate } from "./RoleGate"; // Use the component you just built!
 
-/**
- * @summary Dynamic styling for Sidebar links based on active route state.
- */
 const linkStyle = ({ isActive }: { isActive: boolean }) => ({
   color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.85)",
   fontWeight: isActive ? 700 : 500,
@@ -12,20 +9,13 @@ const linkStyle = ({ isActive }: { isActive: boolean }) => ({
   padding: "10px 14px",
   borderRadius: 8,
   background: isActive ? "rgba(0,0,0,0.15)" : "transparent",
-  display: "block", // Ensures the padding applies to the full width
+  display: "block",
   marginBottom: "4px"
 });
 
-/**
- * @summary The core shell of the GMA Portal.
- * Provides navigation and a persistent layout for all authenticated pages.
- */
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
-  
-  // Logic Gate: Only show Admin links if the role matches
-  const isAdmin = profile?.role === "admin";
 
   return (
     <div className="app-shell">
@@ -45,17 +35,16 @@ export function AppLayout() {
             Register event
           </NavLink>
 
-          {/* Conditional Rendering: Role-Based UI Control */}
-          {isAdmin && (
+          {/* Clean Security: RoleGate handles the logic and the logging */}
+          <RoleGate roles={["admin"]}>
             <NavLink to="/events/approval" style={linkStyle}>
               Approve events
             </NavLink>
-          )}
+          </RoleGate>
         </nav>
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            {/* Fallback chain: Personal Name -> Email -> Generic 'User' */}
             {profile?.firstName ?? profile?.email ?? "User"}{" "}
             <span className="role-pill">{profile?.role}</span>
           </div>
@@ -65,7 +54,6 @@ export function AppLayout() {
             className="btn-ghost"
             onClick={async () => {
               await signOutUser();
-              // 'replace: true' clears the history so users can't click 'back' to go to the dashboard
               navigate("/login", { replace: true });
             }}
           >
@@ -75,7 +63,6 @@ export function AppLayout() {
       </aside>
 
       <main className="app-main">
-        {/* Outlet renders the specific sub-page (Dashboard, Analytics, etc.) */}
         <Outlet />
       </main>
     </div>

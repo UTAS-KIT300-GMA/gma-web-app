@@ -1,8 +1,6 @@
 import { 
   createUserWithEmailAndPassword, 
-  sendEmailVerification,
-  deleteUser, 
-  type User
+  sendEmailVerification, type User, type ActionCodeSettings
 } from "firebase/auth";
 import { 
   doc, 
@@ -12,72 +10,87 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
-// Ensure these imports match your actual file structure
 import type { PartnerRegistrationData, RegisterPartnerResponse } from "../types/auth-types";
 import type { UserProfile } from "../types/user-types";
 
 /**
- * @summary Registers a new Partner Organization and initializes their Firestore profile.
- * Implements a "Try-Catch-Rollback" pattern to maintain database consistency.
+ * @summary  Creates user authentication credentials and triggers an email verification link.
+ * @param  data The user's registration details, including email and password.
+ * @throws {Error} Throws if account creation or email delivery fails.
  */
-export const registerPartner = async (
-  data: PartnerRegistrationData
-): Promise<RegisterPartnerResponse> => {
-  let user: User | null = null;
-
+export const registerPartner = async (data: PartnerRegistrationData): Promise<RegisterPartnerResponse> => {
   try {
-    // 1. Create Auth Credentials
     const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
-    user = cred.user;
-
-    // 2. Prepare Profile Document (Strictly Typed)
-    const userRef = doc(db, "users", user.uid); 
-
-    // We use a partial of UserProfile to ensure keys match your Model
-    const profileData: Partial<UserProfile> = {
-      partnerID: user.uid,
-      email: data.email.toLowerCase().trim(),
-      orgName: data.orgName.trim(),
-      abn: data.abn.trim(),
-      representativeName: data.representativeName.trim(),
-      role: "partner",
-      status: "pending_approval",
-      onboardingComplete: false,
-      createdAt: serverTimestamp() as any, // Cast to any because serverTimestamp() is a FieldValue
+    
+    const actionCodeSettings: ActionCodeSettings = {
+      url: 'http://localhost:5173/', 
+      handleCodeInApp: true,
     };
+   
+    await sendEmailVerification(cred.user, actionCodeSettings);
 
-    await setDoc(userRef, profileData);
-
-    // 3. Trigger Email Verification
-    await sendEmailVerification(user);
-
-    return { success: true, user };
-
+    return cred.user;
   } catch (e) {
-    // 4. Atomic Rollback: If Firestore fails, remove the Auth account
-    // This prevents "Ghost Accounts" in your Firebase Console.
-    if (user) {
-      console.warn("Rolling back: Deleting orphaned Auth user after Firestore failure.");
-      await deleteUser(user);
-    }
+    console.error("Auth Registration Failed:", e);
     throw e;
   }
 };
 
 /**
- * @summary Finalizes the partner profile after the Activation Wizard.
+ * @summary Creates the initial Firestore user document with pending approval status.
+ * @param  user The authenticated Firebase user object.
+ * @param  data The organizational and representative data for the profile.
+ * @throws {Error} Throws if the Firestore document cannot be created.
  */
-export const completePartnerOnboarding = async (
-  uid: string, 
-  onboardingData: Partial<UserProfile>
-) => {
+export const createInitialProfile = async (user: User, data: PartnerRegistrationData) => {
+  try {
+    const userRef = doc(db, "users", user.uid); 
+
+    const profileData: UserProfile = {
+      partnerID: user.uid,
+      email: data.email.toLowerCase().trim(),
+      role: "partner",
+      status: "pending_approval",
+      applicationAt: serverTimestamp() as any,
+      createdAt: serverTimestamp() as any,
+      orgName: data.orgName.trim(),
+      orgType: data.orgType,
+      abn: data.abn.trim(),
+      address: data.address.trim(),
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      position: data.position.trim(),
+      phoneNumber: data.phoneNumber.trim(),
+      onboardingComplete: false,
+    };
+
+    await setDoc(userRef, profileData);
+    return { success: true };
+  } catch (e) {
+    console.error("Firestore Profile Creation Failed:", e);
+    throw e;
+  }
+};
+
+/**
+ * @summary Finalizes the user profile by adding branding data and marking onboarding as complete.
+ * @param  uid The unique identifier of the user to update.
+ * @param  onboardingData The branding and social data provided by the user.
+ * @throws {Error} Throws if the Firestore document update fails.
+ */
+export const completePartnerOnboarding = async (uid: string, onboardingData: Partial<UserProfile>) => {
   try {
     const userRef = doc(db, "users", uid);
-    await updateDoc(userRef, {
-      ...onboardingData,
-      onboardingComplete: true, 
+    
+    const cleanData = {
+      photoURL: onboardingData.photoURL || "",
+      missionStatement: onboardingData.missionStatement || "",
+      socials: onboardingData.socials || {},
+      onboardingComplete: true,
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    await updateDoc(userRef, cleanData);
     return { success: true };
   } catch (e) {
     console.error("Onboarding Update Failed:", e);

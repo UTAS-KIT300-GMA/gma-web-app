@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth"; 
+import { Link } from "react-router-dom";
 
 /**
- * @summary Login page for the GMA Partner Portal.
- * Optimized for React 19 with inferred ChangeEvents and explicit FormEvents.
+ * @summary Renders the login interface for the GMA Partner Portal.
  */
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
@@ -13,8 +13,9 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   /**
-   * Handles the login form submission.
-   * Using React.FormEvent is the standard for React 19 to prevent page refresh.
+   * @summary Processes the login form submission by authenticating user credentials.
+   * @param  e - The form submission event.
+   * @throws {Error} Throws if the sign-in process fails.
    */
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -25,15 +26,12 @@ export function LoginPage() {
     try {
       await signIn(email, password);
     } catch (err) {
-      // The auth hook usually handles the error state, 
-      // but we log here for debugging during development.
       console.error("Login attempt failed:", err);
     } finally {
       setSubmitting(false);
     }
   }
 
-  // A helper to disable UI elements while waiting for Firebase
   const busy = loading || submitting;
 
   return (
@@ -42,7 +40,6 @@ export function LoginPage() {
         <form className="login-card" onSubmit={handleSubmit}>
           <h2>Partner Portal Login</h2>
           
-          {/* Error display with conditional rendering */}
           {error && (
             <div className="alert error" role="alert">
               {error}
@@ -55,7 +52,6 @@ export function LoginPage() {
               <input
                 type="email"
                 value={email}
-                // In React 19, 'e' is automatically inferred as ChangeEvent<HTMLInputElement>
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 required
@@ -87,7 +83,7 @@ export function LoginPage() {
           </div>
           
           <p className="small muted">
-            Need an account? Please contact the GMA Admin team.
+            New Partner? <Link to="/register">Create an Account</Link>
           </p>
         </form>
       </div>

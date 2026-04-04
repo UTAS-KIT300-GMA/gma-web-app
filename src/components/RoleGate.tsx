@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth"; // Updated to use the hooks folder
+import { useAuth } from "../hooks/useAuth";
 import type { UserRole } from "../types/user-types";
 
 interface RoleGateProps {
@@ -9,23 +8,26 @@ interface RoleGateProps {
 }
 
 /**
- * @summary Restricts UI elements or routes based on the user's specific role.
- * Redirects unauthorized users back to the safe Dashboard area.
- * @param {RoleGateProps} props - The list of authorized roles and the restricted content.
- * @returns The children if authorized, otherwise a redirect.
+ * @summary Component-level security for granular UI visibility.
+ * Use this to wrap specific buttons, tabs, or sections.
+ * It returns null if unauthorized, keeping the user on the current page.
  */
 export function RoleGate({ roles, children }: RoleGateProps) {
   const { profile, loading } = useAuth();
 
-  // 1. Wait for the profile to load before making a security decision
+  // 1. System Integrity: Prevent "Security Flicker" while loading
   if (loading) return null;
 
-  // 2. Authorization Check: Compare user's role against the allowed list
-  if (!profile || !roles.includes(profile.role)) {
-    console.warn(`RoleGate: Unauthorized access attempt by ${profile?.role || "unknown"}`);
-    return <Navigate to="/dashboard" replace />;
+  // 2. Existence Check: Hide content if the profile hasn't been created yet
+  if (!profile) return null;
+
+  // 3. Authorization: Is the user's role in the allowed list?
+  if (!roles.includes(profile.role)) {
+    // Log the attempt for the system audit trail
+    console.warn(`RoleGate: Unauthorized role [${profile.role}] attempted access to a restricted UI element.`);
+    return null;
   }
 
-  // 3. Success: Render restricted content
+  // 4. Authorized: Render the restricted content
   return <>{children}</>;
 }

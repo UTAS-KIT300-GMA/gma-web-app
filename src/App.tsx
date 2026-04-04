@@ -1,5 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
@@ -7,68 +6,60 @@ import { RoleGate } from "./components/RoleGate";
 
 // Pages
 import { LoginPage } from "./pages/Login";
+import { RegisterPage } from "./pages/Register";
 import { DashboardPage } from "./pages/Dashboard";
 import { AnalyticsPage } from "./pages/Analytics";
 import { EventRegistrationPage } from "./pages/EventRegistration";
 import { EventApprovalPage } from "./pages/EventApproval";
-import { PendingApprovalPage } from "./pages/PendingApproval"; // Import new page
-import { VerifyEmailPage } from "./pages/VerifyEmail";       // Import new page
+import { PendingApprovalPage } from "./pages/PendingApproval"; 
+import { VerifyEmailPage } from "./pages/VerifyEmail";       
+import { ApplicationPage } from "./pages/Application";
+import { FinalSetupPage } from "./pages/FinalSetup";
 
-/**
- * @summary Traffic Controller for Login.
- * If user is approved, go to dashboard.
- * If user is pending, go to pending page.
- */
 function LoginRoute() {
-  const { user, profile, loading } = useAuth();
-
+  const { user, loading } = useAuth(); 
   if (loading) return <div className="centered"><div className="spinner" /></div>;
 
-  if (user && profile) {
-    // Logic: If they are already logged in, send them to the internal gatekeeper
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // If they are logged in AT ALL, send them to the gatekeeper at root
+  if (user) return <Navigate to="/" replace />;
   return <LoginPage />;
 }
 
-/**
- * @summary Main Route Controller.
- * Redirects users to Verify or Pending screens based on their account state.
- */
-function AppRoutes() {
+export default function AppRoutes() {
   const { user, profile, loading } = useAuth();
 
   if (loading) return <div className="centered"><div className="spinner" /></div>;
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* 1. PUBLIC ROUTES */}
       <Route path="/login" element={<LoginRoute />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/pending-approval" element={<PendingApprovalPage />} />
-
-      {/* Protected Portal Routes */}
+      <Route path="/register" element={<RegisterPage />} />
+      
+      {/* 2. THE MASTER GATEKEEPER (The Decision Maker) */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            {/* IN-ROUTE GATEKEEPER: Forces users to correct state before showing Layout */}
             {!user?.emailVerified ? (
-              <Navigate to="/verify-email" replace />
-            ) : profile?.status === "pending_approval" ? (
-              <Navigate to="/pending-approval" replace />
+              <VerifyEmailPage /> 
+            ) : !profile ? (
+              <ApplicationPage />
+            ) : profile.status === "pending_approval" ? (
+              <PendingApprovalPage />
+            ) : !profile.onboardingComplete ? (
+              <FinalSetupPage />
             ) : (
               <AppLayout />
             )}
           </ProtectedRoute>
         }
       >
+        {/* Dashboard and Internal Portal Sub-Routes */}
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="events/register" element={<EventRegistrationPage />} />
-        
         <Route
           path="events/approval"
           element={
@@ -79,17 +70,8 @@ function AppRoutes() {
         />
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* 3. CATCH-ALL: Back to the Gatekeeper */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  );
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
   );
 }

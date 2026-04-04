@@ -12,9 +12,9 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import type { UserProfile, UserRole,AccountStatus } from "../types/user-types";
+import type { UserProfile, UserRole, AccountStatus } from "../types/user-types";
 
 export type AuthState = {
   user: User | null;
@@ -26,14 +26,26 @@ export type AuthState = {
   clearError: () => void;
 };
 
+/**
+ * @summary Safely extracts a Firebase Timestamp from raw data.
+ * @param  val - The raw value to be converted into a Timestamp.
+ */
+function parseTimestamp(val: unknown): Timestamp | undefined {
+  if (!val) return undefined;
+  if (val instanceof Timestamp) return val;
+  if (typeof val === 'object' && 'seconds' in val && 'nanoseconds' in val) {
+    return new Timestamp((val as any).seconds, (val as any).nanoseconds);
+  }
+  return undefined;
+}
+
 export const AuthContext = createContext<AuthState | null>(null);
 
 const allowedRoles: UserRole[] = ["admin", "partner"];
 
 /**
  * @summary Parses raw Firestore data into a typed UserProfile object.
- * @param {Record<string, unknown>} data The raw document data from Firestore.
- * @returns {UserProfile} A structured and typed profile object.
+ * @param data The raw document data from Firestore.
  */
 function parseProfile(data: Record<string, unknown>): UserProfile {
   const rawRole = String(data.role ?? "general").toLowerCase().trim();
@@ -42,7 +54,6 @@ function parseProfile(data: Record<string, unknown>): UserProfile {
           ? (rawRole as UserRole)
           : "general";
 
-  // Type-safe status check
   const rawStatus = data.status as string | undefined;
   const status: AccountStatus = 
       rawStatus === "approved" || rawStatus === "rejected" || rawStatus === "pending_approval"
@@ -52,20 +63,31 @@ function parseProfile(data: Record<string, unknown>): UserProfile {
   return {
     email: String(data.email ?? ""),
     partnerID: data.partnerID as string | undefined,
-    orgName: data.orgName as string | undefined,
-    abn: data.abn as string | undefined,
-    representativeName: data.representativeName as string | undefined,
+    role,
     status,
+    createdAt: parseTimestamp(data.createdAt) as any,
+    applicationAt: parseTimestamp(data.applicationAt),
+    orgName: data.orgName as string | undefined,
+    orgType: data.orgType as string | undefined,
+    abn: data.abn as string | undefined,
+    address: data.address as string | undefined,
     firstName: data.firstName as string | undefined,
     lastName: data.lastName as string | undefined,
-    role,
-    selectedTags: data.selectedTags as string[] | undefined,
-    onboardingComplete: data.onboardingComplete as boolean | undefined,
+    position: data.position as string | undefined,
+    phoneNumber: data.phoneNumber as string | undefined,
+    onboardingComplete: Boolean(data.onboardingComplete ?? false), 
     photoURL: data.photoURL as string | undefined,
-    createdAt: data.createdAt as any, // Firebase Timestamp
+    missionStatement: data.missionStatement as string | undefined,
+    socials: data.socials as UserProfile["socials"],
+    selectedTags: data.selectedTags as string[] | undefined,
+    updatedAt: parseTimestamp(data.updatedAt),     
   };
 }
 
+/**
+ * @summary Provider component that manages global auth state and Firestore profile listeners.
+ * @param  props React children to be wrapped by the provider.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -73,62 +95,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    /**
-     * @summary Observes Firebase Auth state changes and fetches corresponding Firestore profiles.
-     */
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    let unsubProfile: (() => void) | null = null;
+
+    const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
 
       if (!u) {
+        if (unsubProfile) unsubProfile();
         setProfile(null);
         setError(null);
         setLoading(false);
         return;
       }
 
-      try {
-        const userDocRef = doc(db, "users", u.uid);
-        const snap = await getDoc(userDocRef);
-
-        console.log("snap", snap);
-
+      const userDocRef = doc(db, "users", u.uid);
+      
+      unsubProfile = onSnapshot(userDocRef, (snap) => {
         if (!snap.exists()) {
           setProfile(null);
-          setError("No user profile found in Firestore.");
-          await signOut(auth);
+          setLoading(false);
           return;
         }
-
+        
         const p = parseProfile(snap.data() as Record<string, unknown>);
-
         if (!allowedRoles.includes(p.role)) {
-          setProfile(null);
-          setError(`Access denied. Role "${p.role}" is not authorized.`);
-          await signOut(auth);
-          return;
-        }
-
+            console.warn(`Unauthorized role detected: ${p.role}`);
+            setProfile(null);
+            setError(`Access denied. Role "${p.role}" is not authorized.`);
+            setLoading(false);
+            return;
+          }
+        
         setProfile(p);
         setError(null);
-      } catch (e: any) {
-        console.error("Auth Watcher Error:", e);
-        setError(e.code === "permission-denied"
-            ? "Firestore permission denied. Check your Security Rules."
-            : "Failed to load user profile.");
-        setProfile(null);
-      } finally {
         setLoading(false);
-      }
+      }, (err) => {
+        console.error("Profile Watcher Error:", err);
+        setLoading(false);
+      });
     });
 
-    return () => unsub();
+    return () => {
+      unsubAuth();
+      if (unsubProfile) unsubProfile();
+    };
   }, []);
 
   /**
-   * @summary Authenticates a user with email and password.
-   * @param {string} email - User's registration email.
-   * @param {string} password - User's account password.
-   * @returns {Promise<void>}
+   * @summary Authenticates a user with email and password via Firebase Auth.
+   * @param email User's registration email.
+   * @param password User's account password.
    * @throws {FirebaseError} Throws if credentials are invalid or user not found.
    */
   const signIn = useCallback(async (email: string, password: string) => {
@@ -151,8 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * @summary Terminates the current session and clears local auth state.
-   * @returns {Promise<void>}
+   * @summary Terminates the current session and clears local auth and profile state.
    */
   const signOutUser = useCallback(async () => {
     try {
@@ -185,8 +200,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * @summary Custom hook to access the AuthContext state and methods.
- * @returns The current authentication state and helper functions.
- * @throws {Error} Throws if used outside of an AuthProvider.
- */

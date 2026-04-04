@@ -26,3 +26,4 @@ export const INTEREST_TAG_OPTIONS: { key: string; label: string }[] = [
   { key: "Cycling & Riding", label: "Cycling & Riding" },
   { key: "Healthy Eating", label: "Healthy Eating" },
 ];
+
