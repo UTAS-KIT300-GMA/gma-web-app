@@ -1,7 +1,11 @@
-import { useState, type FormEvent } from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useState } from "react";
+import { useAuth } from "../hooks/useAuth"; 
 import { colors } from "../theme";
 
+/**
+ * @summary Login page for the GMA Partner Portal.
+ * Uses explicit SyntheticEvent and ChangeEvent types to satisfy React 19+ standards.
+ */
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
 
@@ -9,16 +13,21 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  /**
+   * @summary Processes the login form submission.
+   * @param {React.SyntheticEvent<HTMLFormElement>} e The base React event type for forms.
+   */
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+    // Standard practice to prevent page refresh
     e.preventDefault();
+    
     clearError();
     setSubmitting(true);
+    
     try {
       await signIn(email, password);
-      /* Do not navigate here. React state updates after onAuthStateChanged + Firestore;
-         LoginRoute redirects when user && profile are ready (avoids race with ProtectedRoute). */
-    } catch {
-      /* surfaced in context */
+    } catch (err) {
+      console.error("Login component caught error:", err);
     } finally {
       setSubmitting(false);
     }
@@ -28,50 +37,39 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-vignette" aria-hidden />
       <div className="login-inner">
-        <div className="login-logo-wrap">
-          <img
-            src="/gma-in-app-white-logo.png"
-            alt="GMA"
-            width={200}
-            height={120}
-            className="login-logo"
-          />
-        </div>
-
         <form className="login-card" onSubmit={handleSubmit}>
-          <p className="login-sub">
-            Admin &amp; Partner portal
-          </p>
-          {error && <div className="alert error">{error}</div>}
+          {error && <div className="alert error" style={{ color: colors.error }}>{error}</div>}
+
           <label className="field">
             <span>Email</span>
             <input
               type="email"
-              autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              // Using ChangeEvent as suggested by the compiler warning
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
               disabled={busy}
             />
           </label>
+
           <label className="field">
             <span>Password</span>
             <input
               type="password"
-              autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              // Using ChangeEvent for the password input as well
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               required
               disabled={busy}
             />
           </label>
+
           <button
             type="submit"
             className="btn-primary"
             disabled={busy}
-            style={{ background: colors.primary, color: colors.textOnPrimary }}
+            style={{ backgroundColor: colors.primary, color: colors.textOnPrimary }}
           >
             {busy ? "Signing in…" : "Log in"}
           </button>
