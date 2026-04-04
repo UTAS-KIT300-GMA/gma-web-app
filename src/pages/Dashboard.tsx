@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, collectionGroup } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import type { EventRecord } from "../types";
+import type { EventRecord } from "../types/event-types";
 
 export function DashboardPage() {
   const { user, profile } = useAuth();

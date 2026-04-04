@@ -8,7 +8,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { INTEREST_TAG_OPTIONS } from "../constants/interests";
-import type { Category } from "../types";
+import type { Category } from "../types/event-types";
 
 const categories: { value: Category; label: string }[] = [
   { value: "connect", label: "Connect" },

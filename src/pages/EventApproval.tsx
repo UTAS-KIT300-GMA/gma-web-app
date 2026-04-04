@@ -10,7 +10,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import type { EventRecord } from "../types";
+import type { EventRecord } from "../types/event-types";
 
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
@@ -65,10 +65,10 @@ export function EventApprovalPage() {
   }
 
   async function reject(ev: EventRecord) {
-    const reason = (rejectReason[ev.id] ?? "").trim() || "Rejected by admin";
-    setBusyId(ev.id);
+    const reason = (rejectReason[ev.eventId] ?? "").trim() || "Rejected by admin";
+    setBusyId(ev.eventId);
     try {
-      await updateDoc(doc(db(), "events", ev.id), {
+      await updateDoc(doc(db(), "events", ev.eventId), {
         approvalStatus: "rejected",
         rejectionReason: reason,
       });
@@ -94,7 +94,7 @@ export function EventApprovalPage() {
       ) : (
         <ul className="approval-list">
           {pending.map((ev) => (
-            <li key={ev.id} className="approval-card">
+            <li key={ev.eventId} className="approval-card">
               <div className="approval-head">
                 <h3>{ev.title}</h3>
                 <span className="muted">{formatWhen(ev.dateTime)}</span>
@@ -116,24 +116,24 @@ export function EventApprovalPage() {
                 <button
                   type="button"
                   className="btn-primary"
-                  disabled={busyId === ev.id}
-                  onClick={() => approve(ev.id)}
+                  disabled={busyId === ev.eventId}
+                  onClick={() => approve(ev.eventId)}
                 >
                   Approve
                 </button>
                 <input
                   type="text"
                   placeholder="Rejection note (optional)"
-                  value={rejectReason[ev.id] ?? ""}
+                  value={rejectReason[ev.eventId] ?? ""}
                   onChange={(e) =>
-                    setRejectReason((r) => ({ ...r, [ev.id]: e.target.value }))
+                    setRejectReason((r) => ({ ...r, [ev.eventId]: e.target.value }))
                   }
-                  disabled={busyId === ev.id}
+                  disabled={busyId === ev.eventId}
                 />
                 <button
                   type="button"
                   className="btn-danger"
-                  disabled={busyId === ev.id}
+                  disabled={busyId === ev.eventId}
                   onClick={() => reject(ev)}
                 >
                   Reject

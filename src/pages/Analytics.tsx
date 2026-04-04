@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, collectionGroup, query } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
-import type { Category, EventRecord } from "../types";
+import { useAuth } from "../hooks/useAuth";
+import type { EventRecord, Category } from "../types/event-types";
 
 type CatCount = Record<string, number>;
 
