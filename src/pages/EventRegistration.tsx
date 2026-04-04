@@ -309,6 +309,23 @@ export function EventRegistrationPage() {
             disabled={saving}
           />
         </label>
+        <div className="field span-2 image-preview-container">
+          <span>Image Preview</span>
+          <div className="image-preview-wrapper">
+            {image ? (
+                <img
+                    src={image}
+                    alt="Preview"
+                    className="form-image-preview"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://placehold.co/600x400?text=Invalid+Image+URL';
+                    }}
+                />
+            ) : (
+                <div className="image-placeholder">No image URL provided</div>
+            )}
+          </div>
+        </div>
         <label className="field">
           <span>Starts at</span>
           <input

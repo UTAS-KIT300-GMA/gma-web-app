@@ -126,16 +126,30 @@ export function EventManagePage() {
           {events.map((ev) => {
             const allowed = canManageEvent(ev, user?.uid, isAdmin);
             return (
-              <li key={ev.eventId} className="approval-card">
-                <div className="approval-head">
-                  <h3>{ev.title}</h3>
-                  <span className="muted">{formatWhen(ev.dateTime)}</span>
+              <li key={ev.eventId} className="approval-card event-manage-card">
+                <div className="event-manage-row">
+                  {ev.image && (
+                      <img
+                          src={ev.image}
+                          alt={ev.title}
+                          className="event-manage-thumb"
+                          onError={(e) => (e.currentTarget.style.display = 'none')} // Hide if URL is broken
+                      />
+                  )}
+
+                  <div className="event-manage-content">
+                    <div className="approval-head">
+                      <h3>{ev.title}</h3>
+                      <span className="muted">{formatWhen(ev.dateTime)}</span>
+                    </div>
+                    <p className="approval-desc">{ev.description}</p>
+                    <p className="muted small">
+                      {ev.address} · {ev.category}
+                      {ev.approvalStatus ? ` · ${ev.approvalStatus}` : ""}
+                    </p>
+                  </div>
                 </div>
-                <p className="approval-desc">{ev.description}</p>
-                <p className="muted small">
-                  {ev.address} · {ev.category}
-                  {ev.approvalStatus ? ` · ${ev.approvalStatus}` : ""}
-                </p>
+
                 {allowed && (
                   <div className="event-manage-actions">
                     <Link
