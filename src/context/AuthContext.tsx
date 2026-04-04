@@ -1,7 +1,6 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -15,9 +14,9 @@ import {
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import type { UserProfile, UserRole } from "../types";
+import type { UserProfile, UserRole,AccountStatus } from "../types/user-types";
 
-type AuthState = {
+export type AuthState = {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
@@ -27,25 +26,43 @@ type AuthState = {
   clearError: () => void;
 };
 
-const AuthContext = createContext<AuthState | null>(null);
+export const AuthContext = createContext<AuthState | null>(null);
 
 const allowedRoles: UserRole[] = ["admin", "partner"];
 
+/**
+ * @summary Parses raw Firestore data into a typed UserProfile object.
+ * @param {Record<string, unknown>} data The raw document data from Firestore.
+ * @returns {UserProfile} A structured and typed profile object.
+ */
 function parseProfile(data: Record<string, unknown>): UserProfile {
-  const raw = String(data.role ?? "general").toLowerCase().trim();
+  const rawRole = String(data.role ?? "general").toLowerCase().trim();
   const role: UserRole =
-      raw === "admin" || raw === "partner" || raw === "general"
-          ? (raw as UserRole)
+      rawRole === "admin" || rawRole === "partner" || rawRole === "general"
+          ? (rawRole as UserRole)
           : "general";
+
+  // Type-safe status check
+  const rawStatus = data.status as string | undefined;
+  const status: AccountStatus = 
+      rawStatus === "approved" || rawStatus === "rejected" || rawStatus === "pending_approval"
+          ? (rawStatus as AccountStatus)
+          : "pending_approval";
 
   return {
     email: String(data.email ?? ""),
+    partnerID: data.partnerID as string | undefined,
+    orgName: data.orgName as string | undefined,
+    abn: data.abn as string | undefined,
+    representativeName: data.representativeName as string | undefined,
+    status,
     firstName: data.firstName as string | undefined,
     lastName: data.lastName as string | undefined,
     role,
     selectedTags: data.selectedTags as string[] | undefined,
     onboardingComplete: data.onboardingComplete as boolean | undefined,
     photoURL: data.photoURL as string | undefined,
+    createdAt: data.createdAt as any, // Firebase Timestamp
   };
 }
 
@@ -56,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth(), async (u) => {
+    /**
+     * @summary Observes Firebase Auth state changes and fetches corresponding Firestore profiles.
+     */
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
 
       if (!u) {
@@ -67,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const userDocRef = doc(db(), "users", u.uid);
+        const userDocRef = doc(db, "users", u.uid);
         const snap = await getDoc(userDocRef);
 
         console.log("snap", snap);
@@ -75,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!snap.exists()) {
           setProfile(null);
           setError("No user profile found in Firestore.");
-          await signOut(auth());
+          await signOut(auth);
           return;
         }
 
@@ -84,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!allowedRoles.includes(p.role)) {
           setProfile(null);
           setError(`Access denied. Role "${p.role}" is not authorized.`);
-          await signOut(auth());
+          await signOut(auth);
           return;
         }
 
@@ -104,11 +124,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, []);
 
+  /**
+   * @summary Authenticates a user with email and password.
+   * @param {string} email - User's registration email.
+   * @param {string} password - User's account password.
+   * @returns {Promise<void>}
+   * @throws {FirebaseError} Throws if credentials are invalid or user not found.
+   */
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth(), email.trim(), password);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e: any) {
       const map: Record<string, string> = {
         "auth/invalid-credential": "Invalid email or password.",
@@ -123,9 +150,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * @summary Terminates the current session and clears local auth state.
+   * @returns {Promise<void>}
+   */
   const signOutUser = useCallback(async () => {
     try {
-      await signOut(auth());
+      await signOut(auth);
       setProfile(null);
       setUser(null);
     } catch (e) {
@@ -133,6 +164,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * @summary Resets the current authentication error state.
+   */
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo(
@@ -151,8 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
-}
+/**
+ * @summary Custom hook to access the AuthContext state and methods.
+ * @returns The current authentication state and helper functions.
+ * @throws {Error} Throws if used outside of an AuthProvider.
+ */

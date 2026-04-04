@@ -28,5 +28,5 @@ export function getFirebaseApp(): FirebaseApp {
   return app;
 }
 
-export const auth = () => getAuth(getFirebaseApp());
-export const db = () => getFirestore(getFirebaseApp());
+export const auth =  getAuth(getFirebaseApp());
+export const db =  getFirestore(getFirebaseApp());
