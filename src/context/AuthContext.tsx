@@ -62,7 +62,7 @@ function parseProfile(data: Record<string, unknown>): UserProfile {
 
   return {
     email: String(data.email ?? ""),
-    partnerID: data.partnerID as string | undefined,
+    partnerId: data.partnerId as string | undefined,
     role,
     status,
     createdAt: parseTimestamp(data.createdAt) as any,

@@ -47,7 +47,7 @@ export const createInitialProfile = async (user: User, data: PartnerRegistration
     const userRef = doc(db, "users", user.uid); 
 
     const profileData: UserProfile = {
-      partnerID: user.uid,
+      partnerId: user.uid,
       email: data.email.toLowerCase().trim(),
       role: "partner",
       status: "pending_approval",

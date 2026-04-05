@@ -8,7 +8,7 @@ export interface UserProfile {
   // (No Firestore document exists yet until email is verified)
 
   // --- Stage 2: The Application (Core Identity & Legal) ---
-  partnerID?: string;          // Maps to Firebase UID
+  partnerId?: string;          // Maps to Firebase UID
   email: string;
   role: UserRole;
   status: AccountStatus;       

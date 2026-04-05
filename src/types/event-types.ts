@@ -25,7 +25,7 @@ export type EventRecord = {
 
   // --- Admin & Partner Portal Workflow ---
   approvalStatus?: "pending" | "approved" | "rejected";
-  submittedBy?: string;        // The partnerID of the creator
+  submittedBy?: string;        // The partnerId of the creator
   rejectionReason?: string;    // Feedback for the partner
   interestTags?: string[];     
 };
