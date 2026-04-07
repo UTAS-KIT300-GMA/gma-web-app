@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   Timestamp,
   updateDoc,
+  GeoPoint
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
@@ -54,6 +55,25 @@ export function EventRegistrationPage() {
   const isValidCategory = (value: unknown): value is (typeof CATEGORIES)[number] => {
     return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
   };
+
+  async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Geocoding failed:", error);
+      return null;
+    }
+  }
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -177,6 +197,12 @@ export function EventRegistrationPage() {
     setMessage(null);
     setSaving(true);
     try {
+      // Convert address to coordinates
+      const coords = await getCoordinates(address);
+      if (!coords) {
+        throw new Error("Could not verify the address. Please try a more specific address.");
+      }
+
       const start = new Date(dateTime);
       if (Number.isNaN(start.getTime())) {
         setMessage({ type: "err", text: "Choose a valid date and time." });
@@ -192,6 +218,7 @@ export function EventRegistrationPage() {
         description: description.trim(),
         category,
         address: address.trim(),
+        location: new GeoPoint(coords?.lat ?? 0, coords?.lng ?? 0),
         image: image.trim(),
         type,
         dateTime: Timestamp.fromDate(start),
