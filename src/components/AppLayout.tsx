@@ -1,68 +1,131 @@
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth"; 
-import { RoleGate } from "./RoleGate"; // Use the component you just built!
+import {
+  Menu,
+  House,
+  Plus,
+  CalendarDays,
+  ChartColumn,
+  Settings,
+  ShieldCheck,
+  CircleUserRound,
+  LogOut,
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { RoleGate } from "./RoleGate";
 
-const linkStyle = ({ isActive }: { isActive: boolean }) => ({
-  color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.85)",
-  fontWeight: isActive ? 700 : 500,
-  textDecoration: "none",
-  padding: "10px 14px",
-  borderRadius: 8,
-  background: isActive ? "rgba(0,0,0,0.15)" : "transparent",
-  display: "block",
-  marginBottom: "4px"
-});
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  `sidebar-link ${isActive ? "active" : ""}`;
 
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  const displayName = profile?.firstName ?? profile?.email ?? "Sandra Lee";
+  const roleLabel = profile?.role ?? "partner";
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <div className="sidebar-brand">GMA Portal</div>
-        
+    <div
+      className={`app-shell ${
+        sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"
+      }`}
+    >
+      <aside
+        className={`app-sidebar ${sidebarExpanded ? "expanded" : "collapsed"}`}
+      >
+        <div className="sidebar-top">
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={() => setSidebarExpanded((prev) => !prev)}
+            aria-label={
+              sidebarExpanded ? "Collapse navigation" : "Expand navigation"
+            }
+          >
+            <Menu size={22} strokeWidth={2.2} />
+          </button>
+
+          {sidebarExpanded && <div className="sidebar-brand">GMA Connect</div>}
+        </div>
+
         <nav className="sidebar-nav">
-          <NavLink to="/dashboard" style={linkStyle} end>
-            Dashboard
-          </NavLink>
-          
-          <NavLink to="/analytics" style={linkStyle}>
-            Analytics
-          </NavLink>
-          
-          <NavLink to="/events/register" style={linkStyle}>
-            Register event
+          <NavLink to="/dashboard" className={linkClass} end>
+            <span className="sidebar-link-icon">
+              <House size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Dashboard</span>}
           </NavLink>
 
-          <NavLink to="/events/manage" style={linkStyle}>
-            Manage events
+          <NavLink to="/events/register" className={linkClass}>
+            <span className="sidebar-link-icon">
+              <Plus size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Create Event</span>}
           </NavLink>
 
-          {/* Clean Security: RoleGate handles the logic and the logging */}
+          <NavLink to="/events/manage" className={linkClass}>
+            <span className="sidebar-link-icon">
+              <CalendarDays size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>My Events</span>}
+          </NavLink>
+
+          <NavLink to="/analytics" className={linkClass}>
+            <span className="sidebar-link-icon">
+              <ChartColumn size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Analytics</span>}
+          </NavLink>
+
+          <a
+            className="sidebar-link sidebar-link-muted"
+            href="#settings"
+            onClick={(e) => e.preventDefault()}
+          >
+            <span className="sidebar-link-icon">
+              <Settings size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Settings</span>}
+          </a>
+
           <RoleGate roles={["admin"]}>
-            <NavLink to="/events/approval" style={linkStyle}>
-              Approve events
+            <NavLink to="/events/approval" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <ShieldCheck size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Approve Events</span>}
             </NavLink>
           </RoleGate>
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user">
-            {profile?.firstName ?? profile?.email ?? "User"}{" "}
-            <span className="role-pill">{profile?.role}</span>
-          </div>
-          
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={async () => {
-              await signOutUser();
-              navigate("/login", { replace: true });
-            }}
-          >
-            Sign out
-          </button>
+          {sidebarExpanded ? (
+            <div className="sidebar-user-card">
+              <div className="sidebar-user-info">
+                <strong>{displayName}</strong>
+                <span className="role-pill">{roleLabel}</span>
+              </div>
+
+              <button
+                type="button"
+                className="btn-ghost sidebar-signout"
+                onClick={async () => {
+                  await signOutUser();
+                  navigate("/login", { replace: true });
+                }}
+              >
+                <LogOut size={16} strokeWidth={2.2} />
+                <span>Sign out</span>
+              </button>
+            </div>
+          ) : (
+            <div className="sidebar-footer-collapsed">
+              <div className="sidebar-mini-user">
+                <CircleUserRound size={20} strokeWidth={2.2} />
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
