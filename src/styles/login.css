@@ -1,0 +1,56 @@
+/*
+login.css
+Styles specific to the login experience, including the login page layout,
+login card, logo area, and decorative background treatment.
+*/
+.login-page {
+  min-height: 100vh;
+  background: var(--gma-plum);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top right, rgba(241, 203, 95, 0.08), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(164, 33, 105, 0.18), transparent 35%);
+}
+
+.login-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.login-logo {
+  object-fit: contain;
+}
+
+.login-card {
+  background: var(--gma-cream);
+  border-radius: 20px;
+  padding: 1.75rem 1.5rem 2rem;
+  box-shadow: 0 10px 30px rgba(24, 6, 18, 0.28);
+}
+
+.login-sub {
+  font-size: 0.9rem;
+  color: var(--gma-muted);
+  margin: 0 0 1rem;
+  line-height: 1.45;
+  text-align: center;
+}

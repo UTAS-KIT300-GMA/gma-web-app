@@ -1,0 +1,40 @@
+/*
+event-manage.css
+Styles for event management pages including event action controls,
+event rows, and event thumbnail presentation.
+*/
+.event-manage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: center;
+}
+
+.event-manage-actions .btn-inline {
+  width: auto;
+  margin-top: 0;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.event-manage-actions a.btn-primary {
+  background: var(--gma-gold);
+  color: var(--gma-plum);
+}
+
+.event-manage-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.event-manage-thumb {
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+  background-color: #f0f0f0;
+}
