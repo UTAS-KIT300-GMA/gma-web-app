@@ -1,0 +1,48 @@
+/*
+cards.css
+Shared card, panel, and stat card styles used across dashboard
+and other content sections throughout the app.
+*/
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--gma-card);
+  border-radius: var(--gma-radius);
+  padding: 1.25rem;
+  box-shadow: var(--gma-shadow);
+  border: 1px solid var(--gma-border);
+}
+
+.stat-card.accent {
+  border-color: rgba(241, 144, 33, 0.45);
+  background: #fffaf5;
+}
+
+.stat-value {
+  font-family: var(--gma-font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gma-magenta);
+  text-align: center;
+  width: 100%;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--gma-muted);
+  margin-top: 0.25rem;
+}
+
+.panel {
+  margin-top: 1.5rem;
+  background: var(--gma-card);
+  border-radius: var(--gma-radius);
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--gma-border);
+  box-shadow: var(--gma-shadow);
+}

@@ -1,0 +1,153 @@
+/*
+   base.css
+   Global design tokens, resets, typography, shared utility classes,
+   and foundational page-level styles used across the web app.
+*/
+   
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Bree+Serif&display=swap");
+
+:root {
+  --gma-plum: #400f32;
+  --gma-magenta: #a42169;
+  --gma-orange: #f19021;
+  --gma-gold: #f1cb5f;
+  --gma-cream: #fbf0e4;
+
+  --gma-bg: var(--gma-cream);
+  --gma-surface: #fffdf9;
+  --gma-card: #ffffff;
+  --gma-primary: var(--gma-magenta);
+  --gma-primary-dark: var(--gma-plum);
+  --gma-accent: var(--gma-orange);
+  --gma-highlight: var(--gma-gold);
+  --gma-text: var(--gma-plum);
+  --gma-muted: #6a5761;
+  --gma-border: rgba(64, 15, 50, 0.12);
+  --gma-border-strong: rgba(64, 15, 50, 0.2);
+  --gma-sidebar: var(--gma-plum);
+  --gma-radius: 14px;
+  --gma-radius-sm: 10px;
+  --gma-shadow: 0 6px 22px rgba(64, 15, 50, 0.08);
+
+  --gma-font-heading: "Cooper Std", "Bree Serif", Georgia, serif;
+  --gma-font-body: "Acumin Pro", "DM Sans", "Segoe UI", Arial, sans-serif;
+
+  font-family: var(--gma-font-body);
+  line-height: 1.45;
+  color: var(--gma-text);
+  background: var(--gma-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--gma-bg);
+  color: var(--gma-text);
+  font-family: var(--gma-font-body);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+code {
+  font-size: 0.9em;
+  padding: 2px 6px;
+  background: rgba(164, 33, 105, 0.08);
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--gma-font-heading);
+  color: var(--gma-plum);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: 2.1rem;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.45rem;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--gma-muted);
+  font-size: 0.96rem;
+  margin-bottom: 1.25rem;
+}
+
+.small {
+  font-size: 0.84rem;
+  color: var(--gma-muted);
+}
+
+.page {
+  padding: 1.5rem 2rem 3rem;
+  max-width: 1320px;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--gma-muted);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(64, 15, 50, 0.15);
+  border-top-color: var(--gma-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

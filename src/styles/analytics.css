@@ -1,0 +1,57 @@
+/*
+analytics.css
+Analytics-specific visual styles such as bar lists, tracks, fills,
+and lightweight metric list presentation.
+*/
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 88px 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.bar-label {
+  text-transform: capitalize;
+  color: var(--gma-muted);
+}
+
+.bar-track {
+  height: 10px;
+  background: rgba(64, 15, 50, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--gma-magenta);
+  border-radius: 6px;
+}
+
+.bar-num {
+  text-align: right;
+  font-weight: 600;
+}
+
+.tag-analytics {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tag-analytics li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  border-bottom: 1px dashed rgba(64, 15, 50, 0.12);
+  padding-bottom: 0.35rem;
+}

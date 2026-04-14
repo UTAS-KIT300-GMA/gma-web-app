@@ -1,0 +1,42 @@
+/*
+tags.css
+Styles for selectable tags, inline tags, chips, and small metadata labels
+used in forms, filters, and content summaries.
+*/
+.tag-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-height: 220px;
+  overflow: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--gma-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  padding: 0.28rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(164, 33, 105, 0.08);
+  cursor: pointer;
+}
+
+.tags-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+}
+
+.mini-tag {
+  font-size: 0.7rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(241, 144, 33, 0.18);
+  color: var(--gma-plum);
+}
