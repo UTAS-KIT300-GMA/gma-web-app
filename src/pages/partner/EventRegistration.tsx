@@ -29,25 +29,25 @@ export function EventRegistrationPage() {
   const [title, setTitle] = useState(mockInitialForm.title);
   const [description, setDescription] = useState(mockInitialForm.description);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(
-    mockInitialForm.categories
+    mockInitialForm.categories,
   );
   const [address, setAddress] = useState(mockInitialForm.address);
   const [dateTime, setDateTime] = useState(mockInitialForm.dateTime);
   const [totalTickets, setTotalTickets] = useState<number>(
-    mockInitialForm.totalTickets
+    mockInitialForm.totalTickets,
   );
   const [imageName, setImageName] = useState(mockInitialForm.imageName);
   const [interestTags, setInterestTags] = useState<string[]>(
-    mockInitialForm.interestTags
+    mockInitialForm.interestTags,
   );
   const [ticketAccess, setTicketAccess] = useState<TicketAccessType>(
-    mockInitialForm.ticketAccess
+    mockInitialForm.ticketAccess,
   );
   const [showPreview, setShowPreview] = useState(false);
 
   function toggleTag(key: string) {
     setInterestTags((prev) =>
-      prev.includes(key) ? prev.filter((tag) => tag !== key) : [...prev, key]
+      prev.includes(key) ? prev.filter((tag) => tag !== key) : [...prev, key],
     );
   }
 
@@ -55,7 +55,7 @@ export function EventRegistrationPage() {
     setSelectedCategories((prev) =>
       prev.includes(category)
         ? prev.filter((item) => item !== category)
-        : [...prev, category]
+        : [...prev, category],
     );
   }
 
@@ -346,61 +346,70 @@ export function EventRegistrationPage() {
               <div className="mobile-preview-phone">
                 <div className="mobile-preview-notch" />
 
-<div className="mobile-preview-screen">
-  <div className="android-preview-header">
-    <button
-      type="button"
-      className="mobile-back-btn"
-      aria-label="Back"
-    >
-      ‹
-    </button>
-    <h3>Event Details</h3>
-    <div className="mobile-header-spacer" />
-  </div>
+                <div className="mobile-preview-screen">
+                  <div className="android-preview-header">
+                    <button
+                      type="button"
+                      className="mobile-back-btn"
+                      aria-label="Back"
+                    >
+                      ‹
+                    </button>
+                    <h3>Event Details</h3>
+                    <div className="mobile-header-spacer" />
+                  </div>
 
-  <div className="mobile-preview-scroll">
-    <div className="mobile-preview-image android-preview-image">
-      {imageName ? <span>{imageName}</span> : <span>Event image</span>}
-    </div>
+                  <div className="mobile-preview-scroll">
+                    <div className="mobile-preview-image android-preview-image">
+                      {imageName ? (
+                        <span>{imageName}</span>
+                      ) : (
+                        <span>Event image</span>
+                      )}
+                    </div>
 
-    <div className="android-preview-content">
-      <div className="android-preview-title-row">
-        <h4>{title || "Your event title"}</h4>
+                    <div className="android-preview-content">
+                      <div className="android-preview-title-row">
+                        <h4>{title || "Your event title"}</h4>
 
-        <button
-          type="button"
-          className="mobile-bookmark-btn"
-          aria-label="Bookmark"
-        >
-          🔖
-        </button>
-      </div>
+                        <button
+                          type="button"
+                          className="mobile-bookmark-btn"
+                          aria-label="Bookmark"
+                        >
+                          🔖
+                        </button>
+                      </div>
 
-      <div className="android-preview-date">
-        <span className="mobile-meta-icon">🗓</span>
-        <span>{dateTime || "Apr 10, 2026 • 8:00 PM"}</span>
-      </div>
+                      <div className="android-preview-date">
+                        <span className="mobile-meta-icon">🗓</span>
+                        <span>{dateTime || "Apr 10, 2026 • 8:00 PM"}</span>
+                      </div>
 
-      <p className="android-preview-description">
-        {description || "No description provided."}
-      </p>
+                      <p className="android-preview-description">
+                        {description || "No description provided."}
+                      </p>
 
-      <div className="android-preview-access-row">
-        <span className="mobile-meta-icon">🏷</span>
-        <span>
-          {ticketAccess === "free_for_all" ? "Free Event" : "Subscribers Only"}
-        </span>
-      </div>
-    </div>
-  </div>
+                      <div className="android-preview-access-row">
+                        <span className="mobile-meta-icon">🏷</span>
+                        <span>
+                          {ticketAccess === "free_for_all"
+                            ? "Free Event"
+                            : "Subscribers Only"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-  <div className="android-preview-bottom-bar">
-    <button type="button" className="mobile-rsvp-btn android-rsvp-btn">
-      RSVP / Book Now
-    </button>
-  </div>
-</div>
+                  <div className="android-preview-bottom-bar">
+                    <button
+                      type="button"
+                      className="mobile-rsvp-btn android-rsvp-btn"
+                    >
+                      RSVP / Book Now
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

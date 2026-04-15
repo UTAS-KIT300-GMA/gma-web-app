@@ -1,11 +1,11 @@
 /** GMA web theme aligned to the official brand guide */
 export const colors = {
   /* Core brand colours */
-  background: "#FBF0E4",     // brand cream
-  primary: "#A42169",        // brand magenta
-  primaryDark: "#400F32",    // brand plum
-  secondary: "#F19021",      // brand orange
-  highlight: "#F1CB5F",      // brand gold
+  background: "#FBF0E4", // brand cream
+  primary: "#A42169", // brand magenta
+  primaryDark: "#400F32", // brand plum
+  secondary: "#F19021", // brand orange
+  highlight: "#F1CB5F", // brand gold
 
   /* Text colours */
   text: "#400F32",

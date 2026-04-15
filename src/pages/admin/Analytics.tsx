@@ -73,7 +73,7 @@ export function AnalyticsPage() {
     for (const e of events) {
     const c = e.category;
     
-    if (c === "connect" || c === "growth" || c === "thrive") {
+    if (c === "connect" || c === "grow" || c === "thrive") {
       m[c] += 1;
     } else {
       m.other += 1;

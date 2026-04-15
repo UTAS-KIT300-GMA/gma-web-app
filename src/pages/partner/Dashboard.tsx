@@ -1,5 +1,4 @@
 import { useState } from "react";
-//import { colors } from "../theme";
 
 type FilterKey = "week" | "month" | "year";
 
@@ -98,11 +97,15 @@ export default function PartnerDashboard() {
     <div className="page dashboard-page">
       <section className="dashboard-topbar">
         <div className="dashboard-topbar-left">
-  <div className="dashboard-topbar-title">Partner Dashboard</div>
-</div>
+          <div className="dashboard-topbar-title">Partner Dashboard</div>
+        </div>
 
         <div className="dashboard-topbar-right">
-          <button className="dashboard-icon-btn" type="button" aria-label="Notifications">
+          <button
+            className="dashboard-icon-btn"
+            type="button"
+            aria-label="Notifications"
+          >
             🔔
           </button>
           <div className="dashboard-userbox">
@@ -118,7 +121,8 @@ export default function PartnerDashboard() {
       <section className="dashboard-header">
         <h1>Partner Dashboard Overview</h1>
         <p className="muted dashboard-hero-copy">
-          A quick summary of event performance, engagement trends, and key insights.
+          A quick summary of event performance, engagement trends, and key
+          insights.
         </p>
       </section>
 
@@ -216,8 +220,8 @@ export default function PartnerDashboard() {
               Skilled Migrant Networking Night
             </p>
             <p className="muted small">
-              This event is currently your strongest performer based on bookings,
-              visibility, and engagement.
+              This event is currently your strongest performer based on
+              bookings, visibility, and engagement.
             </p>
 
             <div className="dashboard-highlight-metrics">
@@ -245,7 +249,8 @@ export default function PartnerDashboard() {
                 <div className="dashboard-activity-dot" />
                 <div>
                   <p className="dashboard-activity-text">
-                    Your event “Career Growth Workshop” was submitted for review.
+                    Your event “Career Growth Workshop” was submitted for
+                    review.
                   </p>
                   <p className="muted small">2 hours ago</p>
                 </div>

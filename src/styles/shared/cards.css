@@ -29,7 +29,9 @@ and other content sections throughout the app.
   color: var(--gma-magenta);
   text-align: center;
   width: 100%;
-  transition: transform 0.2s ease, color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
 }
 
 .stat-label {
