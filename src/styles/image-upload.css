@@ -1,8 +1,8 @@
 /*
 image-upload.css
-Styles for image upload and preview components including upload zones,
-preview wrappers, placeholders, and remove-image controls.
+Clean, simple upload UI for event creation
 */
+
 .image-preview-wrapper {
   margin-top: 8px;
   border: 2px dashed rgba(64, 15, 50, 0.14);
@@ -26,36 +26,68 @@ preview wrappers, placeholders, and remove-image controls.
   font-style: italic;
 }
 
+/* Upload box (FINAL version you want) */
 .image-upload-zone {
-  border: 2px dashed rgba(64, 15, 50, 0.14);
-  border-radius: 14px;
-  padding: 20px;
+  border: 2px dashed rgba(164, 33, 105, 0.25);
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  background: #fffdfb;
   text-align: center;
-  background: #fffaf6;
-  transition: all 0.2s ease;
-  min-height: 200px;
+  cursor: pointer;
+  min-height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .image-upload-zone:hover {
-  border-color: rgba(164, 33, 105, 0.4);
+  border-color: var(--gma-magenta);
   background: #fff7fb;
+  box-shadow: 0 10px 24px rgba(164, 33, 105, 0.08);
 }
 
-.upload-placeholder {
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
+/* Content inside upload box */
+.legacy-upload-placeholder {
+  max-width: 560px;
 }
 
-.preview-container {
-  position: relative;
-  width: 100%;
+.legacy-upload-placeholder strong {
+  display: inline-block;
+  color: var(--gma-plum);
+  font-size: 1.1rem;
+  font-weight: 800;
 }
 
+.legacy-upload-placeholder span {
+  color: var(--gma-plum);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.legacy-upload-placeholder .small {
+  margin-top: 0.6rem;
+  color: var(--gma-muted);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.uploaded-file-name {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gma-magenta);
+}
+
+/* Hidden input */
+.sr-only-input {
+  display: none;
+}
+
+/* Optional remove button (keep for future) */
 .btn-remove-image {
   position: absolute;
   top: 10px;
