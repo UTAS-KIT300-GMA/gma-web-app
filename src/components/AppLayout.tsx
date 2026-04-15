@@ -24,6 +24,7 @@ export function AppLayout() {
 
   const displayName = profile?.firstName ?? profile?.email ?? "Sandra Lee";
   const roleLabel = profile?.role ?? "partner";
+  const isAdmin = profile?.role === "admin";
 
   return (
     <div
@@ -49,55 +50,65 @@ export function AppLayout() {
           {sidebarExpanded && <div className="sidebar-brand">GMA Connect</div>}
         </div>
 
-        <nav className="sidebar-nav">
-          <NavLink to="/dashboard" className={linkClass} end>
-            <span className="sidebar-link-icon">
-              <House size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Dashboard</span>}
-          </NavLink>
+<nav className="sidebar-nav">
+  <NavLink
+    to={isAdmin ? "/admin/dashboard" : "/partner/dashboard"}
+    className={linkClass}
+    end
+  >
+    <span className="sidebar-link-icon">
+      <House size={20} strokeWidth={2.2} />
+    </span>
+    {sidebarExpanded && <span>Dashboard</span>}
+  </NavLink>
 
-          <NavLink to="/events/register" className={linkClass}>
-            <span className="sidebar-link-icon">
-              <Plus size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Create Event</span>}
-          </NavLink>
+  {!isAdmin && (
+    <NavLink to="/partner/events/register" className={linkClass}>
+      <span className="sidebar-link-icon">
+        <Plus size={20} strokeWidth={2.2} />
+      </span>
+      {sidebarExpanded && <span>Create Event</span>}
+    </NavLink>
+  )}
 
-          <NavLink to="/events/manage" className={linkClass}>
-            <span className="sidebar-link-icon">
-              <CalendarDays size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>My Events</span>}
-          </NavLink>
+  {isAdmin && (
+    <NavLink to="/admin/events/manage" className={linkClass}>
+      <span className="sidebar-link-icon">
+        <CalendarDays size={20} strokeWidth={2.2} />
+      </span>
+      {sidebarExpanded && <span>Manage Events</span>}
+    </NavLink>
+  )}
 
-          <NavLink to="/analytics" className={linkClass}>
-            <span className="sidebar-link-icon">
-              <ChartColumn size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Analytics</span>}
-          </NavLink>
+  {isAdmin && (
+    <NavLink to="/admin/analytics" className={linkClass}>
+      <span className="sidebar-link-icon">
+        <ChartColumn size={20} strokeWidth={2.2} />
+      </span>
+      {sidebarExpanded && <span>Analytics</span>}
+    </NavLink>
+  )}
 
-          <a
-            className="sidebar-link sidebar-link-muted"
-            href="#settings"
-            onClick={(e) => e.preventDefault()}
-          >
-            <span className="sidebar-link-icon">
-              <Settings size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Settings</span>}
-          </a>
+  <a
+    className="sidebar-link sidebar-link-muted"
+    href="#settings"
+    onClick={(e) => e.preventDefault()}
+  >
+    <span className="sidebar-link-icon">
+      <Settings size={20} strokeWidth={2.2} />
+    </span>
+    {sidebarExpanded && <span>Settings</span>}
+  </a>
 
-          <RoleGate roles={["admin"]}>
-            <NavLink to="/events/approval" className={linkClass}>
-              <span className="sidebar-link-icon">
-                <ShieldCheck size={20} strokeWidth={2.2} />
-              </span>
-              {sidebarExpanded && <span>Approve Events</span>}
-            </NavLink>
-          </RoleGate>
-        </nav>
+  <RoleGate roles={["admin"]}>
+    <NavLink to="/admin/events/approval" className={linkClass}>
+      <span className="sidebar-link-icon">
+        <ShieldCheck size={20} strokeWidth={2.2} />
+      </span>
+      {sidebarExpanded && <span>Approve Events</span>}
+    </NavLink>
+  </RoleGate>
+</nav>
 
         <div className="sidebar-footer">
           {sidebarExpanded ? (

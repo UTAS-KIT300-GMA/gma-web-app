@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { completePartnerOnboarding } from "../services/authService";
-
+import { useAuth } from "../../hooks/useAuth";
+import { completePartnerOnboarding } from "../../services/authService";
 
 const SOCIAL_PLATFORMS = {
   website: "Official Website",
@@ -11,7 +10,7 @@ const SOCIAL_PLATFORMS = {
   instagram: "Instagram",
   youtube: "YouTube",
   tiktok: "TikTok",
-  snapchat: "Snapchat"
+  snapchat: "Snapchat",
 };
 
 /**
@@ -21,11 +20,9 @@ export function FinalSetupPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  
   const [photoURL, setPhotoURL] = useState("");
   const [missionStatement, setMissionStatement] = useState("");
 
- 
   const [socials, setSocials] = useState({
     website: "",
     facebook: "",
@@ -34,10 +31,9 @@ export function FinalSetupPage() {
     tiktok: "",
     snapchat: "",
     linkedin: "",
-    twitter: ""
+    twitter: "",
   });
 
- 
   const [activeFields, setActiveFields] = useState<string[]>(["website"]);
 
   /**
@@ -51,16 +47,15 @@ export function FinalSetupPage() {
     setLoading(true);
 
     try {
-    
       const filteredSocials = Object.fromEntries(
-        Object.entries(socials).filter(([_, value]) => value.trim() !== "")
+        Object.entries(socials).filter(([_, value]) => value.trim() !== ""),
       );
 
       await completePartnerOnboarding(user.uid, {
         photoURL,
         missionStatement,
         socials: filteredSocials,
-        onboardingComplete: true
+        onboardingComplete: true,
       });
     } catch (err) {
       console.error("Onboarding failed:", err);
@@ -84,8 +79,8 @@ export function FinalSetupPage() {
    * @param {string} key - The platform key to remove.
    */
   const removeField = (key: string) => {
-    setActiveFields(activeFields.filter(f => f !== key));
-    setSocials(prev => ({ ...prev, [key]: "" }));
+    setActiveFields(activeFields.filter((f) => f !== key));
+    setSocials((prev) => ({ ...prev, [key]: "" }));
   };
 
   /**
@@ -94,48 +89,65 @@ export function FinalSetupPage() {
    * @param {string} value - The URL or handle entered by the user.
    */
   const handleSocialChange = (key: string, value: string) => {
-    setSocials(prev => ({ ...prev, [key]: value }));
+    setSocials((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
     <div className="login-page">
-      <form className="login-card" style={{ maxWidth: '500px' }} onSubmit={handleComplete}>
+      <form
+        className="login-card"
+        style={{ maxWidth: "500px" }}
+        onSubmit={handleComplete}
+      >
         <h2>Finalize Your Profile</h2>
         <p className="muted">Personalize how migrants see your organization.</p>
 
         <div className="form-fields">
           <label className="field">
             <span>Profile Photo URL</span>
-            <input 
-              value={photoURL} 
-              onChange={e => setPhotoURL(e.target.value)} 
+            <input
+              value={photoURL}
+              onChange={(e) => setPhotoURL(e.target.value)}
               placeholder="https://..."
             />
           </label>
 
           <label className="field">
             <span>Mission Statement</span>
-            <textarea 
+            <textarea
               value={missionStatement}
-              onChange={e => setMissionStatement(e.target.value)}
+              onChange={(e) => setMissionStatement(e.target.value)}
               placeholder="Briefly describe your goals..."
               rows={3}
             />
           </label>
 
           <hr />
-          
-          <div className="social-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <div
+            className="social-header"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <p className="small-title">Social Links</p>
-            <select 
+            <select
               className="social-select"
               onChange={(e) => addField(e.target.value)}
               value=""
-              style={{ padding: '4px', borderRadius: '4px' }}
+              style={{ padding: "4px", borderRadius: "4px" }}
             >
-              <option value="" disabled>+ Add Social Media</option>
+              <option value="" disabled>
+                + Add Social Media
+              </option>
               {Object.entries(SOCIAL_PLATFORMS).map(([key, label]) => (
-                <option key={key} value={key} disabled={activeFields.includes(key)}>
+                <option
+                  key={key}
+                  value={key}
+                  disabled={activeFields.includes(key)}
+                >
                   {label}
                 </option>
               ))}
@@ -143,23 +155,37 @@ export function FinalSetupPage() {
           </div>
 
           <div className="dynamic-fields">
-            {activeFields.map(field => (
-              <div key={field} className="field-row" style={{ position: 'relative', marginBottom: '1rem' }}>
+            {activeFields.map((field) => (
+              <div
+                key={field}
+                className="field-row"
+                style={{ position: "relative", marginBottom: "1rem" }}
+              >
                 <label className="field fade-in">
-                  <span>{SOCIAL_PLATFORMS[field as keyof typeof SOCIAL_PLATFORMS]}</span>
-                  <input 
+                  <span>
+                    {SOCIAL_PLATFORMS[field as keyof typeof SOCIAL_PLATFORMS]}
+                  </span>
+                  <input
                     placeholder={`https://...`}
-                    value={(socials as any)[field]} 
-                    onChange={e => handleSocialChange(field, e.target.value)} 
+                    value={(socials as any)[field]}
+                    onChange={(e) => handleSocialChange(field, e.target.value)}
                   />
                 </label>
-                
-                {field !== 'website' && (
-                  <button 
-                    type="button" 
+
+                {field !== "website" && (
+                  <button
+                    type="button"
                     className="btn-remove"
                     onClick={() => removeField(field)}
-                    style={{ position: 'absolute', right: '-30px', top: '35px', border: 'none', background: 'none', cursor: 'pointer', color: 'red' }}
+                    style={{
+                      position: "absolute",
+                      right: "-30px",
+                      top: "35px",
+                      border: "none",
+                      background: "none",
+                      cursor: "pointer",
+                      color: "red",
+                    }}
                   >
                     ×
                   </button>

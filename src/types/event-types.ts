@@ -1,6 +1,6 @@
 import type { Timestamp } from "firebase/firestore";
 
-export const CATEGORIES = ["connect", "growth", "thrive"] as const;
+export const CATEGORIES = ["connect", "grow", "thrive"] as const;
 export type Category = (typeof CATEGORIES)[number] | "all";
 
 /** * Matches gma-mobile-app EventDoc; extended for Web Portal workflow 
@@ -10,6 +10,7 @@ export type EventRecord = {
   title: string;
   description: string;
   category: Category;
+  categories?: Category[];
   address: string;
   image: string;
   type: "free" | "paid";

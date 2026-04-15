@@ -1,0 +1,119 @@
+/*
+   buttons.css
+   Reusable button styles including primary, ghost, danger,
+   and shared button layout helpers.
+*/
+
+.btn-primary {
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.25rem;
+  background: var(--gma-magenta);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #8f1c5b;
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #b00020;
+  color: #fff;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.sidebar-signout {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  border: 1px solid rgba(64, 15, 50, 0.14);
+  background: var(--gma-highlight);
+  color: var(--gma-text-on-secondary);
+  border-radius: 14px;
+  padding: 0.95rem 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(64, 15, 50, 0.08);
+  filter: brightness(0.99);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.event-form-actions .btn-primary,
+.event-form-actions .btn-secondary {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-outline {
+  border: 1px solid rgba(64, 15, 50, 0.14);
+  background: #fff;
+  color: var(--gma-plum);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.btn-outline:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(64, 15, 50, 0.08);
+  border-color: rgba(164, 33, 105, 0.24);
+  background: #fffafc;
+}

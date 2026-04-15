@@ -74,7 +74,10 @@ navigation links, user summary section, and sidebar interactions.
   font-weight: 500;
   min-height: 52px;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .sidebar-link:hover {
@@ -99,7 +102,9 @@ navigation links, user summary section, and sidebar interactions.
   font-size: 1.2rem;
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .sidebar-link:hover .sidebar-link-icon {

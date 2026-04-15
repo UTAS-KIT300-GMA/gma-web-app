@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, collectionGroup, query } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../hooks/useAuth";
-import type { EventRecord, Category } from "../types/event-types";
+import { db } from "../../firebase";
+import { useAuth } from "../../hooks/useAuth";
+import type { EventRecord, Category } from "../../types/event-types";
 
 type CatCount = Record<string, number>;
 
@@ -73,7 +73,7 @@ export function AnalyticsPage() {
     for (const e of events) {
     const c = e.category;
     
-    if (c === "connect" || c === "growth" || c === "thrive") {
+    if (c === "connect" || c === "grow" || c === "thrive") {
       m[c] += 1;
     } else {
       m.other += 1;

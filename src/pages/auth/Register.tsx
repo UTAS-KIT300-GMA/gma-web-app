@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerPartner } from "../services/authService"; 
+import { registerPartner } from "../../services/authService"; 
 
 /**
  * @summary Renders the registration interface for Stage 1 of the partner onboarding process.

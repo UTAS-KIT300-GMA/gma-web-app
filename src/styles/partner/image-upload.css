@@ -1,0 +1,101 @@
+/*
+image-upload.css
+Clean, simple upload UI for event creation
+*/
+
+.image-preview-wrapper {
+  margin-top: 8px;
+  border: 2px dashed rgba(64, 15, 50, 0.14);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fffaf6;
+  min-height: 200px;
+}
+
+.form-image-preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.image-placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* Upload box (FINAL version you want) */
+.image-upload-zone {
+  border: 2px dashed rgba(164, 33, 105, 0.25);
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  background: #fffdfb;
+  text-align: center;
+  cursor: pointer;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.image-upload-zone:hover {
+  border-color: var(--gma-magenta);
+  background: #fff7fb;
+  box-shadow: 0 10px 24px rgba(164, 33, 105, 0.08);
+}
+
+/* Content inside upload box */
+.legacy-upload-placeholder {
+  max-width: 560px;
+}
+
+.legacy-upload-placeholder strong {
+  display: inline-block;
+  color: var(--gma-plum);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.legacy-upload-placeholder span {
+  color: var(--gma-plum);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.legacy-upload-placeholder .small {
+  margin-top: 0.6rem;
+  color: var(--gma-muted);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.uploaded-file-name {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gma-magenta);
+}
+
+/* Hidden input */
+.sr-only-input {
+  display: none;
+}
+
+/* Optional remove button (keep for future) */
+.btn-remove-image {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(176, 0, 32, 0.9);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}

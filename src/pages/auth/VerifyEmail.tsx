@@ -1,7 +1,7 @@
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import { sendEmailVerification } from "firebase/auth";
 import { useState, useEffect } from "react";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 
 /**
  * @summary Renders the Stage 1 verification interface and handles automatic polling for email status changes.
