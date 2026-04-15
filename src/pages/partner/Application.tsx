@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
 import { useNavigate } from "react-router-dom"; 
-import { useAuth } from "../hooks/useAuth";
-import { createInitialProfile } from "../services/authService"; 
+import { useAuth } from "../../hooks/useAuth";
+import { createInitialProfile } from "../../services/authService"; 
 
 export function ApplicationPage() {
   const { user } = useAuth();

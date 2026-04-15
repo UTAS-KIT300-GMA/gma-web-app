@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { completePartnerOnboarding } from "../services/authService";
+import { useAuth } from "../../hooks/useAuth";
+import { completePartnerOnboarding } from "../../services/authService";
 
 
 const SOCIAL_PLATFORMS = {

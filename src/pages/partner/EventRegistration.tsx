@@ -8,8 +8,8 @@ import {
   Tag,
   Ticket,
 } from "lucide-react";
-import { INTEREST_TAG_OPTIONS } from "../constants/interests";
-import { CATEGORIES, type Category } from "../types/event-types";
+import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
+import { CATEGORIES, type Category } from "../../types/event-types";
 
 type TicketAccessType = "free_for_all" | "members_only";
 

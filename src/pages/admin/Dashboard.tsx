@@ -88,7 +88,7 @@ const mockDecisionMetrics = [
   { label: "Lowest Engagement", value: "Sunday" },
 ];
 
-export function DashboardPage() {
+export default function AdminDashboard() {
   const [filter, setFilter] = useState<FilterKey>("month");
 
   const activeData = chartData[filter];
@@ -98,7 +98,7 @@ export function DashboardPage() {
     <div className="page dashboard-page">
       <section className="dashboard-topbar">
         <div className="dashboard-topbar-left">
-  <div className="dashboard-topbar-title">Partner Dashboard</div>
+  <div className="dashboard-topbar-title">Admin Dashboard</div>
 </div>
 
         <div className="dashboard-topbar-right">
@@ -116,7 +116,7 @@ export function DashboardPage() {
       </section>
 
       <section className="dashboard-header">
-        <h1>Partner Dashboard Overview</h1>
+        <h1>Admin Dashboard Overview</h1>
         <p className="muted dashboard-hero-copy">
           A quick summary of event performance, engagement trends, and key insights.
         </p>

@@ -9,9 +9,9 @@ import {
   where,
   type Timestamp,
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../hooks/useAuth";
-import type { EventRecord } from "../types/event-types";
+import { db } from "../../firebase";
+import { useAuth } from "../../hooks/useAuth";
+import type { EventRecord } from "../../types/event-types";
 
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
