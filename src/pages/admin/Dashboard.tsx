@@ -92,6 +92,7 @@ export default function AdminDashboard() {
   const [registeredUsers, setRegisteredUsers] = useState(0);
 
   useEffect(() => {
+  // Fetches the total number of events from Firestore
   const unsubscribeTotal = onSnapshot(collection(db, "events"), (snapshot) => {
     setStats((prev) => {
       const updated = [...prev];
@@ -104,6 +105,7 @@ export default function AdminDashboard() {
     });
   });
 
+  // Retrieves the count of approved (active) events
      const unsubscribeApproved = onSnapshot(
     query(collection(db, "events"), where("approvalStatus", "==", "approved")),
     (snapshot) => {
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
       });
     }
   );
-
+ // Retrieves the count of events pending
   const unsubscribePending = onSnapshot(
     query(collection(db, "events"), where("approvalStatus", "==", "pending")),
     (snapshot) => {
@@ -142,6 +144,7 @@ export default function AdminDashboard() {
 }, []);
     
   useEffect(() => {
+  // Calculates the total number of registered users
   const unsubscribe = onSnapshot(collection(db, "events"), (snapshot) => {
     let total = 0;
 
