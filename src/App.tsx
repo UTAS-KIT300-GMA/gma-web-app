@@ -54,7 +54,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
 
       <Route
-        path="/"
+        path="/app"
         element={
           <ProtectedRoute>
             {!user?.emailVerified ? (

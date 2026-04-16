@@ -35,7 +35,7 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   // This prevents a Partner from manually typing "/events/approval" in the URL
   if (roles && (!profile || !roles.includes(profile.role))) {
     console.warn(`Security: Role [${profile?.role || "none"}] attempted unauthorized access to a protected route.`);
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   // 4. Success: If they are logged in and authorized, let them pass to the AppRoutes logic
