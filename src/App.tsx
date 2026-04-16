@@ -22,6 +22,8 @@ import { EventManagePage } from "./pages/admin/EventManage";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 
+import { LandingPage } from "./pages/Landing";
+
 function LoginRoute() {
   const { user, loading } = useAuth();
 
@@ -50,6 +52,7 @@ export default function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
 
