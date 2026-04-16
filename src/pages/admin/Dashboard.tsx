@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "../../firebase";
 //import { colors } from "../theme";
 
 type FilterKey = "week" | "month" | "year";
@@ -16,26 +18,22 @@ type ChartPoint = {
 };
 
 const mockStats: StatCard[] = [
+
   {
     label: "Total Events",
-    value: "12",
+    value: "0",
     hint: "All events created",
   },
   {
-    label: "Published Events",
-    value: "8",
+    label: "Approved Events",
+    value: "0",
     hint: "Currently live",
     accent: true,
   },
   {
     label: "Pending Review",
-    value: "3",
+    value: "0",
     hint: "Awaiting approval",
-  },
-  {
-    label: "Total Bookings",
-    value: "186",
-    hint: "Combined registrations",
   },
   {
     label: "Engagement Rate",
@@ -90,6 +88,79 @@ const mockDecisionMetrics = [
 
 export default function AdminDashboard() {
   const [filter, setFilter] = useState<FilterKey>("month");
+  const [stats, setStats] = useState<StatCard[]>(mockStats);
+  const [registeredUsers, setRegisteredUsers] = useState(0);
+
+  useEffect(() => {
+  // Fetches the total number of events from Firestore
+  const unsubscribeTotal = onSnapshot(collection(db, "events"), (snapshot) => {
+    setStats((prev) => {
+      const updated = [...prev];
+      updated[0] = {
+        label: "Total Events",
+        value: snapshot.size.toString(),
+        hint: "All events created",
+      };
+      return updated;
+    });
+  });
+
+  // Retrieves the count of approved (active) events
+     const unsubscribeApproved = onSnapshot(
+    query(collection(db, "events"), where("approvalStatus", "==", "approved")),
+    (snapshot) => {
+      setStats((prev) => {
+        const updated = [...prev];
+        updated[1] = {
+          label: "Approved Events",
+          value: snapshot.size.toString(),
+          hint: "Currently live",
+          accent: true,
+        };
+        return updated;
+      });
+    }
+  );
+ // Retrieves the count of events pending
+  const unsubscribePending = onSnapshot(
+    query(collection(db, "events"), where("approvalStatus", "==", "pending")),
+    (snapshot) => {
+      setStats((prev) => {
+        const updated = [...prev];
+        updated[2] = {
+          label: "Pending Review",
+          value: snapshot.size.toString(),
+          hint: "Awaiting approval",
+        };
+        return updated;
+      });
+    }
+  );
+  return () => {
+    unsubscribeTotal();
+    unsubscribeApproved();
+    unsubscribePending();
+  };
+}, []);
+    
+  useEffect(() => {
+  // Calculates the total number of registered users
+  const unsubscribe = onSnapshot(collection(db, "events"), (snapshot) => {
+    let total = 0;
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      total += data.ticketsSold || 0;
+    });
+
+    setRegisteredUsers(total);
+  });
+
+  return () => unsubscribe();
+}, []);
+
+
+
 
   const activeData = chartData[filter];
   const maxValue = Math.max(...activeData.map((item) => item.value));
@@ -123,7 +194,13 @@ export default function AdminDashboard() {
       </section>
 
       <section className="dashboard-kpi-grid">
-        {mockStats.map((stat) => (
+      <article className="stat-card dashboard-stat-card">
+        <span className="dashboard-stat-title">Total Registered Users</span>
+        <div className="stat-value">{registeredUsers}</div>
+        <div className="stat-label">Users registered for events</div>
+      </article>
+
+        {stats.map((stat) => (
           <article
             key={stat.label}
             className={`stat-card dashboard-stat-card ${stat.accent ? "accent" : ""}`}
