@@ -8,6 +8,7 @@ import { RoleGate } from "./components/RoleGate";
 import { LoginPage } from "./pages/auth/Login";
 import { RegisterPage } from "./pages/auth/Register";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmail";
+import { LandingPage } from "./pages/auth/Landing";
 
 // Partner pages
 import PartnerDashboardPage from "./pages/partner/Dashboard";
@@ -22,8 +23,6 @@ import { EventManagePage } from "./pages/admin/EventManage";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 
-import { LandingPage } from "./pages/Landing";
-
 function LoginRoute() {
   const { user, loading } = useAuth();
 
@@ -35,7 +34,11 @@ function LoginRoute() {
     );
   }
 
-  if (user) return <Navigate to="/" replace />;
+  // If logged in → send to correct dashboard
+  if (user) {
+    return <Navigate to="/app" replace />;
+  }
+
   return <LoginPage />;
 }
 

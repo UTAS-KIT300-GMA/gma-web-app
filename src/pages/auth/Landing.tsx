@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/landing.css";
-import { Header } from "../components/Header";
-import banner from "../assets/banner.jpg";
+import "../../styles/shared/landing.css";
+import { Header } from "../../components/Header";
+import banner from "../../assets/banner.jpg";
 
 type ViewMode = "admin" | "partner";
 
 export function LandingPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>("admin");
+  const [viewMode, setViewMode] = useState<ViewMode>("partner"); // Default to partner view
   const navigate = useNavigate();
 
-  function handleLoginClick() {
-    navigate(`/login?role=${viewMode}`);
+  function handleLoginClick(mode: "admin" | "partner") {
+    navigate(`/login?role=${mode}`);
   }
 
   function handleRegisterClick() {
@@ -33,7 +33,7 @@ export function LandingPage() {
           </p>
 
           <div className="bannerBtn">
-            <button className="primary-btn" onClick={handleLoginClick}>
+            <button className="primary-btn" onClick={() => handleLoginClick(viewMode)}>
               {viewMode === "admin" ? "Admin Login" : "Partner Login"}
             </button>
 

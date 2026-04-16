@@ -83,6 +83,7 @@ button {
 
 	&:hover {
 		background-color: var(--gma-card);
+		border: 1px solid var(--gma-primary);
 		box-shadow: var(--gma-shadow);
 		color: var(--gma-primary);
 	}

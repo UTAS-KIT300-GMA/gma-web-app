@@ -1,4 +1,4 @@
-import "../styles/header.css";
+import "../styles/shared/header.css";
 import logo from "../assets/gma-web-logo.png";
 
 type ViewMode = "admin" | "partner";
