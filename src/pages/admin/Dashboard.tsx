@@ -25,7 +25,7 @@ const mockStats: StatCard[] = [
     hint: "All events created",
   },
   {
-    label: "Published Events",
+    label: "Approved Events",
     value: "0",
     hint: "Currently live",
     accent: true,
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
       setStats((prev) => {
         const updated = [...prev];
         updated[1] = {
-          label: "Published Events",
+          label: "Approved Events",
           value: snapshot.size.toString(),
           hint: "Currently live",
           accent: true,
