@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/shared/landing.css";
 import { Header } from "../../components/Header";
+import { Footer } from "../../components/Footer";
 import banner from "../../assets/banner.jpg";
 
 type ViewMode = "admin" | "partner";
@@ -48,6 +49,7 @@ export function LandingPage() {
           <img src={banner} className="banner-image" alt="banner" />
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
