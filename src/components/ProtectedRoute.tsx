@@ -26,9 +26,9 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     );
   }
 
-  // 2. Authentication Gate: If no user is logged in at all, kick to Login
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // 2. Authentication Gate: If no user is logged in at all and loading is complete, kick to Landing Page
+  if (!user && !loading) {
+    return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
   // 3. Authorization Gate: Check if the user has the required Role (Admin/Partner)
