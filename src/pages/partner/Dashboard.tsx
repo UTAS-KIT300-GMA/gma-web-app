@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { collection, getDocs,} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 
 type FilterKey = "week" | "month" | "year";
@@ -59,107 +59,107 @@ const mockDecisionMetrics = [
 export default function PartnerDashboard() {
   const [filter, setFilter] = useState<FilterKey>("month");
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const partnerID = profile?.partnerId;
 
   const [totalEvents, setTotalEvents] = useState(0);
   const [totalBookings, setTotalBookings] = useState<number | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState(0);
 
   useEffect(() => {
-     if (!user) return;
+    if (!user || !partnerID) return;
 
-     let cancelled = false;
+    let cancelled = false;
 
     (async () => {
-       try {
-         // Get all events
-         const eventSnap = await getDocs(collection(db, "events"));
+      try {
+        const eventsQuery = query(
+          collection(db, "events"),
+          where("partnerID", "==", partnerID)
+        );
 
-         const events = eventSnap.docs.map((doc) => ({
-         ...(doc.data() as any),
-         eventId: doc.id,
-         }));
+        const eventSnap = await getDocs(eventsQuery);
 
-        //  Filter partner events
-         const myEvents = events.filter(
-           (e) => e.submittedBy === user.uid
-         );
+        if (cancelled) return;
 
-         if (cancelled) return;
+        const events = eventSnap.docs.map((doc) => ({
+          ...(doc.data() as any),
+          eventId: doc.id,
+        }));
 
-         setTotalEvents(myEvents.length);
+        setTotalEvents(events.length);
 
-         // Upcoming events
-         const now = new Date();
-         const upcoming = myEvents.filter((e) => {
-           try {
-             return e.dateTime?.toDate() > now;
-             } catch {
-              return false;
-            }
-           });
+        const now = new Date();
+        const upcoming = events.filter((e) => {
+          try {
+            const eventDate = e.dateTime?.toDate
+              ? e.dateTime.toDate()
+              : new Date(e.dateTime);
 
-          setUpcomingEvents(upcoming.length);
+            return eventDate > now;
+          } catch {
+            return false;
+          }
+        });
 
+        if (!cancelled) setUpcomingEvents(upcoming.length);
 
-          const myEventIds = new Set(myEvents.map((e) => e.eventId));
+        const myEventIds = new Set(events.map((e) => e.eventId));
 
-          const userBookingSnap = await getDocs(
-            collection(db, "users", user.uid, "bookings")
-          );
+        const userBookingSnap = await getDocs(
+          collection(db, "users", user.uid, "bookings")
+        );
 
+        const bookingsCount = userBookingSnap.docs.filter((doc) => {
+          const data = doc.data() as { eventId?: string };
+          return !!data.eventId && myEventIds.has(data.eventId);
+        }).length;
 
-          const bookingsCount = userBookingSnap.docs.filter((doc) => {
-            const data = doc.data() as { eventId?: string };
-            return !!data.eventId && myEventIds.has(data.eventId);
-          }).length;
+        if (!cancelled) setTotalBookings(bookingsCount);
+      } catch (err) {
+        console.error("Dashboard analytics error:", err);
+        if (!cancelled) setTotalBookings(null);
+      }
+    })();
 
-          if (!cancelled) setTotalBookings(bookingsCount);
+    return () => {
+      cancelled = true;
+    };
+  }, [user, partnerID]);
 
-            } catch (err) {
-            console.error("Dashboard analytics error:", err);
-            if (!cancelled) setTotalBookings(null);
-            }
-          })();
-
-          return () => {
-              cancelled = true;
-          };
-        }, [user]);
-
-    const stats: StatCard[] = [
-      {
-         label: "Total Events",
-         value: totalEvents.toString(),
-         hint: "All events created",
-      },
-      {
-         label: "Published Events",
-         value: "8",
-         hint: "Currently live",
-         accent: true,
-      },
-      {
-         label: "Pending Review",
-         value: "3",
-         hint: "Awaiting approval",
-      },
-      {
-         label: "Total Bookings",
-         value: totalBookings === null ? "-" : totalBookings.toString(),
-         hint: "Combined registrations",
-      },
-      {
-         label: "Engagement Rate",
-         value: "75%",
-         hint: "Average event engagement",
-      },
-      {
-         label: "Upcoming Events",
-         value: upcomingEvents.toString(),
-         hint: "Scheduled next",
-       },
-    ];
+  const stats: StatCard[] = [
+    {
+      label: "Total Events",
+      value: totalEvents.toString(),
+      hint: "All events created",
+    },
+    {
+      label: "Published Events",
+      value: "8",
+      hint: "Currently live",
+      accent: true,
+    },
+    {
+      label: "Pending Review",
+      value: "3",
+      hint: "Awaiting approval",
+    },
+    {
+      label: "Total Bookings",
+      value: totalBookings === null ? "-" : totalBookings.toString(),
+      hint: "Combined registrations",
+    },
+    {
+      label: "Engagement Rate",
+      value: "75%",
+      hint: "Average event engagement",
+    },
+    {
+      label: "Upcoming Events",
+      value: upcomingEvents.toString(),
+      hint: "Scheduled next",
+    },
+  ];
 
   const activeData = chartData[filter];
   const maxValue = Math.max(...activeData.map((item) => item.value));
