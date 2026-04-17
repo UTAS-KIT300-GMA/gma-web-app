@@ -39,7 +39,7 @@ export function VerifyEmailPage() {
       if (user.emailVerified) return; 
 
       await sendEmailVerification(user, {
-        url: 'http://localhost:5173/app', 
+        url: 'http://localhost:5173/', 
         handleCodeInApp: true,
       });
       alert("Verification email sent!");

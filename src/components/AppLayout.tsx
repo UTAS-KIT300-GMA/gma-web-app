@@ -52,7 +52,7 @@ export function AppLayout() {
 
 <nav className="sidebar-nav">
   <NavLink
-    to={isAdmin ? "/app/admin/dashboard" : "/app/partner/dashboard"}
+    to={isAdmin ? "/admin/dashboard" : "/partner/dashboard"}
     className={linkClass}
     end
   >
@@ -63,7 +63,7 @@ export function AppLayout() {
   </NavLink>
 
   {!isAdmin && (
-    <NavLink to="/app/partner/events/register" className={linkClass}>
+    <NavLink to="/partner/events/register" className={linkClass}>
       <span className="sidebar-link-icon">
         <Plus size={20} strokeWidth={2.2} />
       </span>
@@ -72,7 +72,7 @@ export function AppLayout() {
   )}
 
   {isAdmin && (
-    <NavLink to="/app/admin/events/manage" className={linkClass}>
+    <NavLink to="/admin/events/manage" className={linkClass}>
       <span className="sidebar-link-icon">
         <CalendarDays size={20} strokeWidth={2.2} />
       </span>
@@ -81,7 +81,7 @@ export function AppLayout() {
   )}
 
   {isAdmin && (
-    <NavLink to="/app/admin/analytics" className={linkClass}>
+    <NavLink to="/admin/analytics" className={linkClass}>
       <span className="sidebar-link-icon">
         <ChartColumn size={20} strokeWidth={2.2} />
       </span>
@@ -101,7 +101,7 @@ export function AppLayout() {
   </a>
 
   <RoleGate roles={["admin"]}>
-    <NavLink to="/app/admin/events/approval" className={linkClass}>
+    <NavLink to="/admin/events/approval" className={linkClass}>
       <span className="sidebar-link-icon">
         <ShieldCheck size={20} strokeWidth={2.2} />
       </span>

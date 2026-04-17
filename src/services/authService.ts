@@ -23,7 +23,7 @@ export const registerPartner = async (data: PartnerRegistrationData): Promise<Re
     const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
     
     const actionCodeSettings: ActionCodeSettings = {
-      url: 'http://localhost:5173/app', 
+      url: 'http://localhost:5173/', 
       handleCodeInApp: true,
     };
    

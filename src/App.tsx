@@ -36,7 +36,7 @@ function LoginRoute() {
 
   // If logged in → send to correct dashboard
   if (user) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <LoginPage />;
@@ -55,12 +55,12 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
 
       <Route
-        path="/app"
+        path="/"
         element={
           <ProtectedRoute>
             {!user?.emailVerified ? (

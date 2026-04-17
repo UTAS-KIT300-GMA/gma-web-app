@@ -26,16 +26,16 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     );
   }
 
-  // 2. Authentication Gate: If no user is logged in at all, kick to Login
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // 2. Authentication Gate: If no user is logged in at all and loading is complete, kick to Landing Page
+  if (!user && !loading) {
+    return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
   // 3. Authorization Gate: Check if the user has the required Role (Admin/Partner)
   // This prevents a Partner from manually typing "/events/approval" in the URL
   if (roles && (!profile || !roles.includes(profile.role))) {
     console.warn(`Security: Role [${profile?.role || "none"}] attempted unauthorized access to a protected route.`);
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // 4. Success: If they are logged in and authorized, let them pass to the AppRoutes logic
