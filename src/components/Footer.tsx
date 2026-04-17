@@ -1,5 +1,10 @@
 import "../styles/shared/footer.css";
 
+/**
+ * Footer component for the landing page, potentially used across the entire application. 
+ * Provides company information and quick links for users.
+ * @returns 
+ */
 export function Footer() {
   return (
     <footer className="footer">
