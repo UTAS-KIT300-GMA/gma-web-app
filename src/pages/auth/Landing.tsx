@@ -19,7 +19,7 @@ export function LandingPage() {
 
   // Handle login button click based on the current view mode
   function handleLoginClick(mode: "admin" | "partner") {
-    navigate(`/login?role=${mode}`);
+    navigate(`/login?view=${mode}`);
   }
 
   // Handle register button click for partners
@@ -59,6 +59,18 @@ export function LandingPage() {
           <img src={banner} className="banner-image" alt="banner" />
         </div>
       </div>
+
+      {/* Content section with information about the benefits of joining */ }
+      <div className="content">
+        <h2>Why Join Us?</h2>
+        <p>
+          {viewMode === "admin"
+            ? "As an administrator, you play a crucial role in managing our platform and ensuring a seamless experience for our users. Your efforts help us maintain the quality and integrity of Guess My Accent."
+            : "As a partner, you can expand your reach and grow your business by joining our platform. We provide you with the tools and support you need to succeed. Together, we can make Tassie a wonderful place for everyone!"}
+        </p>
+      </div>
+
+      {/* Footer section */ }
       <Footer />
     </div>
   );

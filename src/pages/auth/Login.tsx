@@ -8,7 +8,7 @@ import { Link, useSearchParams } from "react-router-dom";
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
   const [searchParams] = useSearchParams();
-  const role = searchParams.get("role") || "partner"; // Default to partner if no role specified
+  const view = searchParams.get("view") || "partner"; // Default to partner if no role specified
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +40,7 @@ export function LoginPage() {
     <div className="login-page">
       <div className="login-inner">
         <form className="login-card" onSubmit={handleSubmit}>
-          <h2>{role === "admin" ? "Admin" : "Partner"} Portal Login</h2>
+          <h2>{view === "admin" ? "Admin" : "Partner"} Portal Login</h2>
 
           {error && (
             <div className="alert error" role="alert">
@@ -80,10 +80,10 @@ export function LoginPage() {
             </button>
           </div>
 
-          {role === "partner" && (
+          {view === "partner" && (
             <p className="small muted">
               New Partner?{" "}
-              <Link to="/register?role=partner">Create an Account</Link>
+              <Link to="/register?view=partner">Create an Account</Link>
             </p>
           )}
         </form>
