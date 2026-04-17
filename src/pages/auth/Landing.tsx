@@ -24,7 +24,7 @@ export function LandingPage() {
 
   // Handle register button click for partners
   function handleRegisterClick() {
-    navigate("/register?role=partner");
+    navigate("/register");
   }
 
   return (
