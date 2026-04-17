@@ -47,7 +47,7 @@ export function RegisterPage() {
         phoneNumber: ""
       });
       
-      navigate("/verify-email");
+      navigate("/app");
     } catch (err: any) {
       console.error("Registration failed:", err);
       if (err.code === "auth/email-already-in-use") {
