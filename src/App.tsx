@@ -19,7 +19,7 @@ import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { EventManagePage } from "./pages/admin/EventManage";
-import { PendingApprovalPage } from "./pages/admin/PendingApproval";
+import { AdminApprovalPage } from "./pages/admin/adminApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 
 function LoginRoute() {
@@ -62,7 +62,7 @@ export default function AppRoutes() {
             ) : !profile ? (
               <ApplicationPage />
             ) : profile.status === "pending_approval" ? (
-              <PendingApprovalPage />
+              <AdminApprovalPage />
             ) : !profile.onboardingComplete ? (
               <FinalSetupPage />
             ) : (
@@ -149,7 +149,7 @@ export default function AppRoutes() {
         path="admin/partners/manage"
         element={
           <RoleGate roles={["admin"]}>
-            <PendingApprovalPage />
+            <AdminApprovalPage />
           </RoleGate>
         }
       />
