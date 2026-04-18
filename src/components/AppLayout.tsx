@@ -7,17 +7,24 @@ import {
   CalendarDays,
   ChartColumn,
   Settings,
-  ShieldCheck,
+  CircleCheckBig,
   CircleUserRound,
   LogOut,
+  Handshake,
   Users,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { RoleGate } from "./RoleGate";
 
+/// Helper function to apply active class to NavLink
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `sidebar-link ${isActive ? "active" : ""}`;
 
+/**
+ * AppLayout component that defines the main layout of the application with a sidebar and main content area.
+ * The sidebar contains navigation links that are conditionally rendered based on the user's role.
+ * The main content area renders the child routes using <Outlet />.
+ */
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
@@ -45,80 +52,89 @@ export function AppLayout() {
               sidebarExpanded ? "Collapse navigation" : "Expand navigation"
             }
           >
-            <Menu size={22} strokeWidth={2.2} />
+            <Menu width={22} height={22} strokeWidth={2.2} />
           </button>
 
           {sidebarExpanded && <div className="sidebar-brand">GMA Connect</div>}
         </div>
 
-<nav className="sidebar-nav">
-  <NavLink
-    to={isAdmin ? "/admin/dashboard" : "/partner/dashboard"}
-    className={linkClass}
-    end
-  >
-    <span className="sidebar-link-icon">
-      <House size={20} strokeWidth={2.2} />
-    </span>
-    {sidebarExpanded && <span>Dashboard</span>}
-  </NavLink>
+        <nav className="sidebar-nav">
+          <NavLink
+            to={isAdmin ? "/admin/dashboard" : "/partner/dashboard"}
+            className={linkClass}
+            end
+          >
+            <span className="sidebar-link-icon">
+              <House size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Dashboard</span>}
+          </NavLink>
 
-  {!isAdmin && (
-    <NavLink to="/partner/events/register" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <Plus size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Create Event</span>}
-    </NavLink>
-  )}
+          {!isAdmin && (
+            <NavLink to="/partner/events/register" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Plus size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Create Event</span>}
+            </NavLink>
+          )}
 
-  {isAdmin && (
-    <NavLink to="/admin/events/manage" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <CalendarDays size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Manage Events</span>}
-    </NavLink>
-  )}
+          {isAdmin && (
+            <NavLink to="/admin/events/manage" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <CalendarDays size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Manage Events</span>}
+            </NavLink>
+          )}
 
-  {isAdmin && (
-    <NavLink to="/admin/partners/approve" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <Users size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Manage Partners</span>}
-    </NavLink>
-  )}
+          {isAdmin && (
+            <NavLink to="/admin/analytics" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <ChartColumn size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Analytics</span>}
+            </NavLink>
+          )}
 
-  {isAdmin && (
-    <NavLink to="/admin/analytics" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <ChartColumn size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Analytics</span>}
-    </NavLink>
-  )}
+          {isAdmin && (
+            <NavLink to="/admin/users" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Users size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Users</span>}
+            </NavLink>
+          )}
 
-  <a
-    className="sidebar-link sidebar-link-muted"
-    href="#settings"
-    onClick={(e) => e.preventDefault()}
-  >
-    <span className="sidebar-link-icon">
-      <Settings size={20} strokeWidth={2.2} />
-    </span>
-    {sidebarExpanded && <span>Settings</span>}
-  </a>
+          {isAdmin && (
+            <NavLink to="/admin/partners/approve" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Handshake size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Manage Partners</span>}
+            </NavLink>
+          )}
 
-  <RoleGate roles={["admin"]}>
-    <NavLink to="/admin/events/approval" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <ShieldCheck size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Approve Events</span>}
-    </NavLink>
-  </RoleGate>
-</nav>
+          <a
+            className="sidebar-link sidebar-link-muted"
+            href="#settings"
+            onClick={(e) => e.preventDefault()}
+          >
+            <span className="sidebar-link-icon">
+              <Settings size={20} strokeWidth={2.2} />
+            </span>
+            {sidebarExpanded && <span>Settings</span>}
+          </a>
+
+          <RoleGate roles={["admin"]}>
+            <NavLink to="/admin/events/approval" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <CircleCheckBig size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Approve Events</span>}
+            </NavLink>
+          </RoleGate>
+        </nav>
 
         <div className="sidebar-footer">
           {sidebarExpanded ? (
