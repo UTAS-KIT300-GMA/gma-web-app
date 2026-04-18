@@ -7,6 +7,13 @@ interface EventLocationInputProps {
   disabled?: boolean;
 }
 
+/**
+ * @summary An autocomplete input component that allows users to search for and select an event location.
+ * @param props - The component props.
+ * @param props.onLocationSelect - Executes when a user clicks a location from the dropdown.
+ * @param props.initialAddress - The starting address string (defaults to an empty string).
+ * @param props.disabled - Controls whether the input is interactive (defaults to false).
+ */
 export const EventLocationInput: React.FC<EventLocationInputProps> = ({ 
   onLocationSelect, 
   initialAddress = '',
@@ -22,6 +29,10 @@ export const EventLocationInput: React.FC<EventLocationInputProps> = ({
     }
   }, [initialAddress]);
 
+  /**
+   * @summary Updates the search query state and fetches location results from the GeocodingService.
+   * @param text - The current string entered into the input field by the user.
+   */
   const handleSearch = async (text: string) => {
     setSearchQuery(text);
     
@@ -36,6 +47,10 @@ export const EventLocationInput: React.FC<EventLocationInputProps> = ({
     setIsSearching(false);
   };
 
+  /**
+   * @summary Handles the user selecting a specific location from the dropdown results.
+   * @param location - The location object selected from the dropdown list.
+   */
   const handleSelect = (location: EventLocation) => {
     setSearchQuery(location.displayAddress);
     setResults([]);

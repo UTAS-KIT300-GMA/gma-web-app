@@ -33,7 +33,17 @@ interface PhotonResponse {
 
 const PHOTON_API_URL = 'https://photon.komoot.io/api/';
 
+/**
+ * @summary A service for interacting with the Photon geocoding API to retrieve location data.
+ */
 export const GeocodingService = {
+  
+  /**
+   * @summary Searches for event locations based on a text query using the Photon API.
+   * @param query - The search string representing an address or place name.
+   * @param limit - The maximum number of results to return (defaults to 5).
+   * @returns An array of formatted location objects.
+   */
   async searchEventLocation(query: string, limit: number = 5): Promise<EventLocation[]> {
     if (!query || query.trim() === '') return [];
 
