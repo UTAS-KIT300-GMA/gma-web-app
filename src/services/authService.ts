@@ -97,3 +97,47 @@ export const completePartnerOnboarding = async (uid: string, onboardingData: Par
     throw e;
   }
 };
+
+// Add AccountStatus, next to UserProfile at the top at imports.
+
+/*
+Import this from firebase/firestore:
+query,
+collection,
+where,
+getDocs,
+*/
+
+/**
+ * TASK 1: Fetching the Pending List
+ * Use a 'query' with 'where' to filter the "users" collection 
+ * for anyone whose 'approvalStatus' is "pending_approval".
+ */
+/*
+export const getPendingPartnerApprovals = async (): Promise<UserProfile[]> => {
+
+// Logic goes here...
+  return []; 
+};
+*/
+
+/**
+ * TASK 2: The Approval Action
+ * Use 'updateDoc' to change a specific user's status to "approved".
+ */
+/*
+export const approvePartner = async (userId: string): Promise<void> => {
+  
+  // Logic goes here...
+};
+*/
+
+/**
+ * TASK 3: The Rejection Action
+ * Similar to Task 2, but set the status to "rejected".
+ */
+/*
+export const rejectPartner = async (userId: string): Promise<void> => {
+  // Logic goes here...
+};
+*/
