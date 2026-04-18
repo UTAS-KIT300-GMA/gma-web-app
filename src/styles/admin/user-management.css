@@ -1,0 +1,456 @@
+.user-management-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 30px;
+}
+
+.user-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.user-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #35192d;
+}
+
+.user-subtitle {
+  margin: 0;
+  color: #6e5a66;
+  font-size: 0.95rem;
+}
+
+.user-management-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.user-management-toolbar-left,
+.user-management-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.user-add-btn {
+  background: #a73d7c;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 1.4rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.user-add-btn:hover {
+  background: #922f6c;
+  transform: translateY(-1px);
+}
+
+.user-management-select,
+.user-management-search,
+.user-management-input,
+.user-management-textarea {
+  width: 100%;
+  border: 1px solid #d9cfc9;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.8rem 0.95rem;
+  font: inherit;
+  color: #2f2235;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-management-select:focus,
+.user-management-search:focus,
+.user-management-input:focus,
+.user-management-textarea:focus {
+  border-color: #a73d7c;
+  box-shadow: 0 0 0 3px rgba(167, 61, 124, 0.12);
+}
+
+.user-management-search {
+  min-width: 280px;
+}
+
+.user-management-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.user-management-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e4d8d1;
+  border-radius: 24px;
+  padding: 1.4rem;
+  box-shadow: 0 8px 24px rgba(59, 31, 48, 0.05);
+}
+
+.user-management-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #35192d;
+}
+
+.user-management-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.user-management-card-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7a6872;
+}
+
+.user-management-table-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding-right: 0.2rem;
+}
+
+.user-management-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-management-table thead th {
+  text-align: left;
+  padding: 0.9rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #5d4c58;
+  border-bottom: 1px solid #eadfda;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 1;
+}
+
+.user-management-table tbody td {
+  padding: 0.95rem 0.75rem;
+  border-bottom: 1px solid #f1e8e4;
+  color: #3c2a38;
+  vertical-align: middle;
+}
+
+.user-management-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.user-management-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.user-management-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid #cdbcb5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #5a2b4d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-action-icon {
+  width: 28px !important;
+  height: 28px !important;
+  stroke-width: 2.6 !important;
+  flex-shrink: 0;
+}
+
+.user-management-icon-btn:hover {
+  border-color: #a73d7c;
+  background: #faf3f7;
+  color: #a73d7c;
+}
+
+.user-management-icon-btn.danger:hover {
+  border-color: #c75b6a;
+  background: #fff3f4;
+  color: #a63b4a;
+}
+
+.user-management-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.user-management-badge.active {
+  background: #edf8f1;
+  color: #1e7a46;
+}
+
+.user-management-badge.pending {
+  background: #fff6e8;
+  color: #b57612;
+}
+
+.user-management-badge.inactive {
+  background: #f3f1f4;
+  color: #6e6270;
+}
+
+.user-management-profile-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-management-image-placeholder {
+  width: 100%;
+  min-height: 190px;
+  border: 2px dashed #d9cfc9;
+  border-radius: 20px;
+  background: #faf7f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #846f7c;
+  font-weight: 600;
+  text-align: center;
+  padding: 1rem;
+}
+
+.user-management-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-management-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.user-management-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.user-management-field label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #4b3143;
+}
+
+.user-management-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.user-management-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.user-management-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.75rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-management-btn.primary {
+  background: #a73d7c;
+  color: #ffffff;
+}
+
+.user-management-btn.primary:hover {
+  background: #922f6c;
+}
+
+.user-management-btn.secondary {
+  background: #ffffff;
+  color: #5a2b4d;
+  border-color: #d8cbc5;
+}
+
+.user-management-btn.secondary:hover {
+  background: #faf5f8;
+  border-color: #bda9b7;
+}
+
+.user-management-btn.ghost {
+  background: #f7f2f5;
+  color: #5a2b4d;
+  border-color: #eadde6;
+}
+
+.user-management-btn.ghost:hover {
+  background: #f2e9ef;
+}
+
+@media (max-width: 720px) {
+  .user-management-page {
+    padding: 20px 16px;
+  }
+
+  .user-management-toolbar {
+    align-items: stretch;
+  }
+
+  .user-management-toolbar-left,
+  .user-management-toolbar-right {
+    width: 100%;
+  }
+
+  .user-management-toolbar-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .user-management-search {
+    min-width: 0;
+  }
+
+  .user-management-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-management-form-actions {
+    flex-direction: column;
+  }
+
+  .user-management-btn,
+  .user-add-btn {
+    width: 100%;
+  }
+
+  .user-management-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-user-card {
+  padding: 1.8rem;
+}
+
+.add-user-layout {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.add-user-left {
+  padding-right: 1.5rem;
+  border-right: 1px solid #eadfda;
+}
+
+.add-user-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.add-user-section-title {
+  margin: 0 0 1.2rem;
+  font-size: 1.25rem;
+  color: #35192d;
+}
+
+.add-user-field-full {
+  grid-column: 1 / -1;
+}
+
+.add-user-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.95rem;
+  color: #4b3143;
+  margin-top: 0.25rem;
+}
+
+.add-user-checkbox input {
+  accent-color: #a73d7c;
+}
+
+.add-user-image-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.add-user-image-placeholder {
+  min-height: 260px;
+  border: 2px dashed #d9cfc9;
+  border-radius: 20px;
+  background: #faf7f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  color: #846f7c;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.add-user-image-placeholder span {
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .add-user-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .add-user-left {
+    padding-right: 0;
+    border-right: none;
+  }
+}
+
+.user-add-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+}
