@@ -1,0 +1,168 @@
+name: "🚀 Bug Report"
+description: "Report a bug in the system"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug! Please fill out the details below to help us reproduce and fix the issue quickly.
+        
+        **🛑 REQUIRED TITLE FORMAT**
+        `[Bug] [Platform] Short description`
+        
+        *Example: [Bug] [GMA-APP] Login button not responding on Android 14*
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where did this bug occur?
+      options:
+        - GMA-APP
+        - GMA-WEB 
+        - Both (Mobile + Web)
+        - Backend / API
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Last Commit Hash
+      description: Please provide the short commit hash from the last update (run `git rev-parse --short HEAD`).
+      placeholder: "e.g. 7f3a1b2"
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Component / Screen
+      description: Which screen, page, or specific feature were you using?
+      placeholder: "e.g. Login Screen, Event Map, Partner Dashboard"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How much does this bug impact your ability to use the app?
+      options:
+        - Low (minor issue, workaround exists)
+        - Medium (noticeable but usable)
+        - High (major feature broken)
+        - Critical (app unusable / blocking)
+
+  - type: dropdown
+    id: auth_status
+    attributes:
+      label: Authentication Status
+      description: What was your auth state when this happened?
+      options:
+        - Logged In
+        - Logged Out
+        - During Auth State Transition (e.g., UI loading/flickering)
+        - Session Expired
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: error_code
+    attributes:
+      label: Error Code / Message (if any)
+      description: Paste any error code or message you see (e.g. auth/user-not-found, permission-denied).
+      placeholder: "e.g. auth/network-request-failed"
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: What steps did you take to trigger the bug?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: "e.g., After tapping 'Sign In', I expected to be redirected to the Partner Dashboard."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: "e.g., The button turned gray, a loading spinner appeared, but then the app froze and crashed to the home screen."
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: |
+        What operating system are you using?
+        
+        Examples:
+        - Windows 11 (Chrome / Firefox / Brave)
+        - macOS 14 (Safari / Chrome)
+        - Ubuntu 22.04
+        - Android 14 (Samsung Galaxy S23)
+        
+        Note: This project supports Android mobile + web (desktop browsers).
+      placeholder: "e.g. Windows 11, macOS 14, Android 14 (Galaxy S23)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: Browser (Web App Only)
+      description: If you are using the web portal, what browser are you on?
+      options:
+        - Chrome
+        - Safari
+        - Firefox
+        - Edge
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network Conditions
+      description: What was your connection like when the bug occurred?
+      options:
+        - Wi-Fi (Stable)
+        - Mobile Data (4G/5G)
+        - Poor Connection / Spotty
+        - Offline Mode
+        - Not sure
+
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots / Videos / Logs (Optional)
+      description: |
+        📎 Drag and drop files directly into this box.
+        
+        Supported:
+        - Images (PNG, JPG)
+        - Screen recordings
+        - Log files
+        
+        You can also paste images or text logs here.
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Anything else that might help us understand the issue.

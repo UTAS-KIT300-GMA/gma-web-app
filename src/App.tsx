@@ -8,6 +8,7 @@ import { RoleGate } from "./components/RoleGate";
 import { LoginPage } from "./pages/auth/Login";
 import { RegisterPage } from "./pages/auth/Register";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmail";
+import { LandingPage } from "./pages/auth/Landing";
 
 // Partner pages
 import PartnerDashboardPage from "./pages/partner/Dashboard";
@@ -33,7 +34,11 @@ function LoginRoute() {
     );
   }
 
-  if (user) return <Navigate to="/" replace />;
+  // If logged in → send to correct dashboard
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
   return <LoginPage />;
 }
 
@@ -50,6 +55,7 @@ export default function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
 
