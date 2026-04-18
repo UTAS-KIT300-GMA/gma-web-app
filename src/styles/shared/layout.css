@@ -4,10 +4,10 @@ High-level application layout styles including the main app shell,
 page structure, and primary content area layout.
 */
 .app-shell {
-  display: grid;
-  grid-template-columns: 82px 1fr;
-  min-height: 100vh;
-  transition: grid-template-columns 0.2s ease;
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
 .app-shell.sidebar-expanded {
@@ -20,5 +20,7 @@ page structure, and primary content area layout.
 
 .app-main {
   background: var(--gma-bg);
-  min-height: 100vh;
+  flex-grow: 1;
+  height: 100%;
+  overflow-y: auto;
 }

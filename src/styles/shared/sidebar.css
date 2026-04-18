@@ -10,7 +10,7 @@ navigation links, user summary section, and sidebar interactions.
   flex-direction: column;
   padding: 1rem 0.85rem;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  overflow: hidden;
+  height: 100%;
 }
 
 .app-sidebar.collapsed {
