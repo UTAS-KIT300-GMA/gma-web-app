@@ -11,6 +11,11 @@ import {
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import { CATEGORIES, type Category } from "../../types/event-types";
 
+
+import { EventLocationInput } from "../../components/EventLocationInput";
+import { type EventLocation } from "../../services/geoService";
+
+
 type TicketAccessType = "free_for_all" | "members_only";
 
 const mockInitialForm = {
@@ -32,6 +37,11 @@ export function EventRegistrationPage() {
     mockInitialForm.categories,
   );
   const [address, setAddress] = useState(mockInitialForm.address);
+  
+  
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  
+  
   const [dateTime, setDateTime] = useState(mockInitialForm.dateTime);
   const [totalTickets, setTotalTickets] = useState<number>(
     mockInitialForm.totalTickets,
@@ -59,12 +69,15 @@ export function EventRegistrationPage() {
     );
   }
 
-  function handleMockSubmit(e: React.FormEvent) {
+  function handleMockSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
+    
+    console.log("Captured Data:", { address, coordinates });
+    
   }
 
   function handleMockSaveDraft() {
-    // UI only for this subtask
+    
   }
 
   function handleImageChange(file?: File) {
@@ -163,12 +176,15 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <input
-                  type="text"
-                  placeholder="Enter event address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                
+                <EventLocationInput
+                  initialAddress={address}
+                  onLocationSelect={(location: EventLocation) => {
+                    setAddress(location.displayAddress);
+                    setCoordinates({ lat: location.latitude, lng: location.longitude });
+                  }}
                 />
+                {/* ------------------------------------------------------- */}
               </div>
             </label>
 
