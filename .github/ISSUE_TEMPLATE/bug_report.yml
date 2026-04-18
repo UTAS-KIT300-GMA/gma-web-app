@@ -2,7 +2,6 @@ name: "🚀 Bug Report"
 description: "Report a bug in the system"
 title: "[Bug]: "
 labels: ["bug"]
-
 body:
   - type: markdown
     attributes:
@@ -153,10 +152,14 @@ body:
     attributes:
       label: Screenshots / Videos / Logs (Optional)
       description: |
-        Drag and drop files directly into this box (screenshots, screen recordings, logs).
+        📎 Drag and drop files directly into this box.
+        
+        Supported:
+        - Images (PNG, JPG)
+        - Screen recordings
+        - Log files
         
         You can also paste images or text logs here.
-      render: shell
 
   - type: textarea
     id: additional
