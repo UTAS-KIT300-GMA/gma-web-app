@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   CircleUserRound,
   LogOut,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { RoleGate } from "./RoleGate";
@@ -86,15 +87,6 @@ export function AppLayout() {
         <ChartColumn size={20} strokeWidth={2.2} />
       </span>
       {sidebarExpanded && <span>Analytics</span>}
-    </NavLink>
-  )}
-
-  {isAdmin && (
-    <NavLink to="/admin/partners/manage" className={linkClass}>
-      <span className="sidebar-link-icon">
-        <CalendarDays size={20} strokeWidth={2.2} />
-      </span>
-      {sidebarExpanded && <span>Manage partners</span>}
     </NavLink>
   )}
 

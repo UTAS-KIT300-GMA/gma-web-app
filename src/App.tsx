@@ -22,6 +22,8 @@ import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { EventManagePage } from "./pages/admin/EventManage";
 import { AdminApprovalPage } from "./pages/admin/adminApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
+import UserManagementPage from "./pages/admin/UserManagement";
+import AddUserPage from "./pages/admin/AddUser";
 
 function LoginRoute() {
   const { user, loading } = useAuth();
@@ -147,6 +149,24 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["admin"]}>
               <EventApprovalPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="admin/users"
+          element={
+            <RoleGate roles={["admin"]}>
+              <UserManagementPage />
+            </RoleGate>
+          }
+        />
+        
+        <Route
+          path="admin/users/add"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AddUserPage />
             </RoleGate>
           }
         />
