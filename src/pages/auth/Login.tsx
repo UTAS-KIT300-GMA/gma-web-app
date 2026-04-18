@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth"; 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 /**
  * @summary Renders the login interface for the GMA Partner Portal.
  */
 export function LoginPage() {
   const { signIn, error, clearError, loading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get("view") || "partner"; // Default to partner if no role specified
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,8 +40,8 @@ export function LoginPage() {
     <div className="login-page">
       <div className="login-inner">
         <form className="login-card" onSubmit={handleSubmit}>
-          <h2>Partner Portal Login</h2>
-          
+          <h2>{view === "admin" ? "Admin" : "Partner"} Portal Login</h2>
+
           {error && (
             <div className="alert error" role="alert">
               {error}
@@ -73,18 +75,17 @@ export function LoginPage() {
           </div>
 
           <div className="form-actions">
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={busy}
-            >
+            <button type="submit" className="btn-primary" disabled={busy}>
               {busy ? "Signing in..." : "Log in"}
             </button>
           </div>
-          
-          <p className="small muted">
-            New Partner? <Link to="/register">Create an Account</Link>
-          </p>
+
+          {view === "partner" && (
+            <p className="small muted">
+              New Partner?{" "}
+              <Link to="/register?view=partner">Create an Account</Link>
+            </p>
+          )}
         </form>
       </div>
     </div>
