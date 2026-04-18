@@ -145,7 +145,14 @@ export default function AppRoutes() {
           }
         />
       </Route>
-
+      <Route
+        path="admin/partners/manage"
+        element={
+          <RoleGate roles={["admin"]}>
+            <PendingApprovalPage />
+          </RoleGate>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
