@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   CircleUserRound,
   LogOut,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { RoleGate } from "./RoleGate";
@@ -88,6 +89,15 @@ export function AppLayout() {
       {sidebarExpanded && <span>Analytics</span>}
     </NavLink>
   )}
+
+  {isAdmin && (
+  <NavLink to="/admin/users" className={linkClass}>
+    <span className="sidebar-link-icon">
+      <Users size={20} strokeWidth={2.2} />
+    </span>
+    {sidebarExpanded && <span>Users</span>}
+  </NavLink>
+)}
 
   <a
     className="sidebar-link sidebar-link-muted"
