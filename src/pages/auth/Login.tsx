@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth"; 
 import { Link, useSearchParams } from "react-router-dom";
+import logo from "../../assets/gma-web-logo.png";
+import "../../styles/admin/login.css";
+
+
 
 /**
  * @summary Renders the login interface for the GMA Partner Portal.
@@ -13,6 +17,9 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+
 
   /**
    * @summary Processes the login form submission by authenticating user credentials.
@@ -21,7 +28,12 @@ export function LoginPage() {
    */
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    
+
+     if (!email.trim() || !password.trim()) {
+    setFormError("Please enter both email and password.");
+    return;
+  }
+    setFormError("");
     clearError();
     setSubmitting(true);
     
@@ -37,16 +49,30 @@ export function LoginPage() {
   const busy = loading || submitting;
 
   return (
-    <div className="login-page">
+    <div className={`login-page ${view === "admin" ? "admin-view" : "partner-view"}`}>
       <div className="login-inner">
-        <form className="login-card" onSubmit={handleSubmit}>
+        <form className="login-card" onSubmit={handleSubmit} noValidate>
+           <div className="login-brand">
+             <img src={logo} alt="GMA Logo" className="login-logo" />
+          
           <h2>{view === "admin" ? "Admin" : "Partner"} Portal Login</h2>
-
+               <p className="login-subtitle">
+      {view === "admin"
+        ? "Sign in to manage platform activity"
+        : "Sign in to access your partner portal"}
+    </p>
+  </div>
           {error && (
             <div className="alert error" role="alert">
               {error}
             </div>
           )}
+
+          {formError && (
+            <div className="form-error">
+              {formError}
+            </div>
+         )}
 
           <div className="form-fields">
             <label className="field">
@@ -54,10 +80,15 @@ export function LoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {setEmail(e.target.value);
+                  if (formError) 
+                    setFormError("");
+                  }
+                }
                 placeholder="name@example.com"
                 required
                 disabled={busy}
+                className={!email.trim() && formError ? "input-error" : ""}
               />
             </label>
 
@@ -66,18 +97,26 @@ export function LoginPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {setPassword(e.target.value);
+                  if (formError)
+                    setFormError("");
+                  }
+                }
+
                 placeholder="••••••••"
                 required
                 disabled={busy}
+                className={!password.trim() && formError ? "input-error" : ""}
               />
             </label>
           </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={busy}>
+          
+          <div className="login-row">  
+            <button type="submit" className="btn-primary login-btn" disabled={busy}>
               {busy ? "Signing in..." : "Log in"}
             </button>
+            <span className="forgot-password">Forgot password?</span>
           </div>
 
           {view === "partner" && (
