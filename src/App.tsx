@@ -67,13 +67,13 @@ export default function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            {!user?.emailVerified ? (
+           {!user?.emailVerified && profile?.role !== "admin" ? (
               <VerifyEmailPage />
             ) : !profile ? (
               <ApplicationPage />
-            ) : profile.partnerApprovalStatus === "pending_approval" ? (
-              <AdminApprovalPage />
-            ) : !profile.onboardingComplete ? (
+            ) : profile.role === "partner" && profile.partnerApprovalStatus === "pending_approval" ? (
+              <PendingApprovalPage />
+            ) : !profile.onboardingComplete && profile?.role !== "admin" ? (
               <FinalSetupPage />
             ) : (
               <AppLayout />

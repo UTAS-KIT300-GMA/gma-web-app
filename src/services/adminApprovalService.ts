@@ -6,7 +6,7 @@ export const getPendingPartnerApprovals = async (): Promise<UserProfile[]> => {
   try {
     const usersRef = collection(db, "users");
     
-    const q = query(usersRef, where("partherApprovalStatus", "==", "pending_approval"));
+    const q = query(usersRef, where("partnerApprovalStatus", "==", "pending_approval"));
 
     const querySnapshot = await getDocs(q);
 
