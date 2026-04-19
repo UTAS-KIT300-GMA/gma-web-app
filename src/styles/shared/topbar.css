@@ -1,0 +1,74 @@
+.app-topbar {
+	display: flex;
+	background-color: var(--gma-card);
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+	padding: 1rem;
+	border-bottom: 1px solid rgba(64, 15, 50, 0.08);
+	flex-wrap: wrap;
+	box-shadow: var(--gma-shadow);
+}
+
+.app-topbar-left {
+	display: flex;
+	padding-left: 16px;
+	align-items: center;
+	gap: 0.9rem;
+	flex-wrap: wrap;
+}
+
+.dashboard-title {
+	font-family: var(--gma-font-heading);
+	font-size: 1.15rem;
+	color: var(--gma-plum);
+}
+
+.app-topbar-right {
+	padding-right: 4px;
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+}
+
+.dashboard-icon-btn {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1rem;
+	padding: 0.35rem;
+	color: var(--gma-plum);
+}
+
+.dashboard-userbox {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.dashboard-user-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	line-height: 1.15;
+}
+
+.dashboard-user-meta strong {
+	font-size: 0.9rem;
+}
+
+.dashboard-user-meta span {
+	font-size: 0.78rem;
+	color: var(--gma-muted);
+}
+
+.dashboard-user-avatar {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	border: 1px solid rgba(64, 15, 50, 0.18);
+	background: #fff;
+	font-size: 0.95rem;
+}

@@ -5,78 +5,7 @@ summary sections, featured insight panels, and activity feed layout.
 */
 .dashboard-page {
   max-width: 1320px;
-}
-
-.dashboard-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid rgba(64, 15, 50, 0.08);
-  flex-wrap: wrap;
-}
-
-.dashboard-topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-}
-
-.dashboard-topbar-title {
-  font-family: var(--gma-font-heading);
-  font-size: 1.15rem;
-  color: var(--gma-plum);
-}
-
-.dashboard-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-}
-
-.dashboard-icon-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.35rem;
-  color: var(--gma-plum);
-}
-
-.dashboard-userbox {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.dashboard-user-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.15;
-}
-
-.dashboard-user-meta strong {
-  font-size: 0.9rem;
-}
-
-.dashboard-user-meta span {
-  font-size: 0.78rem;
-  color: var(--gma-muted);
-}
-
-.dashboard-user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(64, 15, 50, 0.18);
-  background: #fff;
-  font-size: 0.95rem;
+  background-color: var(--gma-bg);
 }
 
 .dashboard-header {

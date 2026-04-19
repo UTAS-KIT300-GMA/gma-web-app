@@ -12,6 +12,7 @@ import {
   LogOut,
   Handshake,
   Users,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { RoleGate } from "./RoleGate";
@@ -40,6 +41,7 @@ export function AppLayout() {
         sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"
       }`}
     >
+      {/* Sidebar navigation */}
       <aside
         className={`app-sidebar ${sidebarExpanded ? "expanded" : "collapsed"}`}
       >
@@ -166,7 +168,32 @@ export function AppLayout() {
         </div>
       </aside>
 
+      {/* Main content area with topbar */}
       <main className="app-main">
+        <header className="app-topbar">
+          <div className="app-topbar-left">
+            <div className="dashboard-title">Admin Dashboard</div>
+          </div>
+
+          <div className="app-topbar-right">
+            <button
+              className="dashboard-icon-btn"
+              type="button"
+              aria-label="Notifications"
+            >
+              <Bell width={20} height={24} strokeWidth={2.2} />
+            </button>
+            <div className="dashboard-userbox">
+              <div className="dashboard-user-meta">
+                <strong>Sandra Lee</strong>
+                <span>Partner</span>
+              </div>
+              <div className="dashboard-user-avatar">
+                <CircleUserRound size={32} strokeWidth={1} />
+              </div>
+            </div>
+          </div>
+        </header>
         <Outlet />
       </main>
     </div>
