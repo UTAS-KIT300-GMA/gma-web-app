@@ -140,7 +140,7 @@ export function AppLayout() {
           {sidebarExpanded ? (
             <div className="sidebar-user-card">
               <div className="sidebar-user-info">
-                <strong>{displayName}</strong>
+                <div className="user-name">{displayName}</div>
                 <span className="role-pill">{roleLabel}</span>
               </div>
 
