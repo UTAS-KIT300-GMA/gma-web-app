@@ -1,172 +1,121 @@
-import { useAuth } from "../../hooks/useAuth";
-import { useState, useEffect } from "react";
-import { collection, deleteDoc, doc, getDocs, query, updateDoc, where, } from "firebase/firestore";
-import { db } from "../../firebase";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-/**
- * @summary The "Waiting Room" for new Partners.
- * Triggered when email is verified but status is still 'pending_approval'.
- */
+import {
+  getPendingPartnerApprovals,
+  approvePartner,
+  rejectPartner
+} from "../../services/adminApprovalService";
+import type { UserProfile } from "../../types/user-types";
+
 export function AdminApprovalPage() {
-  const { profile, signOutUser } = useAuth();
-  const [pendingPartners, setPendingPartners] = useState<user[]>([]);
-  type user = {
-    id: string;
-    firstName: string;
-    approvalStatus: string;
-    role: string;
-    status: string;
-  }
-  
-
-  //identify admins from pending partners.
-  const isAdmin = profile?.role === "admin";
-
-  // pending approval page code.  first build array of pending users.
+  const [partners, setPartners] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
   useEffect(() => {
-    const getPendingPartnerApprovals = async () => {
-      const q = query(
-        collection(db, "users"),
-        where("status", "==", "pending_approval"),
-      );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as user[];
-    };
-
-    const fetchUsers = async () => {
+    async function loadData() {
       try {
-        const users = await getPendingPartnerApprovals();
-        setPendingPartners(users);
-      } catch (error) {
-        console.error("Error fetching pending partners:", error);
+        setLoading(true);
+        const data = await getPendingPartnerApprovals();
+        setPartners(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to load partners.");
+      } finally {
+        setLoading(false);
       }
-    };
-    fetchUsers();
+    }
+    loadData();
   }, []);
-  
-  //Pending Users are then Approved or Rejected by admin when admin clicks approval button.
-  const approvePartner = async (userId: string) => { //approval process
-    try{  
-        await updateDoc(doc(db, "users", userId), {
-          approvalStatus: "approved",
-      });
-    }
-    catch (err) {
-      console.error("Approve user Error:", err);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await approvePartner(id);
+      setPartners(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      alert("Error approving partner");
     }
   };
-  
-  const rejectPartner = async (userId: string) => { //rejection process
-    try{  
-        await updateDoc(doc(db, "users", userId), {
-          approvalStatus: "rejected",
-      });
+
+  const handleReject = async (id: string) => {
+    try {
+      await rejectPartner(id);
+      setPartners(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      alert("Error rejecting partner");
     }
-    catch (err) {
-      console.error("Reject user Error:", err);
-    }
+  };
+
+  if (loading) return <div style={{ padding: "20px" }}>Searching for pending applications...</div>;
+  if (error) return <div style={{ color: "red", padding: "20px" }}>Error: {error}</div>;
+
+  //small back button for temporary use
+   const goBack = () => {
+    navigate(-1);
   };
   
 
-  // End of admin Panel approve and reject logic
 
-  if (!isAdmin) {
-  return <p>Access denied</p>;
-}
+  return (
+    <div style={{ padding: "40px", maxWidth: "800px", margin: "0 auto" }}>
+      <h1 style={{ borderBottom: "2px solid #eee", paddingBottom: "10px" }}>
+        Admin: Partner Approvals
+      </h1>
 
-return (
-  <div style={{ padding: "20px" }}>
-    <h2>Admin Dashboard</h2>
-
-    <button onClick={signOutUser} style={{ marginBottom: "20px" }}>
-      Sign Out
+      <button onClick={goBack} style={{ marginBottom: "20px" }}>
+      Go Back
     </button>
 
-    <h3>Pending Approvals</h3>
+      {partners.length === 0 ? (
+        <p style={{ marginTop: "20px", color: "#666" }}>
+          No users currently waiting for approval.
+        </p>
+      ) : (
+        <div style={{ display: "grid", gap: "15px", marginTop: "20px" }}>
+          {partners.map((p) => (
+            <div
+              key={p.id}
+              style={{
+                border: "1px solid #ddd",
+                padding: "20px",
+                borderRadius: "8px",
+                backgroundColor: "#f9f9f9"
+              }}
+            >
+              <div style={{ marginBottom: "15px" }}>
+                <h3 style={{ margin: "0 0 5px 0" }}>{p.orgName || "Unnamed Org"}</h3>
+                <p style={{ margin: "0", fontSize: "14px", color: "#555" }}>
+                  <strong>Representative:</strong> {p.firstName} {p.lastName} ({p.email})
+                </p>
+                <p style={{ margin: "0", fontSize: "14px", color: "#555" }}>
+                  <strong>ABN:</strong> {p.abn} | <strong>UID:</strong> {p.id}
+                </p>
+              </div>
 
-    {pendingPartners.length === 0 ? (
-      <p>No pending users</p>
-    ) : (
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {pendingPartners.map((user) => (
-          <div
-            key={user.id}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "12px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            {/* User Info */}
-            <div>
-              <p><strong>{user.firstName}</strong></p>
-              <p>Role: {user.role}</p>
-              <p>Status: {user.approvalStatus}</p>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => handleApprove(p.id)}
+                  style={{
+                    backgroundColor: "#2ecc71", color: "white", border: "none",
+                    padding: "8px 16px", borderRadius: "4px", cursor: "pointer"
+                  }}
+                >
+                  Approve Partner
+                </button>
+                <button
+                  onClick={() => handleReject(p.id)}
+                  style={{
+                    backgroundColor: "#e74c3c", color: "white", border: "none",
+                    padding: "8px 16px", borderRadius: "4px", cursor: "pointer"
+                  }}
+                >
+                  Decline
+                </button>
+              </div>
             </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => approvePartner(user.id)}
-                style={{
-                  backgroundColor: "green",
-                  color: "white",
-                  border: "none",
-                  padding: "6px 12px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Approve
-              </button>
-
-              <button
-                onClick={() => rejectPartner(user.id)}
-                style={{
-                  backgroundColor: "red",
-                  color: "white",
-                  border: "none",
-                  padding: "6px 12px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Reject
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
-};
-
-/*
-*Partenr Approval Logic
-* Partners will need to be approved by an admin before they are able to login.
-* users that are still pending approval or have been rejected will not be unable to login to the system.
-* prevent login if user is still pending approval.
-* if user is still pending, they will log in, fail the check and be logged out with alert showing their approval is still pending.
-
-const approvalCheck = async (user) => {
-  const snap = await getDocs(doc(db, "users", user.uid));
-  if (snap.exists()) return;
-
-  const data = snap.data();
-  if (data.approvalStatus === "pending") {
-    await signOutUser();  //double check signout code from should be same as mobile
-    throw new Error("Account pending approval");
-  }
-  if (data.approvalStatus === "rejected") {
-    await signOutUser(); //again check signout code from before
-    throw new Error("Account rejected. Please try again or contact support.");
-  }
-  alert("Your account is now waiting for admin approval.");
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
-//login step to check if user approval status is pending, if still pending sign out and show alert from above ^
-await approvalCheck(user);
-*/

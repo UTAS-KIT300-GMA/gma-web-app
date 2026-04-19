@@ -20,7 +20,8 @@ import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { EventManagePage } from "./pages/admin/EventManage";
-import { AdminApprovalPage } from "./pages/admin/adminApproval";
+import { AdminApprovalPage } from "./pages/admin/AdminApproval";
+import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
@@ -60,6 +61,7 @@ export default function AppRoutes() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/AdminApproval" element={<AdminApprovalPage />} />
 
       <Route
         path="/"
@@ -69,7 +71,7 @@ export default function AppRoutes() {
               <VerifyEmailPage />
             ) : !profile ? (
               <ApplicationPage />
-            ) : profile.status === "pending_approval" ? (
+            ) : profile.approvalStatus === "pending_approval" ? (
               <AdminApprovalPage />
             ) : !profile.onboardingComplete ? (
               <FinalSetupPage />
@@ -175,10 +177,19 @@ export default function AppRoutes() {
         path="admin/partners/manage"
         element={
           <RoleGate roles={["admin"]}>
+            <PendingApprovalPage />
+          </RoleGate>
+        }
+      />
+      <Route
+        path="admin/partners/approve"
+        element={
+          <RoleGate roles={["admin"]}>
             <AdminApprovalPage />
           </RoleGate>
         }
       />
+            
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

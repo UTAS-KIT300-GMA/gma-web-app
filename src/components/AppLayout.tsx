@@ -82,6 +82,15 @@ export function AppLayout() {
   )}
 
   {isAdmin && (
+    <NavLink to="/admin/partners/approve" className={linkClass}>
+      <span className="sidebar-link-icon">
+        <Users size={20} strokeWidth={2.2} />
+      </span>
+      {sidebarExpanded && <span>Manage Partners</span>}
+    </NavLink>
+  )}
+
+  {isAdmin && (
     <NavLink to="/admin/analytics" className={linkClass}>
       <span className="sidebar-link-icon">
         <ChartColumn size={20} strokeWidth={2.2} />

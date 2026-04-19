@@ -47,7 +47,7 @@ const allowedRoles: UserRole[] = ["admin", "partner"];
  * @summary Parses raw Firestore data into a typed UserProfile object.
  * @param data The raw document data from Firestore.
  */
-function parseProfile(data: Record<string, unknown>): UserProfile {
+function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
   const rawRole = String(data.role ?? "general").toLowerCase().trim();
   const role: UserRole =
       rawRole === "admin" || rawRole === "partner" || rawRole === "general"
@@ -55,16 +55,17 @@ function parseProfile(data: Record<string, unknown>): UserProfile {
           : "general";
 
   const rawStatus = data.status as string | undefined;
-  const status: AccountStatus = 
+  const approvalStatus: AccountStatus = 
       rawStatus === "approved" || rawStatus === "rejected" || rawStatus === "pending_approval"
           ? (rawStatus as AccountStatus)
           : "pending_approval";
 
   return {
+    id: id,
     email: String(data.email ?? ""),
     partnerId: data.partnerId as string | undefined,
     role,
-    status,
+    approvalStatus,
     createdAt: parseTimestamp(data.createdAt) as any,
     applicationAt: parseTimestamp(data.applicationAt),
     orgName: data.orgName as string | undefined,
@@ -117,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        const p = parseProfile(snap.data() as Record<string, unknown>);
+        const p = parseProfile(snap.id, snap.data() as Record<string, unknown>);
         if (!allowedRoles.includes(p.role)) {
             console.warn(`Unauthorized role detected: ${p.role}`);
             setProfile(null);

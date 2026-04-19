@@ -8,10 +8,11 @@ export interface UserProfile {
   // (No Firestore document exists yet until email is verified)
 
   // --- Stage 2: The Application (Core Identity & Legal) ---
+  id: string;
   partnerId?: string;          // Maps to Firebase UID
   email: string;
   role: UserRole;
-  status: AccountStatus;       
+  approvalStatus: AccountStatus;       
   applicationAt?: Timestamp;   // When they submitted the Stage 2 form
   createdAt: Timestamp;        // When the document was first created
   
