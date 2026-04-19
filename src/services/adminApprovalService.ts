@@ -6,7 +6,7 @@ export const getPendingPartnerApprovals = async (): Promise<UserProfile[]> => {
   try {
     const usersRef = collection(db, "users");
     
-    const q = query(usersRef, where("approvalStatus", "==", "pending_approval"));
+    const q = query(usersRef, where("adminApprovalStatus", "==", "pending_approval"));
 
     const querySnapshot = await getDocs(q);
 
@@ -28,10 +28,10 @@ export const getPendingPartnerApprovals = async (): Promise<UserProfile[]> => {
 
 export const approvePartner = async (userId: string): Promise<void> => {
   const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, { approvalStatus: "approved" as AccountStatus });
+  await updateDoc(userRef, { adminApprovalStatus: "approved" as AccountStatus });
 };
 
 export const rejectPartner = async (userId: string): Promise<void> => {
   const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, { approvalStatus: "rejected" as AccountStatus });
+  await updateDoc(userRef, { adminApprovalStatus: "rejected" as AccountStatus });
 };

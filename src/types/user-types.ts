@@ -12,7 +12,7 @@ export interface UserProfile {
   partnerId?: string;          // Maps to Firebase UID
   email: string;
   role: UserRole;
-  approvalStatus: AccountStatus;       
+  partnerApprovalStatus: AccountStatus;       
   applicationAt?: Timestamp;   // When they submitted the Stage 2 form
   createdAt: Timestamp;        // When the document was first created
   

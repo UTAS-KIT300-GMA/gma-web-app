@@ -107,7 +107,7 @@ export default function AdminDashboard() {
 
   // Retrieves the count of approved (active) events
      const unsubscribeApproved = onSnapshot(
-    query(collection(db, "events"), where("approvalStatus", "==", "approved")),
+    query(collection(db, "events"), where("eventApprovalStatus", "==", "approved")),
     (snapshot) => {
       setStats((prev) => {
         const updated = [...prev];
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
   );
  // Retrieves the count of events pending
   const unsubscribePending = onSnapshot(
-    query(collection(db, "events"), where("approvalStatus", "==", "pending")),
+    query(collection(db, "events"), where("eventApprovalStatus", "==", "pending")),
     (snapshot) => {
       setStats((prev) => {
         const updated = [...prev];

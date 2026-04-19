@@ -32,7 +32,7 @@ export function EventApprovalPage() {
     try {
       const q = query(
         collection(db, "events"),
-        where("approvalStatus", "==", "pending"),
+        where("eventApprovalStatus", "==", "pending"),
       );
       const snap = await getDocs(q);
       const rows: EventRecord[] = snap.docs.map((d) => ({
@@ -55,7 +55,7 @@ export function EventApprovalPage() {
     setBusyId(ev);
     try {
       await updateDoc(doc(db, "events", ev), {
-        approvalStatus: "approved",
+        eventApprovalStatus: "approved",
         rejectionReason: deleteField(),
       });
       await load();
@@ -69,7 +69,7 @@ export function EventApprovalPage() {
     setBusyId(ev.eventId);
     try {
       await updateDoc(doc(db, "events", ev.eventId), {
-        approvalStatus: "rejected",
+        eventApprovalStatus: "rejected",
         rejectionReason: reason,
       });
       await load();
@@ -82,7 +82,7 @@ export function EventApprovalPage() {
     <div className="page">
       <h1>Approve events</h1>
       <p className="muted">
-        Lists <code>events</code> with <code>approvalStatus == &quot;pending&quot;</code>.
+        Lists <code>events</code> with <code>eventApprovalStatus == &quot;pending&quot;</code>.
       </p>
 
       {loading ? (
