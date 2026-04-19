@@ -72,6 +72,15 @@ export function AppLayout() {
     </NavLink>
   )}
 
+  {!isAdmin && (
+  <NavLink to="/partner/events/manage" className={linkClass}>
+    <span className="sidebar-link-icon">
+      <CalendarDays size={20} strokeWidth={2.2} />
+    </span>
+    {sidebarExpanded && <span>My Events</span>}
+  </NavLink>
+)}
+
   {isAdmin && (
     <NavLink to="/admin/events/manage" className={linkClass}>
       <span className="sidebar-link-icon">

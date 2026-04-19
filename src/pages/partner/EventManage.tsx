@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { Bell, CircleUserRound } from "lucide-react";
+
+type EventRow = {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  registrations: number;
+  status: "Published" | "Approved" | "Pending";
+};
+
+const mockEvents: EventRow[] = [
+  {
+    id: "1",
+    title: "Community Outreach Program",
+    date: "2024-07-15",
+    category: "Connect",
+    registrations: 120,
+    status: "Published",
+  },
+  {
+    id: "2",
+    title: "Startup Pitch Competition",
+    date: "2024-08-01",
+    category: "Grow",
+    registrations: 85,
+    status: "Approved",
+  },
+  {
+    id: "3",
+    title: "Wellness Workshop Series",
+    date: "2024-09-10",
+    category: "Thrive",
+    registrations: 50,
+    status: "Pending",
+  },
+];
+
+export function EventManagePage() {
+  const [eventStatus, setEventStatus] = useState("All");
+  const [dateRange, setDateRange] = useState("All Time");
+
+  return (
+    <div className="page dashboard-page partner-events-page">
+      <section className="dashboard-topbar">
+        <div className="dashboard-topbar-left">
+          <div className="dashboard-topbar-title">Event Management</div>
+        </div>
+
+        <div className="dashboard-topbar-right">
+          <button
+            className="dashboard-icon-btn"
+            type="button"
+            aria-label="Notifications"
+          >
+            <Bell size={18} strokeWidth={2.2} />
+          </button>
+
+          <div className="dashboard-userbox">
+            <div className="dashboard-user-meta">
+              <strong>Sandra Lee</strong>
+              <span>Partner</span>
+            </div>
+            <div className="dashboard-user-avatar">
+              <CircleUserRound size={18} strokeWidth={2} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-header">
+        <h1>My Events</h1>
+        <p className="muted dashboard-hero-copy">
+          View and manage your submitted events.
+        </p>
+      </section>
+
+      <section className="panel dashboard-panel">
+        <div className="dashboard-section-head">
+          <div>
+            <h2>Filter Events</h2>
+          </div>
+        </div>
+
+        <div className="form-grid partner-events-filter-grid">
+          <label className="field">
+            <span>Event Status</span>
+            <select
+              value={eventStatus}
+              onChange={(e) => setEventStatus(e.target.value)}
+            >
+              <option>All</option>
+              <option>Published</option>
+              <option>Approved</option>
+              <option>Pending</option>
+            </select>
+          </label>
+
+          <label className="field">
+            <span>Date Range</span>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+            >
+              <option>All Time</option>
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+              <option>This Month</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="panel dashboard-panel">
+        <div className="dashboard-section-head">
+          <div>
+            <h2>Event Table</h2>
+          </div>
+        </div>
+
+        <div className="partner-events-table-wrap">
+          <table className="partner-events-table">
+            <thead>
+              <tr>
+                <th>Event Title</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Registrations</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {mockEvents.map((event) => (
+                <tr key={event.id}>
+                  <td>{event.title}</td>
+                  <td>{event.date}</td>
+                  <td>{event.category}</td>
+                  <td>{event.registrations}</td>
+                  <td>
+                    <span
+                      className={`partner-event-status partner-event-status-${event.status.toLowerCase()}`}
+                    >
+                      {event.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="partner-events-actions">
+                      <button type="button" className="btn-small btn-primary">
+                        Edit
+                      </button>
+                      <button type="button" className="btn-small btn-outline">
+                        View Details
+                      </button>
+                      <button type="button" className="btn-small btn-danger">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}

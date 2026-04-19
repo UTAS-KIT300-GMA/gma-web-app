@@ -15,11 +15,12 @@ import PartnerDashboardPage from "./pages/partner/Dashboard";
 import { EventRegistrationPage } from "./pages/partner/EventRegistration";
 import { ApplicationPage } from "./pages/partner/Application";
 import { FinalSetupPage } from "./pages/partner/FinalSetup";
+import { EventManagePage as PartnerEventManagePage } from "./pages/partner/EventManage";
 
 // Admin pages
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
-import { EventManagePage } from "./pages/admin/EventManage";
+import { EventManagePage as AdminEventManagePage } from "./pages/admin/EventManage";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
@@ -100,6 +101,15 @@ export default function AppRoutes() {
         />
 
         <Route
+            path="partner/events/manage"
+            element={
+                <RoleGate roles={["partner"]}>
+                    <PartnerEventManagePage />
+                </RoleGate>
+          }
+        />
+
+        <Route
           path="partner/events/register"
           element={
             <RoleGate roles={["partner"]}>
@@ -139,7 +149,7 @@ export default function AppRoutes() {
           path="admin/events/manage"
           element={
             <RoleGate roles={["admin"]}>
-              <EventManagePage />
+                <AdminEventManagePage />
             </RoleGate>
           }
         />

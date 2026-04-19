@@ -588,3 +588,81 @@ Partner event creation and submission UI
     transform: scale(0.68);
   }
 }
+
+.partner-events-filter-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.partner-events-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.partner-events-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.partner-events-table th,
+.partner-events-table td {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e8dcd3;
+  vertical-align: middle;
+}
+
+.partner-events-table th {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4b1832;
+  background: #f8f2ec;
+}
+
+.partner-events-table td {
+  font-size: 0.95rem;
+  color: #5f5a63;
+}
+
+.partner-events-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.btn-danger {
+  border: 1px solid #d96b6b;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+.partner-event-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.partner-event-status-published {
+  background: #e7f8ee;
+  color: #027a48;
+}
+
+.partner-event-status-approved {
+  background: #eef4ff;
+  color: #175cd3;
+}
+
+.partner-event-status-pending {
+  background: #fff4e5;
+  color: #b54708;
+}
