@@ -5,6 +5,8 @@ navigation links, user summary section, and sidebar interactions.
 */
 
 .app-sidebar {
+  position: sticky;
+  top: 0;
   background: var(--gma-sidebar);
   color: var(--gma-card);
   display: flex;
@@ -12,7 +14,8 @@ navigation links, user summary section, and sidebar interactions.
   flex-direction: column;
   padding: 16px 11px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  height: 100%;
+  height: 100vh;
+  min-height: 100vh;
 }
 
 .app-sidebar.collapsed {
@@ -256,11 +259,24 @@ navigation links, user summary section, and sidebar interactions.
 /* ================= RESPONSIVE ================= */
 
 @media screen and (max-width: 900px) {
+  .app-sidebar,
+    .app-sidebar.collapsed,
+    .app-sidebar.expanded {
+      width: 62px !important;
+      min-width: 62px;
+      flex-shrink: 0;
+      overflow: hidden;
+      padding: 16px 4px;
+
       .sidebar-nav {
-          flex-direction: column;
-        }
-      
-      .app-main {
-        padding: 12px;
+        margin-bottom: 16px;
       }
+      
+    }
+
+  .app-sidebar .sidebar-toggle {
+    pointer-events: none;
+    /* disables click */
+  }
+
 }

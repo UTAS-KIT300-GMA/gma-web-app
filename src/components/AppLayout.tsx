@@ -181,12 +181,14 @@ export function AppLayout() {
               type="button"
               aria-label="Notifications"
             >
-              <Bell width={20} height={24} strokeWidth={2.2} />
+              <Bell size={24} strokeWidth={1.7} />
             </button>
+
+            {/* User's role and name added here */}
             <div className="dashboard-userbox">
               <div className="dashboard-user-meta">
-                <strong>Sandra Lee</strong>
-                <span>Partner</span>
+                <strong>{displayName}</strong>
+                <span>{roleLabel}</span>
               </div>
               <div className="dashboard-user-avatar">
                 <CircleUserRound size={32} strokeWidth={1} />
