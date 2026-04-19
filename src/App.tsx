@@ -67,7 +67,7 @@ export default function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            {!user?.emailVerified ? (
+            {!user?.emailVerified && profile?.role !== "admin" ? (
               <VerifyEmailPage />
             ) : !profile ? (
               <ApplicationPage />
