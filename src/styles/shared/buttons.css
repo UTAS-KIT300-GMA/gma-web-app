@@ -41,10 +41,11 @@
 
 .btn-ghost {
   background: transparent;
+  font-size: 14px;
   border: 1px solid rgba(255, 255, 255, 0.36);
   color: #fff;
   border-radius: 12px;
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem 0.6rem;
   cursor: pointer;
 }
 

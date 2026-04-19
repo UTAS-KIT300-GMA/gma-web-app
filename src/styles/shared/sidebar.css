@@ -16,6 +16,7 @@ navigation links, user summary section, and sidebar interactions.
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   height: 100vh;
   min-height: 100vh;
+  flex-shrink: 0;
 }
 
 .app-sidebar.collapsed {
@@ -62,7 +63,7 @@ navigation links, user summary section, and sidebar interactions.
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 10px;
+  padding-left: 2px;
 
   width: 42px;
   height: 42px;
@@ -93,7 +94,7 @@ navigation links, user summary section, and sidebar interactions.
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 9px;
+  gap: 2px;
   flex: 1;
   padding: 3px 0;
   align-items: stretch;
