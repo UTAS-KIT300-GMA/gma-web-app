@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
+import { Bell, CircleUserRound } from "lucide-react";
 
 type FilterKey = "week" | "month" | "year";
 
@@ -57,9 +58,9 @@ const mockDecisionMetrics = [
 ];
 
 export default function PartnerDashboard() {
+  const { user, profile } = useAuth();
   const [filter, setFilter] = useState<FilterKey>("month");
 
-  const { user, profile } = useAuth();
   const partnerID = profile?.partnerId;
 
   const [totalEvents, setTotalEvents] = useState(0);
@@ -75,7 +76,7 @@ export default function PartnerDashboard() {
       try {
         const eventsQuery = query(
           collection(db, "events"),
-          where("partnerID", "==", partnerID)
+          where("partnerID", "==", partnerID),
         );
 
         const eventSnap = await getDocs(eventsQuery);
@@ -107,7 +108,7 @@ export default function PartnerDashboard() {
         const myEventIds = new Set(events.map((e) => e.eventId));
 
         const userBookingSnap = await getDocs(
-          collection(db, "users", user.uid, "bookings")
+          collection(db, "users", user.uid, "bookings"),
         );
 
         const bookingsCount = userBookingSnap.docs.filter((doc) => {
@@ -177,14 +178,21 @@ export default function PartnerDashboard() {
             type="button"
             aria-label="Notifications"
           >
-            🔔
+            <Bell size={18} strokeWidth={2.2} />
           </button>
+
           <div className="dashboard-userbox">
             <div className="dashboard-user-meta">
-              <strong>Sandra Lee</strong>
+              <strong>
+                {profile?.orgName ||
+                  `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+                  user?.email}
+              </strong>
               <span>Partner</span>
             </div>
-            <div className="dashboard-user-avatar">◎</div>
+            <div className="dashboard-user-avatar">
+              <CircleUserRound size={18} strokeWidth={2} />
+            </div>
           </div>
         </div>
       </section>
