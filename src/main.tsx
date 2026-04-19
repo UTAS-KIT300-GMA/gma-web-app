@@ -16,6 +16,7 @@ import "./styles/shared/responsive.css";
 import "./styles/admin/analytics.css";
 import "./styles/admin/approval.css";
 import "./styles/admin/event-manage.css";
+import "./styles/admin/dashboard.css";
 
 import "./styles/partner/forms.css";
 import "./styles/partner/image-upload.css";

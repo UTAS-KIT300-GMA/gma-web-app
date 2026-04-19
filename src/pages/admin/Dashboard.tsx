@@ -166,7 +166,7 @@ export default function AdminDashboard() {
   const maxValue = Math.max(...activeData.map((item) => item.value));
 
   return (
-    <div className="page dashboard-page">
+    <div className="page dashboard-page admin">
     
       <section className="dashboard-header">
         <h1>Admin Dashboard Overview</h1>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
 
       <section className="dashboard-kpi-grid">
         <article className="stat-card dashboard-stat-card">
-          <span className="dashboard-stat-title">Total Registered Users</span>
+          <span className="dashboard-stat-title">Registered Users</span>
           <div className="stat-value">{registeredUsers}</div>
           <div className="stat-label">Users registered for events</div>
         </article>
