@@ -145,7 +145,7 @@ export function EventManagePage() {
                     <p className="approval-desc">{ev.description}</p>
                     <p className="muted small">
                       {ev.address} · {ev.category}
-                      {ev.approvalStatus ? ` · ${ev.approvalStatus}` : ""}
+                      {ev.eventApprovalStatus ? ` · ${ev.eventApprovalStatus}` : ""}
                     </p>
                   </div>
                 </div>

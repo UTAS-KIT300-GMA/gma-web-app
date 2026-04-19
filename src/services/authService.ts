@@ -45,12 +45,14 @@ export const registerPartner = async (data: PartnerRegistrationData): Promise<Re
 export const createInitialProfile = async (user: User, data: PartnerRegistrationData) => {
   try {
     const userRef = doc(db, "users", user.uid); 
+    const id = userRef.id;
 
     const profileData: UserProfile = {
+      id: id,
       partnerId: user.uid,
       email: data.email.toLowerCase().trim(),
       role: "partner",
-      status: "pending_approval",
+      partnerApprovalStatus: "pending_approval",
       applicationAt: serverTimestamp() as any,
       createdAt: serverTimestamp() as any,
       orgName: data.orgName.trim(),
@@ -97,3 +99,4 @@ export const completePartnerOnboarding = async (uid: string, onboardingData: Par
     throw e;
   }
 };
+

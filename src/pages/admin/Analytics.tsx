@@ -85,7 +85,7 @@ export function AnalyticsPage() {
   const approvedForDisplay = useMemo(
     () =>
       events.filter(
-        (e) => e.approvalStatus === "approved" || e.approvalStatus,
+        (e) => e.eventApprovalStatus === "approved" || e.eventApprovalStatus,
       ),
     [events],
   );

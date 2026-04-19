@@ -28,8 +28,8 @@ export type EventRecord = {
   };
 
   // --- Admin & Partner Portal Workflow ---
-  approvalStatus?: "pending" | "approved" | "rejected";
-  submittedBy?: string; // The partnerId of the creator
-  rejectionReason?: string; // Feedback for the partner
-  interestTags?: string[];
+  eventApprovalStatus?: "pending" | "approved" | "rejected";
+  submittedBy?: string;        // The partnerId of the creator
+  rejectionReason?: string;    // Feedback for the partner
+  interestTags?: string[];     
 };

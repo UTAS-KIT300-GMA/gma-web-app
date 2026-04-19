@@ -20,6 +20,7 @@ import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { EventManagePage } from "./pages/admin/EventManage";
+import { AdminApprovalPage } from "./pages/admin/adminApproval";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
@@ -60,18 +61,19 @@ export default function AppRoutes() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/AdminApproval" element={<AdminApprovalPage />} />
 
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            {!user?.emailVerified ? (
+           {!user?.emailVerified && profile?.role !== "admin" ? (
               <VerifyEmailPage />
             ) : !profile ? (
               <ApplicationPage />
-            ) : profile.status === "pending_approval" ? (
+            ) : profile.role === "partner" && profile.partnerApprovalStatus === "pending_approval" ? (
               <PendingApprovalPage />
-            ) : !profile.onboardingComplete ? (
+            ) : !profile.onboardingComplete && profile?.role !== "admin" ? (
               <FinalSetupPage />
             ) : (
               <AppLayout />
@@ -171,7 +173,23 @@ export default function AppRoutes() {
           }
         />
       </Route>
-
+      <Route
+        path="admin/partners/manage"
+        element={
+          <RoleGate roles={["admin"]}>
+            <PendingApprovalPage />
+          </RoleGate>
+        }
+      />
+      <Route
+        path="admin/partners/approve"
+        element={
+          <RoleGate roles={["admin"]}>
+            <AdminApprovalPage />
+          </RoleGate>
+        }
+      />
+            
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
