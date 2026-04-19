@@ -1,3 +1,6 @@
+import { addDoc, collection, Timestamp, GeoPoint } from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../../hooks/useAuth";
 import { useState } from "react";
 import {
   Bell,
@@ -11,10 +14,8 @@ import {
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import { CATEGORIES, type Category } from "../../types/event-types";
 
-
 import { EventLocationInput } from "../../components/EventLocationInput";
 import { type EventLocation } from "../../services/geoService";
-
 
 type TicketAccessType = "free_for_all" | "members_only";
 
@@ -29,24 +30,35 @@ const mockInitialForm = {
   interestTags: [] as string[],
   ticketAccess: "free_for_all" as TicketAccessType,
 };
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export function EventRegistrationPage() {
+  const { user, profile } = useAuth();
   const [title, setTitle] = useState(mockInitialForm.title);
   const [description, setDescription] = useState(mockInitialForm.description);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(
     mockInitialForm.categories,
   );
   const [address, setAddress] = useState(mockInitialForm.address);
-  
-  
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  
-  
+
+  const [coordinates, setCoordinates] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
   const [dateTime, setDateTime] = useState(mockInitialForm.dateTime);
   const [totalTickets, setTotalTickets] = useState<number>(
     mockInitialForm.totalTickets,
   );
   const [imageName, setImageName] = useState(mockInitialForm.imageName);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [interestTags, setInterestTags] = useState<string[]>(
     mockInitialForm.interestTags,
   );
@@ -69,19 +81,94 @@ export function EventRegistrationPage() {
     );
   }
 
-  function handleMockSubmit(e: React.SyntheticEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    
-    console.log("Captured Data:", { address, coordinates });
-    
+    if (!user) {
+      alert("You must be logged in");
+      return;
+    }
+
+    if (!title || !description || !dateTime || !address) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const partnerId = profile?.partnerId ?? user.uid;
+      const imageBase64 = imageFile ? await readFileAsBase64(imageFile) : "";
+      const eventData = {
+        title,
+        description,
+        category: selectedCategories[0] ?? "connect",
+        categories: selectedCategories,
+
+        address,
+
+        location: coordinates
+          ? new GeoPoint(coordinates.lat, coordinates.lng)
+          : null,
+
+        dateTime: Timestamp.fromDate(new Date(dateTime)),
+
+        totalTickets,
+        ticketsSold: 0,
+
+        image: imageBase64,
+
+        type: ticketAccess === "free_for_all" ? "free" : "paid",
+        ticketAccess,
+
+        memberPrice: 0,
+        nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
+
+        ticketPrices: {
+          member: 0,
+          nonMember: ticketAccess === "members_only" ? 1 : 0,
+        },
+
+        interestTags,
+
+        approvalStatus: "pending",
+
+        submittedBy: partnerId,
+
+        status: "available",
+
+        createdAt: Timestamp.now(),
+      };
+
+      await addDoc(collection(db, "events"), eventData);
+
+      alert("✅ Event submitted successfully!");
+
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setSelectedCategories(["connect"]);
+      setAddress("");
+      setCoordinates(null);
+      setDateTime("");
+      setTotalTickets(50);
+      setImageName("");
+      setImageFile(null);
+      setInterestTags([]);
+      setTicketAccess("free_for_all");
+      setShowPreview(false);
+    } catch (err) {
+      console.error("Event submission error:", err);
+      alert("❌ Failed to submit event");
+    }
   }
 
-  function handleMockSaveDraft() {
-    
-  }
+  function handleMockSaveDraft() {}
 
   function handleImageChange(file?: File) {
     if (!file) return;
+    if (file.size > 500 * 1024) {
+      alert("Image must be 500KB or smaller.");
+      return;
+    }
+    setImageFile(file);
     setImageName(file.name);
   }
 
@@ -103,7 +190,11 @@ export function EventRegistrationPage() {
 
           <div className="dashboard-userbox">
             <div className="dashboard-user-meta">
-              <strong>Sandra Lee</strong>
+              <strong>
+                {profile?.orgName ||
+                  `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+                  user?.email}
+              </strong>
               <span>Partner</span>
             </div>
             <div className="dashboard-user-avatar">
@@ -120,7 +211,7 @@ export function EventRegistrationPage() {
         </p>
       </section>
 
-      <form className="event-create-form" onSubmit={handleMockSubmit}>
+      <form className="event-create-form" onSubmit={handleSubmit}>
         <section className="panel event-create-panel">
           <div className="event-section-head">
             <div>
@@ -176,12 +267,15 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-icon">
                 <MapPin size={16} strokeWidth={2} />
-                
+
                 <EventLocationInput
                   initialAddress={address}
                   onLocationSelect={(location: EventLocation) => {
                     setAddress(location.displayAddress);
-                    setCoordinates({ lat: location.latitude, lng: location.longitude });
+                    setCoordinates({
+                      lat: location.latitude,
+                      lng: location.longitude,
+                    });
                   }}
                 />
                 {/* ------------------------------------------------------- */}
