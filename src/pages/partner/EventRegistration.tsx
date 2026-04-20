@@ -3,9 +3,7 @@ import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import { useState } from "react";
 import {
-  Bell,
   CalendarDays,
-  CircleUserRound,
   Eye,
   MapPin,
   Tag,
@@ -174,35 +172,6 @@ export function EventRegistrationPage() {
 
   return (
     <div className="page dashboard-page event-create-page">
-      <section className="dashboard-topbar">
-        <div className="dashboard-topbar-left">
-          <div className="dashboard-topbar-title">Event Management</div>
-        </div>
-
-        <div className="dashboard-topbar-right">
-          <button
-            className="dashboard-icon-btn"
-            type="button"
-            aria-label="Notifications"
-          >
-            <Bell size={18} strokeWidth={2.2} />
-          </button>
-
-          <div className="dashboard-userbox">
-            <div className="dashboard-user-meta">
-              <strong>
-                {profile?.orgName ||
-                  `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
-                  user?.email}
-              </strong>
-              <span>Partner</span>
-            </div>
-            <div className="dashboard-user-avatar">
-              <CircleUserRound size={18} strokeWidth={2} />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="dashboard-header event-create-header">
         <h1>Create Event</h1>

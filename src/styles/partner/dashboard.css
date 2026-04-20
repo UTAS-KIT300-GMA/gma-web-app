@@ -4,7 +4,7 @@ Dashboard-specific styles including top bar, KPI cards, charts,
 summary sections, featured insight panels, and activity feed layout.
 */
 .dashboard-page {
-  max-width: 1320px;
+  max-width: 100%;
 }
 
 .dashboard-header {

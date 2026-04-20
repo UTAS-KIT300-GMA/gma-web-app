@@ -5,19 +5,22 @@
 */
 
 .btn-primary {
-  border: none;
-  border-radius: 12px;
-  padding: 0.85rem 1.25rem;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  padding: 0.8rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
   width: 100%;
   margin-top: 0.25rem;
   background: var(--gma-magenta);
-  color: #fff;
+  color: var(--gma-card);
 }
 
 .btn-primary:hover {
-  background: #8f1c5b;
+  background: var(--gma-card);
+  color: var(--gma-primary);
+  border: 1.5px solid var(--gma-primary);
+  box-shadow: var(--gma-shadow);
 }
 
 .btn-primary:disabled {
@@ -27,7 +30,7 @@
 
 .btn-danger {
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 0.55rem 0.95rem;
   font-weight: 600;
   cursor: pointer;

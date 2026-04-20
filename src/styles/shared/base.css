@@ -27,7 +27,7 @@
   --gma-sidebar: var(--gma-plum);
   --gma-radius: 14px;
   --gma-radius-sm: 10px;
-  --gma-shadow: 0 6px 22px rgba(64, 15, 50, 0.08);
+  --gma-shadow: 0 1px 10px rgba(64, 15, 50, 0.15);
 
   --gma-font-heading: "Cooper Std", "Bree Serif", Georgia, serif;
   --gma-font-body: "Acumin Pro", "DM Sans", "Segoe UI", Arial, sans-serif;
@@ -134,7 +134,9 @@ p {
 
 .page {
   padding: 1.5rem 2rem 3rem;
-  max-width: 1320px;
+  width: 100%;
+  max-width: 100%;
+
 }
 
 .centered {

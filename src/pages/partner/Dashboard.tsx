@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Bell, CircleUserRound } from "lucide-react";
 
 type FilterKey = "week" | "month" | "year";
 
@@ -167,35 +166,6 @@ export default function PartnerDashboard() {
 
   return (
     <div className="page dashboard-page">
-      <section className="dashboard-topbar">
-        <div className="dashboard-topbar-left">
-          <div className="dashboard-topbar-title">Partner Dashboard</div>
-        </div>
-
-        <div className="dashboard-topbar-right">
-          <button
-            className="dashboard-icon-btn"
-            type="button"
-            aria-label="Notifications"
-          >
-            <Bell size={18} strokeWidth={2.2} />
-          </button>
-
-          <div className="dashboard-userbox">
-            <div className="dashboard-user-meta">
-              <strong>
-                {profile?.orgName ||
-                  `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
-                  user?.email}
-              </strong>
-              <span>Partner</span>
-            </div>
-            <div className="dashboard-user-avatar">
-              <CircleUserRound size={18} strokeWidth={2} />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="dashboard-header">
         <h1>Partner Dashboard Overview</h1>

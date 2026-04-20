@@ -7,6 +7,8 @@ summary sections, featured insight panels, and activity feed layout.
   background-color: var(--gma-surface);
   min-height: 100%;
   margin: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .admin .dashboard-header {
@@ -29,6 +31,7 @@ summary sections, featured insight panels, and activity feed layout.
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.4rem;
   margin-bottom: 1.5rem;
+
 }
 
 .admin .dashboard-stat-card {

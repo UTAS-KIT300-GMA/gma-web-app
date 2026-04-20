@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
   House,
@@ -15,7 +15,6 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { RoleGate } from "./RoleGate";
 
 /// Helper function to apply active class to NavLink
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -31,9 +30,27 @@ export function AppLayout() {
   const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
+  // Mapping of pathname to page title
+  const location = useLocation();
+
+  const pageTitle = () => {
+    if (location.pathname.includes("dashboard")) return "Dashboard";
+    if (location.pathname.includes("events/manage")) return "Manage Events";
+    if (location.pathname.includes("events/approval")) return "Approve Events";
+    if (location.pathname.includes("analytics")) return "Analytics";
+    if (location.pathname.includes("users")) return "Users";
+    if (location.pathname.includes("partners")) return "Manage Partners";
+    if (location.pathname.includes("events/register")) return "Create Event";
+    return "Dashboard";
+  };
+
   const displayName = profile?.firstName ?? profile?.email ?? "Sandra Lee";
   const roleLabel = profile?.role ?? "partner";
   const isAdmin = profile?.role === "admin";
+
+  // Add state for active role to support with admin "view as partner" toggle in the future
+  const [viewAsPartner, setViewAsPartner] = useState(false);
+  const effectiveIsAdmin = isAdmin && !viewAsPartner;
 
   return (
     <div
@@ -62,7 +79,7 @@ export function AppLayout() {
 
         <nav className="sidebar-nav">
           <NavLink
-            to={isAdmin ? "/admin/dashboard" : "/partner/dashboard"}
+            to={effectiveIsAdmin ? "/admin/dashboard" : "/partner/dashboard"}
             className={linkClass}
             end
           >
@@ -72,7 +89,7 @@ export function AppLayout() {
             {sidebarExpanded && <span>Dashboard</span>}
           </NavLink>
 
-          {!isAdmin && (
+          {!effectiveIsAdmin && (
             <NavLink to="/partner/events/register" className={linkClass}>
               <span className="sidebar-link-icon">
                 <Plus size={20} strokeWidth={2.2} />
@@ -81,7 +98,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          {isAdmin && (
+          {effectiveIsAdmin && (
             <NavLink to="/admin/events/manage" className={linkClass}>
               <span className="sidebar-link-icon">
                 <CalendarDays size={20} strokeWidth={2.2} />
@@ -90,7 +107,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          {isAdmin && (
+          {effectiveIsAdmin && (
             <NavLink to="/admin/analytics" className={linkClass}>
               <span className="sidebar-link-icon">
                 <ChartColumn size={20} strokeWidth={2.2} />
@@ -99,7 +116,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          {isAdmin && (
+          {effectiveIsAdmin && (
             <NavLink to="/admin/users" className={linkClass}>
               <span className="sidebar-link-icon">
                 <Users size={20} strokeWidth={2.2} />
@@ -108,7 +125,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          {isAdmin && (
+          {effectiveIsAdmin && (
             <NavLink to="/admin/partners/approve" className={linkClass}>
               <span className="sidebar-link-icon">
                 <Handshake size={20} strokeWidth={2.2} />
@@ -128,14 +145,14 @@ export function AppLayout() {
             {sidebarExpanded && <span>Settings</span>}
           </a>
 
-          <RoleGate roles={["admin"]}>
+          {effectiveIsAdmin && (
             <NavLink to="/admin/events/approval" className={linkClass}>
               <span className="sidebar-link-icon">
                 <CircleCheckBig size={20} strokeWidth={2.2} />
               </span>
               {sidebarExpanded && <span>Approve Events</span>}
             </NavLink>
-          </RoleGate>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -172,10 +189,28 @@ export function AppLayout() {
       <main className="app-main">
         <header className="app-topbar">
           <div className="app-topbar-left">
-            <div className="dashboard-title">Admin Dashboard</div>
+            <div className="dashboard-title">
+              {effectiveIsAdmin ? "Admin" : "Partner"} {pageTitle()}
+            </div>
           </div>
 
           <div className="app-topbar-right">
+            {/* Admin "View as Partner" toggle button, here only needs isAdmin for the switch view button to work */}
+            {isAdmin && (
+              <button
+                className="btn-primary switch-view-btn"
+                type="button"
+                onClick={() => {
+                  setViewAsPartner((prev) => !prev);
+                  navigate(
+                    viewAsPartner ? "/admin/dashboard" : "/partner/dashboard",
+                  );
+                }}
+              >
+                {viewAsPartner ? "Admin View" : "Partner View"}
+              </button>
+            )}
+
             <button
               className="dashboard-icon-btn"
               type="button"

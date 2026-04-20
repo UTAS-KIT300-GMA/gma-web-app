@@ -37,6 +37,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.9rem;
+	flex-shrink: 0; /* Prevent shrinking */
 }
 
 .dashboard-icon-btn {
@@ -56,8 +57,24 @@
 	}
 }
 
+.switch-view-btn {
+	background-color: var(--gma-gold);
+	border: 1.5px solid transparent;
+	color: var(--gma-primary-dark);
+	padding: 0.5rem 0.8rem;
+
+	&:hover {
+		background-color: var(--gma-primary-dark);
+		border: 1.5px solid transparent;
+		color: var(--gma-card)
+	}
+}
+
+
 .dashboard-userbox {
 	display: flex;
+	flex-shrink: 0; /* Prevent shrinking */
+	white-space: nowrap; /* Prevent text from wrapping */
 	align-items: center;
 	gap: 0.65rem;
 }
