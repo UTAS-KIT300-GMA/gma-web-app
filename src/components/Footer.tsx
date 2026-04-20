@@ -17,7 +17,7 @@ export function Footer() {
 
           <div className="footer-text">
             <h3>Contact Us</h3>
-            <p>Email: info@gmaconnect.com</p>
+            <p>Email: contact@guessmyaccent.com.au</p>
           </div>
 
           <div className="footer-links">

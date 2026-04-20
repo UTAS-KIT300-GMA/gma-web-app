@@ -8,6 +8,7 @@ import "./styles/shared/buttons.css";
 import "./styles/shared/login.css";
 import "./styles/shared/layout.css";
 import "./styles/shared/sidebar.css";
+import "./styles/shared/topbar.css";
 import "./styles/shared/cards.css";
 import "./styles/shared/tags.css";
 import "./styles/shared/responsive.css";
@@ -15,6 +16,7 @@ import "./styles/shared/responsive.css";
 import "./styles/admin/analytics.css";
 import "./styles/admin/approval.css";
 import "./styles/admin/event-manage.css";
+import "./styles/admin/dashboard.css";
 
 import "./styles/partner/forms.css";
 import "./styles/partner/image-upload.css";

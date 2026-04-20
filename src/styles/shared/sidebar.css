@@ -3,77 +3,127 @@ sidebar.css
 Sidebar navigation styles including collapsed/expanded states,
 navigation links, user summary section, and sidebar interactions.
 */
+
 .app-sidebar {
+  position: sticky;
+  top: 0;
   background: var(--gma-sidebar);
-  color: #fff;
+  color: var(--gma-card);
   display: flex;
+  align-items: center;
   flex-direction: column;
-  padding: 1rem 0.85rem;
+  padding: 16px 11px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  height: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  flex-shrink: 0;
 }
 
 .app-sidebar.collapsed {
   width: 82px;
+  padding: 16px 11px;
+
+    .sidebar-brand,
+      .sidebar-footer {
+        align-items: center;
+      }
+
+    .sidebar-nav {
+      align-items: stretch;
+    }
 }
 
 .app-sidebar.expanded {
   width: 252px;
+
+  .sidebar-brand, .sidebar-nav, .sidebar-footer {
+    align-items: flex-start;
+    margin-left: 0;
+  }
+
 }
+
+/* ================= TOP ================= */
 
 .sidebar-top {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  margin-bottom: 0.9rem;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   min-height: 52px;
+  width: 90%;
 }
 
-.sidebar-toggle {
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-size: 1.35rem;
-  cursor: pointer;
+/* ================= TOGGLE ================= */
+
+.app-sidebar .sidebar-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 2px;
+
   width: 42px;
   height: 42px;
+
   border-radius: 12px;
-  display: grid;
-  place-items: center;
+  cursor: pointer;
+
+  color: var(--gma-card);
+
 }
 
-.sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.08);
+.app-sidebar.collapsed .sidebar-toggle {
+  padding-left: 4px;
 }
+/* ================= BRAND/LOGO ================= */
 
 .sidebar-brand {
   font-family: var(--gma-font-heading);
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 20px;
   white-space: nowrap;
+  padding-top: 4px;
+  padding-right: 8px;
 }
 
+/* ================= NAV ================= */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  width: 100%;
+  gap: 2px;
   flex: 1;
-  padding-top: 0.2rem;
+  padding: 3px 0;
+  align-items: stretch;
 }
+
+.app-sidebar.collapsed .sidebar-nav {
+  align-items: stretch;
+  padding: 3px 0;
+
+}
+
+/* ================= LINKS ================= */
 
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.72rem 0.7rem;
+  gap: 14px;
+  padding: 11px;
   border-radius: 14px;
+  width: 100%;
+
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   font-weight: 500;
+
   min-height: 52px;
   white-space: nowrap;
+  width: 100%;
+
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -82,26 +132,46 @@ navigation links, user summary section, and sidebar interactions.
 
 .sidebar-link:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--gma-card);
 }
 
 .sidebar-link.active {
   background: rgba(241, 203, 95, 0.14);
-  color: #fff;
+  color: var(--gma-card);
   font-weight: 700;
+
 }
+
+.app-sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 11px;
+  width: 100%;
+
+}
+
+.app-sidebar.expanded .sidebar-link {
+  justify-content: left;
+  padding: 11px;
+
+}
+
+/* ================= ICON ================= */
 
 .sidebar-link-icon {
   width: 42px;
   height: 42px;
   min-width: 42px;
+
   border-radius: 14px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   flex-shrink: 0;
-  font-size: 1.2rem;
+
   background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  color: var(--gma-card);
+
   transition:
     background 0.15s ease,
     transform 0.15s ease;
@@ -114,49 +184,62 @@ navigation links, user summary section, and sidebar interactions.
 
 .sidebar-link.active .sidebar-link-icon {
   background: rgba(241, 203, 95, 0.2);
-  color: #fff;
 }
+
+/* ================= MISC ================= */
 
 .sidebar-link-muted {
   opacity: 0.95;
   cursor: default;
 }
 
+/* ================= FOOTER ================= */
+
 .sidebar-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1rem;
+  padding-top: 16px;
   margin-top: auto;
+  width: 90%;
 }
 
 .sidebar-user-card {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 0 0.2rem;
+  gap: 14px;
+  padding: 0 3px;
 }
 
 .sidebar-user-info {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 6px;
   line-height: 1.2;
 }
 
-.sidebar-user-info strong {
-  font-size: 0.95rem;
-  color: #fff;
+.sidebar-user-info .user-name {
+  padding: 0 8px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gma-card);
 }
 
 .role-pill {
   display: inline-block;
-  width: fit-content;
-  padding: 0.18rem 0.55rem;
+  padding: 5px 9px 3px;
+  width: 40%;
   border-radius: 999px;
   background: rgba(241, 203, 95, 0.24);
-  font-size: 0.72rem;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.app-sidebar .btn-ghost:hover {
+  background: var(--gma-card);
+  color: var(--gma-primary);
+}
+
+/* ================= COLLAPSED FOOTER ================= */
 
 .sidebar-footer-collapsed {
   display: flex;
@@ -168,8 +251,33 @@ navigation links, user summary section, and sidebar interactions.
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.08);
-  font-size: 1.1rem;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media screen and (max-width: 900px) {
+  .app-sidebar,
+    .app-sidebar.collapsed,
+    .app-sidebar.expanded {
+      width: 62px !important;
+      min-width: 62px;
+      flex-shrink: 0;
+      overflow: hidden;
+      padding: 16px 4px;
+
+      .sidebar-nav {
+        margin-bottom: 16px;
+      }
+      
+    }
+
+  .app-sidebar .sidebar-toggle {
+    pointer-events: none;
+    /* disables click */
+  }
+
 }
