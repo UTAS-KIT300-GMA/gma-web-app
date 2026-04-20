@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, CircleUserRound, Pencil, Eye, Trash2 } from "lucide-react";
+import { Pencil, Eye, Trash2 } from "lucide-react";
 
 type EventRow = {
   id: string;
@@ -43,34 +43,9 @@ export function EventManagePage() {
 
   return (
     <div className="page dashboard-page partner-events-page">
-      <section className="dashboard-topbar">
-        <div className="dashboard-topbar-left">
-          <div className="dashboard-topbar-title">Event Management</div>
-        </div>
-
-        <div className="dashboard-topbar-right">
-          <button
-            className="dashboard-icon-btn"
-            type="button"
-            aria-label="Notifications"
-          >
-            <Bell size={18} strokeWidth={2.2} />
-          </button>
-
-          <div className="dashboard-userbox">
-            <div className="dashboard-user-meta">
-              <strong>Sandra Lee</strong>
-              <span>Partner</span>
-            </div>
-            <div className="dashboard-user-avatar">
-              <CircleUserRound size={18} strokeWidth={2} />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="dashboard-header">
-        <h1>My Events</h1>
+        <h1>Event Management</h1>
         <p className="muted dashboard-hero-copy">
           View and manage your submitted events.
         </p>
