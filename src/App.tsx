@@ -20,7 +20,7 @@ import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { EventManagePage } from "./pages/admin/EventManage";
-import { AdminApprovalPage } from "./pages/admin/adminApproval";
+import { AdminApprovalPage } from "./pages/admin/AdminApproval";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
