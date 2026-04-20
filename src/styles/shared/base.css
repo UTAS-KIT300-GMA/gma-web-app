@@ -27,7 +27,8 @@
   --gma-sidebar: var(--gma-plum);
   --gma-radius: 14px;
   --gma-radius-sm: 10px;
-  --gma-shadow: 0 6px 22px rgba(64, 15, 50, 0.08);
+  --gma-shadow: 0 1px 10px rgba(64, 15, 50, 0.15);
+  --gma-danger: #b00020;
 
   --gma-font-heading: "Cooper Std", "Bree Serif", Georgia, serif;
   --gma-font-body: "Acumin Pro", "DM Sans", "Segoe UI", Arial, sans-serif;
@@ -38,8 +39,18 @@
   background: var(--gma-bg);
 }
 
+/* Hide scrollbar but keep scrolling functional */
 * {
   box-sizing: border-box;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
 }
 
 html,
@@ -56,6 +67,9 @@ body {
 }
 
 img {
+  border-radius: var(--gma-radius);
+  width: 20rem;
+  height: auto;
   max-width: 100%;
   display: block;
 }
@@ -124,7 +138,9 @@ p {
 
 .page {
   padding: 1.5rem 2rem 3rem;
-  max-width: 1320px;
+  width: 100%;
+  max-width: 100%;
+
 }
 
 .centered {

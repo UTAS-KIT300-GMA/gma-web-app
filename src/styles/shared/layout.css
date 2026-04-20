@@ -8,19 +8,18 @@ page structure, and primary content area layout.
   height: 100vh;
   width: 100%;
   overflow: hidden;
-}
 
-.app-shell.sidebar-expanded {
-  grid-template-columns: 252px 1fr;
-}
-
-.app-shell.sidebar-collapsed {
-  grid-template-columns: 82px 1fr;
 }
 
 .app-main {
-  background: var(--gma-bg);
-  flex-grow: 1;
-  height: 100%;
+  background: var(--gma-surface);
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  /* fixed height so it becomes the scroller */
   overflow-y: auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* stack topbar above content */
 }

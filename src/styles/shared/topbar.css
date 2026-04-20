@@ -1,0 +1,106 @@
+/**
+ * Styles for the topbar component in the web dashboard.
+ * This file defines the layout and appearance of the top navigation bar,
+ * including the title, notification button, and user profile section.
+ */
+
+.app-topbar {
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	display: flex;
+	background-color: var(--gma-bg);
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem;
+	border-bottom: 1px solid rgba(64, 15, 50, 0.08);
+	flex-wrap: wrap;
+	box-shadow: var(--gma-shadow);
+}
+
+.app-topbar-left {
+	display: flex;
+	padding-left: 16px;
+	align-items: center;
+	gap: 0.9rem;
+	flex-wrap: wrap;
+}
+
+.dashboard-title {
+	font-family: var(--gma-font-heading);
+	font-size: 1.15rem;
+	color: var(--gma-plum);
+}
+
+.app-topbar-right {
+	padding-right: 4px;
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	flex-shrink: 0; /* Prevent shrinking */
+}
+
+.dashboard-icon-btn {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1rem;
+	padding: 0.35rem;
+	margin-top: 0.35rem;
+	color: var(--gma-plum);
+
+	&:hover {
+		color: var(--gma-primary);
+		background: transparent;
+		border: none;
+		box-shadow: none;
+	}
+}
+
+.switch-view-btn {
+	background-color: var(--gma-gold);
+	border: 1.5px solid transparent;
+	color: var(--gma-primary-dark);
+	padding: 0.5rem 0.8rem;
+
+	&:hover {
+		background-color: var(--gma-primary-dark);
+		border: 1.5px solid transparent;
+		color: var(--gma-card)
+	}
+}
+
+
+.dashboard-userbox {
+	display: flex;
+	flex-shrink: 0; /* Prevent shrinking */
+	white-space: nowrap; /* Prevent text from wrapping */
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.dashboard-user-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	line-height: 1.15;
+}
+
+.dashboard-user-meta strong {
+	font-size: 0.9rem;
+}
+
+.dashboard-user-meta span {
+	text-transform: capitalize;
+	font-size: 0.78rem;
+	color: var(--gma-muted);
+}
+
+.dashboard-user-avatar {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 0.95rem;
+}

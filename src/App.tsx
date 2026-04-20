@@ -20,6 +20,7 @@ import { EventManagePage as PartnerEventManagePage } from "./pages/partner/Event
 // Admin pages
 import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
+import { AdminApprovalPage } from "./pages/admin/AdminApproval";
 import { EventManagePage as AdminEventManagePage } from "./pages/admin/EventManage";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
@@ -61,18 +62,26 @@ export default function AppRoutes() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/AdminApproval" element={<AdminApprovalPage />} />
 
+      {/* Protected routes - only accessible if logged in, cases to handle:
+      - If partner needs email verification
+      - If partner hasn't completed application
+      - If partner is pending approval
+      - If partner hasn't completed onboarding
+       */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            {!user?.emailVerified ? (
+            {!user?.emailVerified && profile?.role !== "admin" ? (
               <VerifyEmailPage />
             ) : !profile ? (
               <ApplicationPage />
-            ) : profile.status === "pending_approval" ? (
+            ) : profile.role === "partner" &&
+              profile.partnerApprovalStatus === "pending_approval" ? (
               <PendingApprovalPage />
-            ) : !profile.onboardingComplete ? (
+            ) : !profile.onboardingComplete && profile?.role !== "admin" ? (
               <FinalSetupPage />
             ) : (
               <AppLayout />
@@ -80,6 +89,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        {/* Default route - redirect to correct dashboard based on role */}
         <Route
           index
           element={
@@ -91,10 +101,11 @@ export default function AppRoutes() {
           }
         />
 
+        {/* Partner routes */}
         <Route
           path="partner/dashboard"
           element={
-            <RoleGate roles={["partner"]}>
+            <RoleGate roles={["partner", "admin"]}>
               <PartnerDashboardPage />
             </RoleGate>
           }
@@ -112,7 +123,7 @@ export default function AppRoutes() {
         <Route
           path="partner/events/register"
           element={
-            <RoleGate roles={["partner"]}>
+            <RoleGate roles={["partner", "admin"]}>
               <EventRegistrationPage />
             </RoleGate>
           }
@@ -177,6 +188,24 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["admin"]}>
               <AddUserPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="admin/partners/manage"
+          element={
+            <RoleGate roles={["admin"]}>
+              <PendingApprovalPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="admin/partners/approve"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AdminApprovalPage />
             </RoleGate>
           }
         />

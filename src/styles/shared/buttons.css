@@ -5,19 +5,22 @@
 */
 
 .btn-primary {
-  border: none;
-  border-radius: 12px;
-  padding: 0.85rem 1.25rem;
+  border: 1.5px solid transparent;
+  border-radius: var(--gma-radius);
+  padding: 0.8rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
   width: 100%;
   margin-top: 0.25rem;
   background: var(--gma-magenta);
-  color: #fff;
+  color: var(--gma-card);
 }
 
 .btn-primary:hover {
-  background: #8f1c5b;
+  background: var(--gma-card);
+  color: var(--gma-primary);
+  border: 1.5px solid var(--gma-primary);
+  box-shadow: var(--gma-shadow);
 }
 
 .btn-primary:disabled {
@@ -27,12 +30,18 @@
 
 .btn-danger {
   border: none;
-  border-radius: 10px;
-  padding: 0.55rem 0.95rem;
+  border-radius: var(--gma-radius);
+  margin-top: 0.25rem;
+  padding: 0.8rem 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  background: #b00020;
-  color: #fff;
+  background: var(--gma-danger);
+  color: var(--gma-card);
+}
+
+.btn-danger:hover {
+  border: 1.5px solid var(--gma-danger);
+  color: var(--gma-danger);
 }
 
 .btn-danger:disabled {
@@ -41,10 +50,11 @@
 
 .btn-ghost {
   background: transparent;
+  font-size: 14px;
   border: 1px solid rgba(255, 255, 255, 0.36);
-  color: #fff;
-  border-radius: 10px;
-  padding: 0.5rem 0.8rem;
+  color: var(--gma-card);
+  border-radius: var(--gma-radius);
+  padding: 0.4rem 0.6rem;
   cursor: pointer;
 }
 
@@ -64,7 +74,7 @@
   border: 1px solid rgba(64, 15, 50, 0.14);
   background: var(--gma-highlight);
   color: var(--gma-text-on-secondary);
-  border-radius: 14px;
+  border-radius: var(--gma-radius);
   padding: 0.95rem 1.4rem;
   font-weight: 700;
   cursor: pointer;
@@ -93,22 +103,16 @@
 }
 
 .btn-outline {
-  border: 1px solid rgba(64, 15, 50, 0.14);
+  border: 1.5px solid rgba(64, 15, 50, 0.14);
   background: #fff;
   color: var(--gma-plum);
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
+  border-radius: var(--gma-radius);
+  padding: 0.8rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease;
 }
 
 .btn-outline:hover {
