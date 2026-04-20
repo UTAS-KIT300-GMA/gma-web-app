@@ -22,7 +22,11 @@ function formatWhen(ts: Timestamp | undefined) {
   }
 }
 
-function canManageEvent(ev: EventRecord, uid: string | undefined, isAdmin: boolean) {
+function canManageEvent(
+  ev: EventRecord,
+  uid: string | undefined,
+  isAdmin: boolean,
+) {
   if (isAdmin) return true;
   if (!uid) return false;
   return ev.submittedBy === uid;
@@ -41,7 +45,11 @@ export function EventManagePage() {
     setError(null);
     try {
       if (isAdmin) {
-        const snap = await getDocs(collection(db, "events"));
+        const q = query(
+          collection(db, "events"),
+          where("eventApprovalStatus", "==", "approved"),
+        );
+        const snap = await getDocs(q);
         const rows: EventRecord[] = snap.docs.map((d) => ({
           eventId: d.id,
           ...(d.data() as Omit<EventRecord, "eventId">),
@@ -85,9 +93,7 @@ export function EventManagePage() {
 
   async function onDelete(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
-    const ok = window.confirm(
-      `Delete “${ev.title}”? This cannot be undone.`,
-    );
+    const ok = window.confirm(`Delete “${ev.title}”? This cannot be undone.`);
     if (!ok) return;
     setBusyId(ev.eventId);
     try {
@@ -129,12 +135,12 @@ export function EventManagePage() {
               <li key={ev.eventId} className="approval-card event-manage-card">
                 <div className="event-manage-row">
                   {ev.image && (
-                      <img
-                          src={ev.image}
-                          alt={ev.title}
-                          className="event-manage-thumb"
-                          onError={(e) => (e.currentTarget.style.display = 'none')} // Hide if URL is broken
-                      />
+                    <img
+                      src={ev.image}
+                      alt={ev.title}
+                      className="event-manage-thumb"
+                      onError={(e) => (e.currentTarget.style.display = "none")} // Hide if URL is broken
+                    />
                   )}
 
                   <div className="event-manage-content">
@@ -145,7 +151,9 @@ export function EventManagePage() {
                     <p className="approval-desc">{ev.description}</p>
                     <p className="muted small">
                       {ev.address} · {ev.category}
-                      {ev.eventApprovalStatus ? ` · ${ev.eventApprovalStatus}` : ""}
+                      {ev.eventApprovalStatus
+                        ? ` · ${ev.eventApprovalStatus}`
+                        : ""}
                     </p>
                   </div>
                 </div>

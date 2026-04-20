@@ -1,14 +1,17 @@
-import { addDoc, collection, Timestamp, GeoPoint } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  Timestamp,
+  GeoPoint,
+  doc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
-import { useState } from "react";
-import {
-  CalendarDays,
-  Eye,
-  MapPin,
-  Tag,
-  Ticket,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { CalendarDays, Eye, MapPin, Tag, Ticket } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import { CATEGORIES, type Category } from "../../types/event-types";
 
@@ -28,6 +31,7 @@ const mockInitialForm = {
   interestTags: [] as string[],
   ticketAccess: "free_for_all" as TicketAccessType,
 };
+
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -37,8 +41,23 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
+function toDateTimeLocalString(value: unknown): string {
+  if (!value || typeof value !== "object" || !("toDate" in value)) return "";
+
+  try {
+    const date = (value as Timestamp).toDate();
+    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  } catch {
+    return "";
+  }
+}
+
 export function EventRegistrationPage() {
   const { user, profile } = useAuth();
+  const { eventId } = useParams<{ eventId?: string }>();
+
+  const [draftId, setDraftId] = useState<string | null>(eventId ?? null);
   const [title, setTitle] = useState(mockInitialForm.title);
   const [description, setDescription] = useState(mockInitialForm.description);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(
@@ -57,6 +76,7 @@ export function EventRegistrationPage() {
   );
   const [imageName, setImageName] = useState(mockInitialForm.imageName);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImage, setExistingImage] = useState<string>("");
   const [interestTags, setInterestTags] = useState<string[]>(
     mockInitialForm.interestTags,
   );
@@ -64,6 +84,95 @@ export function EventRegistrationPage() {
     mockInitialForm.ticketAccess,
   );
   const [showPreview, setShowPreview] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(false);
+
+  useEffect(() => {
+    async function loadExistingEvent() {
+      if (!eventId || !user) return;
+
+      setLoadingExisting(true);
+
+      try {
+        const snap = await getDoc(doc(db, "events", eventId));
+
+        if (!snap.exists()) {
+          alert("Event not found.");
+          return;
+        }
+
+        const data = snap.data();
+
+        const currentOwner = data.submittedBy;
+        const currentUserId = profile?.partnerId ?? user.uid;
+
+        if (currentOwner && currentOwner !== currentUserId) {
+          alert("You do not have permission to edit this event.");
+          return;
+        }
+
+        setDraftId(snap.id);
+        setTitle(data.title ?? "");
+        setDescription(data.description ?? "");
+
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          setSelectedCategories(data.categories as Category[]);
+        } else if (data.category) {
+          setSelectedCategories([data.category as Category]);
+        } else {
+          setSelectedCategories(["connect"]);
+        }
+
+        setAddress(data.address ?? "");
+
+        if (data.location) {
+          setCoordinates({
+            lat: data.location.latitude,
+            lng: data.location.longitude,
+          });
+        } else {
+          setCoordinates(null);
+        }
+
+        setDateTime(toDateTimeLocalString(data.dateTime));
+        setTotalTickets(data.totalTickets ?? 50);
+        setExistingImage(data.image ?? "");
+        setImageName(data.image ? "Current image" : "");
+        setImageFile(null);
+        setInterestTags(
+          Array.isArray(data.interestTags) ? data.interestTags : [],
+        );
+        setTicketAccess(
+          data.ticketAccess === "members_only"
+            ? "members_only"
+            : "free_for_all",
+        );
+      } catch (err) {
+        console.error("Failed to load event:", err);
+        alert("❌ Failed to load event");
+      } finally {
+        setLoadingExisting(false);
+      }
+    }
+
+    loadExistingEvent();
+  }, [eventId, user, profile]);
+
+  function resetForm() {
+    setDraftId(null);
+    setTitle("");
+    setDescription("");
+    setSelectedCategories(["connect"]);
+    setAddress("");
+    setCoordinates(null);
+    setDateTime("");
+    setTotalTickets(50);
+    setImageName("");
+    setImageFile(null);
+    setExistingImage("");
+    setInterestTags([]);
+    setTicketAccess("free_for_all");
+    setShowPreview(false);
+  }
 
   function toggleTag(key: string) {
     setInterestTags((prev) =>
@@ -79,8 +188,43 @@ export function EventRegistrationPage() {
     );
   }
 
+  async function buildEventData(status: "draft" | "pending") {
+    const partnerId = profile?.partnerId ?? user?.uid ?? "";
+    const imageBase64 = imageFile
+      ? await readFileAsBase64(imageFile)
+      : existingImage;
+
+    return {
+      title,
+      description,
+      category: selectedCategories[0] ?? "connect",
+      categories: selectedCategories,
+      address,
+      location: coordinates
+        ? new GeoPoint(coordinates.lat, coordinates.lng)
+        : null,
+      dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
+      totalTickets,
+      image: imageBase64,
+      type: ticketAccess === "free_for_all" ? "free" : "paid",
+      ticketAccess,
+      memberPrice: 0,
+      nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
+      ticketPrices: {
+        member: 0,
+        nonMember: ticketAccess === "members_only" ? 1 : 0,
+      },
+      interestTags,
+      eventApprovalStatus: status,
+      submittedBy: partnerId,
+      status: "available",
+      updatedAt: Timestamp.now(),
+    };
+  }
+
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
+
     if (!user) {
       alert("You must be logged in");
       return;
@@ -92,73 +236,58 @@ export function EventRegistrationPage() {
     }
 
     try {
-      const partnerId = profile?.partnerId ?? user.uid;
-      const imageBase64 = imageFile ? await readFileAsBase64(imageFile) : "";
-      const eventData = {
-        title,
-        description,
-        category: selectedCategories[0] ?? "connect",
-        categories: selectedCategories,
+      const eventData = await buildEventData("pending");
 
-        address,
-
-        location: coordinates
-          ? new GeoPoint(coordinates.lat, coordinates.lng)
-          : null,
-
-        dateTime: Timestamp.fromDate(new Date(dateTime)),
-
-        totalTickets,
-        ticketsSold: 0,
-
-        image: imageBase64,
-
-        type: ticketAccess === "free_for_all" ? "free" : "paid",
-        ticketAccess,
-
-        memberPrice: 0,
-        nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
-
-        ticketPrices: {
-          member: 0,
-          nonMember: ticketAccess === "members_only" ? 1 : 0,
-        },
-
-        interestTags,
-
-        approvalStatus: "pending",
-
-        submittedBy: partnerId,
-
-        status: "available",
-
-        createdAt: Timestamp.now(),
-      };
-
-      await addDoc(collection(db, "events"), eventData);
+      if (draftId) {
+        await updateDoc(doc(db, "events", draftId), eventData);
+      } else {
+        await addDoc(collection(db, "events"), {
+          ...eventData,
+          ticketsSold: 0,
+          createdAt: Timestamp.now(),
+        });
+      }
 
       alert("✅ Event submitted successfully!");
-
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setSelectedCategories(["connect"]);
-      setAddress("");
-      setCoordinates(null);
-      setDateTime("");
-      setTotalTickets(50);
-      setImageName("");
-      setImageFile(null);
-      setInterestTags([]);
-      setTicketAccess("free_for_all");
-      setShowPreview(false);
+      resetForm();
     } catch (err) {
       console.error("Event submission error:", err);
       alert("❌ Failed to submit event");
     }
   }
 
-  function handleMockSaveDraft() {}
+  async function handleSaveDraft() {
+    if (!user) {
+      alert("You must be logged in");
+      return;
+    }
+
+    if (!title.trim()) {
+      alert("Please enter at least an event title before saving a draft.");
+      return;
+    }
+
+    try {
+      const eventData = await buildEventData("draft");
+
+      if (draftId) {
+        await updateDoc(doc(db, "events", draftId), eventData);
+        alert("✅ Draft updated successfully!");
+      } else {
+        const newDoc = await addDoc(collection(db, "events"), {
+          ...eventData,
+          ticketsSold: 0,
+          createdAt: Timestamp.now(),
+        });
+
+        setDraftId(newDoc.id);
+        alert("✅ Draft saved successfully!");
+      }
+    } catch (err) {
+      console.error("Draft save error:", err);
+      alert("❌ Failed to save draft");
+    }
+  }
 
   function handleImageChange(file?: File) {
     if (!file) return;
@@ -170,11 +299,18 @@ export function EventRegistrationPage() {
     setImageName(file.name);
   }
 
+  if (loadingExisting) {
+    return (
+      <div className="page dashboard-page event-create-page">
+        <p>Loading event...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page dashboard-page event-create-page">
-
       <section className="dashboard-header event-create-header">
-        <h1>Create Event</h1>
+        <h1>{draftId ? "Edit Event" : "Create Event"}</h1>
         <p className="muted dashboard-hero-copy">
           Draft and submit your event details for review before publishing.
         </p>
@@ -236,7 +372,6 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-icon">
                 <MapPin size={16} strokeWidth={2} />
-
                 <EventLocationInput
                   initialAddress={address}
                   onLocationSelect={(location: EventLocation) => {
@@ -247,7 +382,6 @@ export function EventRegistrationPage() {
                     });
                   }}
                 />
-                {/* ------------------------------------------------------- */}
               </div>
             </label>
 
@@ -398,7 +532,7 @@ export function EventRegistrationPage() {
           <button
             type="button"
             className="btn-secondary event-action-btn"
-            onClick={handleMockSaveDraft}
+            onClick={handleSaveDraft}
           >
             Save draft
           </button>

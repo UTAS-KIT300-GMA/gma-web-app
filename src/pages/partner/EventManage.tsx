@@ -1,49 +1,164 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, Eye, Trash2 } from "lucide-react";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../../hooks/useAuth";
+import { Link } from "react-router-dom";
 
-type EventRow = {
+type FirestoreEventRow = {
   id: string;
   title: string;
-  date: string;
-  category: string;
-  registrations: number;
-  status: "Published" | "Approved" | "Pending";
+  dateTime?: Timestamp | null;
+  category?: string;
+  categories?: string[];
+  ticketsSold?: number;
+  totalTickets?: number;
+  eventApprovalStatus?: "draft" | "pending" | "approved" | "rejected";
+  submittedBy?: string;
 };
 
-const mockEvents: EventRow[] = [
-  {
-    id: "1",
-    title: "Community Outreach Program",
-    date: "2024-07-15",
-    category: "Connect",
-    registrations: 120,
-    status: "Published",
-  },
-  {
-    id: "2",
-    title: "Startup Pitch Competition",
-    date: "2024-08-01",
-    category: "Grow",
-    registrations: 85,
-    status: "Approved",
-  },
-  {
-    id: "3",
-    title: "Wellness Workshop Series",
-    date: "2024-09-10",
-    category: "Thrive",
-    registrations: 50,
-    status: "Pending",
-  },
-];
+function formatDate(ts?: Timestamp | null) {
+  if (!ts?.toDate) return "—";
+  try {
+    return ts.toDate().toLocaleDateString();
+  } catch {
+    return "—";
+  }
+}
+
+function mapStatus(status?: string) {
+  switch (status) {
+    case "draft":
+      return "Draft";
+    case "pending":
+      return "Pending";
+    case "approved":
+      return "Approved";
+    case "rejected":
+      return "Rejected";
+    default:
+      return "Unknown";
+  }
+}
 
 export function EventManagePage() {
+  const { user, profile } = useAuth();
   const [eventStatus, setEventStatus] = useState("All");
   const [dateRange, setDateRange] = useState("All Time");
+  const [events, setEvents] = useState<FirestoreEventRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadEvents() {
+      if (!user) {
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const partnerId = profile?.partnerId ?? user.uid;
+
+        const q = query(
+          collection(db, "events"),
+          where("submittedBy", "==", partnerId),
+        );
+
+        const snap = await getDocs(q);
+
+        const rows: FirestoreEventRow[] = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<FirestoreEventRow, "id">),
+        }));
+
+        rows.sort((a, b) => {
+          const ta = a.dateTime?.toMillis?.() ?? 0;
+          const tb = b.dateTime?.toMillis?.() ?? 0;
+          return tb - ta;
+        });
+
+        setEvents(rows);
+      } catch (error) {
+        console.error("Failed to load partner events:", error);
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadEvents();
+  }, [user, profile]);
+
+  async function handleDelete(eventId: string, title: string) {
+    const ok = window.confirm(`Delete "${title}"? This cannot be undone.`);
+    if (!ok) return;
+
+    setBusyId(eventId);
+    try {
+      await deleteDoc(doc(db, "events", eventId));
+      setEvents((prev) => prev.filter((event) => event.id !== eventId));
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      alert("❌ Failed to delete event");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const filteredEvents = useMemo(() => {
+    let filtered = [...events];
+
+    if (eventStatus !== "All") {
+      filtered = filtered.filter(
+        (event) => mapStatus(event.eventApprovalStatus) === eventStatus,
+      );
+    }
+
+    const now = new Date();
+
+    if (dateRange === "Last 7 Days") {
+      const cutoff = new Date();
+      cutoff.setDate(now.getDate() - 7);
+      filtered = filtered.filter((event) => {
+        const date = event.dateTime?.toDate?.();
+        return date ? date >= cutoff : false;
+      });
+    }
+
+    if (dateRange === "Last 30 Days") {
+      const cutoff = new Date();
+      cutoff.setDate(now.getDate() - 30);
+      filtered = filtered.filter((event) => {
+        const date = event.dateTime?.toDate?.();
+        return date ? date >= cutoff : false;
+      });
+    }
+
+    if (dateRange === "This Month") {
+      filtered = filtered.filter((event) => {
+        const date = event.dateTime?.toDate?.();
+        return date
+          ? date.getMonth() === now.getMonth() &&
+              date.getFullYear() === now.getFullYear()
+          : false;
+      });
+    }
+
+    return filtered;
+  }, [events, eventStatus, dateRange]);
 
   return (
     <div className="page dashboard-page partner-events-page">
-
       <section className="dashboard-header">
         <h1>Event Management</h1>
         <p className="muted dashboard-hero-copy">
@@ -66,9 +181,10 @@ export function EventManagePage() {
               onChange={(e) => setEventStatus(e.target.value)}
             >
               <option>All</option>
-              <option>Published</option>
-              <option>Approved</option>
+              <option>Draft</option>
               <option>Pending</option>
+              <option>Approved</option>
+              <option>Rejected</option>
             </select>
           </label>
 
@@ -95,66 +211,87 @@ export function EventManagePage() {
         </div>
 
         <div className="partner-events-table-wrap">
-          <table className="partner-events-table">
-            <thead>
-              <tr>
-                <th>Event Title</th>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Registrations</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+          {loading ? (
+            <p>Loading events...</p>
+          ) : filteredEvents.length === 0 ? (
+            <p>No events found.</p>
+          ) : (
+            <table className="partner-events-table">
+              <thead>
+                <tr>
+                  <th>Event Title</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Registrations</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {mockEvents.map((event) => (
-                <tr key={event.id}>
-                  <td>{event.title}</td>
-                  <td>{event.date}</td>
-                  <td>{event.category}</td>
-                  <td>{event.registrations}</td>
-                  <td>
-                    <span
-                      className={`partner-event-status partner-event-status-${event.status.toLowerCase()}`}
-                    >
-                      {event.status}
-                    </span>
-                  </td>
-                  <td>
-                      <div className="partner-events-actions">
-                        <button
-                            type="button"
+              <tbody>
+                {filteredEvents.map((event) => {
+                  const displayStatus = mapStatus(event.eventApprovalStatus);
+
+                  return (
+                    <tr key={event.id}>
+                      <td>{event.title || "Untitled event"}</td>
+                      <td>{formatDate(event.dateTime)}</td>
+                      <td>
+                        {event.category ||
+                          event.categories?.[0] ||
+                          "Uncategorised"}
+                      </td>
+                      <td>{event.ticketsSold ?? 0}</td>
+                      <td>
+                        <span
+                          className={`partner-event-status partner-event-status-${displayStatus.toLowerCase()}`}
+                        >
+                          {displayStatus}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="partner-events-actions">
+                          <Link
+                            to={`/partner/events/register/${event.id}`}
                             className="icon-action-btn"
                             aria-label="Edit event"
                             title="Edit"
-                        >
+                          >
                             <Pencil size={16} strokeWidth={2} />
+                          </Link>
+
+                          <button
+                            type="button"
+                            className="icon-action-btn"
+                            aria-label="View event details"
+                            title="View Details"
+                            onClick={() =>
+                              alert(`View details for "${event.title}"`)
+                            }
+                          >
+                            <Eye size={16} strokeWidth={2} />
                           </button>
 
                           <button
-                              type="button"
-                              className="icon-action-btn"
-                              aria-label="View event details"
-                              title="View Details"
+                            type="button"
+                            className="icon-action-btn danger"
+                            aria-label="Delete event"
+                            title="Delete"
+                            disabled={busyId === event.id}
+                            onClick={() =>
+                              handleDelete(event.id, event.title || "Untitled")
+                            }
                           >
-                              <Eye size={16} strokeWidth={2} />
-                            </button>
-
-                            <button
-                                type="button"
-                                className="icon-action-btn danger"
-                                aria-label="Delete event"
-                                title="Delete"
-                            >
-                                <Trash2 size={16} strokeWidth={2} />
-                              </button>
-                          </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                            <Trash2 size={16} strokeWidth={2} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
     </div>
