@@ -23,7 +23,16 @@ import { Tag } from "lucide-react";
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
   try {
-    return ts.toDate().toLocaleString();
+    const date = ts.toDate();
+    return date
+      .toLocaleString("en-AU", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
   } catch {
     return "—";
   }
@@ -183,7 +192,7 @@ export function EventApprovalPage() {
                   <span className="muted small">
                     Date & Time: {formatWhen(ev.dateTime)}
                   </span>
-                  <p className="muted small">
+                  <p className="muted small capitalize">
                     Location: {ev.address} · Category: {ev.category} · by{" "}
                     {ev.submittedBy
                       ? userInfo[ev.submittedBy]?.name &&

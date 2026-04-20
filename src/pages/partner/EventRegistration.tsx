@@ -1,14 +1,18 @@
-import { addDoc, collection, Timestamp, GeoPoint } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  updateDoc,
+  Timestamp,
+  GeoPoint,
+} from "firebase/firestore";
+import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import { useState } from "react";
-import {
-  CalendarDays,
-  Eye,
-  MapPin,
-  Tag,
-  Ticket,
-} from "lucide-react";
+import { CalendarDays, Eye, MapPin, Tag, Ticket } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import { CATEGORIES, type Category } from "../../types/event-types";
 
@@ -28,6 +32,7 @@ const mockInitialForm = {
   interestTags: [] as string[],
   ticketAccess: "free_for_all" as TicketAccessType,
 };
+
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -38,6 +43,9 @@ function readFileAsBase64(file: File): Promise<string> {
 }
 
 export function EventRegistrationPage() {
+  const { eventId } = useParams();
+  const isEditing = !!eventId;
+
   const { user, profile } = useAuth();
   const [title, setTitle] = useState(mockInitialForm.title);
   const [description, setDescription] = useState(mockInitialForm.description);
@@ -78,6 +86,38 @@ export function EventRegistrationPage() {
         : [...prev, category],
     );
   }
+
+  // Load existing event data if editing
+  useEffect(() => {
+    if (!eventId) return;
+
+    const fetchEvent = async () => {
+      const snap = await getDoc(doc(db, "events", eventId));
+      if (snap.exists()) {
+        const data = snap.data();
+        setTitle(data.title ?? "");
+        setDescription(data.description ?? "");
+        setAddress(data.address ?? "");
+        setDateTime(
+          data.dateTime?.toDate
+            ? data.dateTime.toDate().toISOString().slice(0, 16)
+            : "",
+        );
+        setTotalTickets(data.totalTickets ?? 50);
+        setSelectedCategories(data.categories ?? ["connect"]);
+        setInterestTags(data.interestTags ?? []);
+        setTicketAccess(data.ticketAccess ?? "free_for_all");
+        if (data.location) {
+          setCoordinates({
+            lat: data.location.latitude,
+            lng: data.location.longitude,
+          });
+        }
+      }
+    };
+
+    fetchEvent();
+  }, [eventId]);
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -135,23 +175,37 @@ export function EventRegistrationPage() {
         createdAt: Timestamp.now(),
       };
 
-      await addDoc(collection(db, "events"), eventData);
+      {
+        /* For editing, we update the existing document. For new events, we create a new document. */
+      }
+      if (isEditing) {
+        await updateDoc(doc(db, "events", eventId), eventData);
+        alert("✅ Event updated successfully!");
+      } else {
+        await addDoc(collection(db, "events"), {
+          ...eventData,
+          ticketsSold: 0,
+          approvalStatus: "pending",
+          submittedBy: partnerId,
+          status: "available",
+          createdAt: Timestamp.now(),
+        });
 
-      alert("✅ Event submitted successfully!");
-
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setSelectedCategories(["connect"]);
-      setAddress("");
-      setCoordinates(null);
-      setDateTime("");
-      setTotalTickets(50);
-      setImageName("");
-      setImageFile(null);
-      setInterestTags([]);
-      setTicketAccess("free_for_all");
-      setShowPreview(false);
+        alert("✅ Event submitted successfully!");
+        // reset form only on create
+        setTitle("");
+        setDescription("");
+        setSelectedCategories(["connect"]);
+        setAddress("");
+        setCoordinates(null);
+        setDateTime("");
+        setTotalTickets(50);
+        setImageName("");
+        setImageFile(null);
+        setInterestTags([]);
+        setTicketAccess("free_for_all");
+        setShowPreview(false);
+      }
     } catch (err) {
       console.error("Event submission error:", err);
       alert("❌ Failed to submit event");
@@ -172,11 +226,12 @@ export function EventRegistrationPage() {
 
   return (
     <div className="page dashboard-page event-create-page">
-
       <section className="dashboard-header event-create-header">
-        <h1>Create Event</h1>
+        <h1>{isEditing ? "Edit Event" : "Create Event"}</h1>
         <p className="muted dashboard-hero-copy">
-          Draft and submit your event details for review before publishing.
+          {isEditing
+            ? "Update the event details below."
+            : "Draft and submit your event details for review before publishing."}
         </p>
       </section>
 
