@@ -54,8 +54,9 @@ function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
           ? (rawRole as UserRole)
           : "general";
 
-  const rawStatus = data.status as string | undefined;
-  const partnerApprovalStatus: AccountStatus = 
+  const rawStatus = data.partnerApprovalStatus as string | undefined;
+
+  const partnerApprovalStatus: AccountStatus =
       rawStatus === "approved" || rawStatus === "rejected" || rawStatus === "pending_approval"
           ? (rawStatus as AccountStatus)
           : "pending_approval";
