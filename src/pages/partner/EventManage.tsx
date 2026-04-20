@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, CircleUserRound } from "lucide-react";
+import { Bell, CircleUserRound, Pencil, Eye, Trash2 } from "lucide-react";
 
 type EventRow = {
   id: string;
@@ -147,17 +147,34 @@ export function EventManagePage() {
                     </span>
                   </td>
                   <td>
-                    <div className="partner-events-actions">
-                      <button type="button" className="btn-small btn-primary">
-                        Edit
-                      </button>
-                      <button type="button" className="btn-small btn-outline">
-                        View Details
-                      </button>
-                      <button type="button" className="btn-small btn-danger">
-                        Delete
-                      </button>
-                    </div>
+                      <div className="partner-events-actions">
+                        <button
+                            type="button"
+                            className="icon-action-btn"
+                            aria-label="Edit event"
+                            title="Edit"
+                        >
+                            <Pencil size={16} strokeWidth={2} />
+                          </button>
+
+                          <button
+                              type="button"
+                              className="icon-action-btn"
+                              aria-label="View event details"
+                              title="View Details"
+                          >
+                              <Eye size={16} strokeWidth={2} />
+                            </button>
+
+                            <button
+                                type="button"
+                                className="icon-action-btn danger"
+                                aria-label="Delete event"
+                                title="Delete"
+                            >
+                                <Trash2 size={16} strokeWidth={2} />
+                              </button>
+                          </div>
                   </td>
                 </tr>
               ))}

@@ -607,40 +607,48 @@ Partner event creation and submission UI
 .partner-events-table th,
 .partner-events-table td {
   text-align: left;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid #e8dcd3;
   vertical-align: middle;
 }
 
 .partner-events-table th {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #4b1832;
   background: #f8f2ec;
 }
 
 .partner-events-table td {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #5f5a63;
 }
 
 .partner-events-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
-.btn-small {
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
+.icon-action-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0; 
+  border-radius: 8px;
+  border: 1px solid #e2d5cc;
+  background: #fff;
+  color: #4b1832;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.btn-danger {
-  border: 1px solid #d96b6b;
-  background: #fff5f5;
+.icon-action-btn.danger {
   color: #b42318;
+  border-color: #f0c7c2;
+  background: #fff7f6;
 }
 
 .partner-event-status {
@@ -665,4 +673,11 @@ Partner event creation and submission UI
 .partner-event-status-pending {
   background: #fff4e5;
   color: #b54708;
+}
+
+.icon-action-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: #4b1832;
+  display: block;
 }
