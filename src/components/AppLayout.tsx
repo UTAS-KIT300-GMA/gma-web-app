@@ -108,6 +108,15 @@ export function AppLayout() {
           )}
 
           {effectiveIsAdmin && (
+            <NavLink to="/admin/events/approval" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <CircleCheckBig size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Approve Events</span>}
+            </NavLink>
+          )}
+
+          {effectiveIsAdmin && (
             <NavLink to="/admin/analytics" className={linkClass}>
               <span className="sidebar-link-icon">
                 <ChartColumn size={20} strokeWidth={2.2} />
@@ -144,15 +153,6 @@ export function AppLayout() {
             </span>
             {sidebarExpanded && <span>Settings</span>}
           </a>
-
-          {effectiveIsAdmin && (
-            <NavLink to="/admin/events/approval" className={linkClass}>
-              <span className="sidebar-link-icon">
-                <CircleCheckBig size={20} strokeWidth={2.2} />
-              </span>
-              {sidebarExpanded && <span>Approve Events</span>}
-            </NavLink>
-          )}
         </nav>
 
         <div className="sidebar-footer">

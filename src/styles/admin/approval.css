@@ -17,15 +17,63 @@ action areas, and review input sections.
   border-radius: var(--gma-radius);
   padding: 1.25rem;
   border: 1px solid var(--gma-border);
+  text-transform: capitalize;
+
+  .small.muted {
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--gma-muted);
+    margin: 0;
+  }
+
+  .mini-tag {
+    display: flex;
+    padding: 0.4rem 0.5rem 0.25rem;
+    gap: 0.25rem;
+    background-color: var(--gma-gold);
+    color: var(--gma-primary-dark);
+  }
 }
 
-.approval-head {
+.approval-inner {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5rem;
-  align-items: baseline;
-  margin-bottom: 0.5rem;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.approval-img {
+  width: 30%;
+  align-self: stretch; /* make image container take full height of card */
+  flex-shrink: 0;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--gma-radius);
+  overflow: hidden;
+}
+
+.approval-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.approval-img-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--gma-border);
+  border-radius: var(--gma-radius);
+}
+
+.approval-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.approval-head h3{
+  margin: 0.5rem 0 0;
+  font-size: 1.5rem;
+
 }
 
 .approval-desc {
@@ -35,18 +83,62 @@ action areas, and review input sections.
 }
 
 .approval-actions {
+  width: 40%;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   margin-top: 0.75rem;
+  margin-left: auto; /* push actions to the right */
+
+  .btn-primary {
+    flex: 1; 
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+
+  }
+
+  .btn-danger {
+    flex: 1;
+    flex-shrink: 0;
+    padding: 0.45rem 0.75rem;
+  }
 }
 
-.approval-actions input[type="text"] {
-  flex: 1;
-  min-width: 160px;
+.rejection-input {
+      display: none;
+      /* hidden by default */
+      width: 100%;
+      margin-top: 0.5rem;
+}
+
+.rejection-input.visible {
+  border-top: 1px solid var(--gma-border);
+  width: 100%;
+  margin-left: auto;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+}
+
+.rejection-input textarea {
+  flex: 11;
+  padding: 0.5rem;
+  border-radius: var(--gma-radius);
   border: 1px solid var(--gma-border);
-  border-radius: 10px;
-  padding: 0.45rem 0.6rem;
-  background: #fff;
+  resize: none; /* prevent resizing */
+  min-height: 38px; /* ensure it doesn't collapse when empty */
+  height: auto;
+  font-size: 0.95rem;
+  
+}
+
+.rejection-input .btn-outline {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  width: auto;
+  margin-top: 0;
 }
