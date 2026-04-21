@@ -17,7 +17,10 @@ action areas, and review input sections.
   border-radius: var(--gma-radius);
   padding: 1.25rem;
   border: 1px solid var(--gma-border);
-  text-transform: capitalize;
+
+  .capitalize {
+    text-transform: capitalize;
+  }
 
   .small.muted {
     text-align: left;
@@ -39,6 +42,7 @@ action areas, and review input sections.
   display: flex;
   gap: 1.25rem;
   align-items: stretch;
+  width: 100%;
 }
 
 .approval-img {
@@ -48,6 +52,7 @@ action areas, and review input sections.
   aspect-ratio: 16 / 9;
   border-radius: var(--gma-radius);
   overflow: hidden;
+  min-width: 351px; /* ensure a minimum height for the image container */
 }
 
 .approval-img img {
@@ -65,9 +70,11 @@ action areas, and review input sections.
 
 .approval-content {
   flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  min-width: 0; /* allow content to shrink properly */
 }
 
 .approval-head h3{
@@ -88,8 +95,10 @@ action areas, and review input sections.
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  margin-top: auto; /* push actions to the bottom of the card */
   margin-left: auto; /* push actions to the right */
+  align-self: flex-end; /* align actions to the bottom of the card */
 
   .btn-primary {
     flex: 1; 

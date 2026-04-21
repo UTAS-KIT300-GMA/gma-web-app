@@ -3,38 +3,81 @@ event-manage.css
 Styles for event management pages including event action controls,
 event rows, and event thumbnail presentation.
 */
-.event-manage-actions {
+
+.event-manage-controls {
   display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
   align-items: center;
 }
 
-.event-manage-actions .btn-inline {
-  width: auto;
-  margin-top: 0;
-  padding: 0.5rem 1rem;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.event-manage-actions a.btn-primary {
-  background: var(--gma-gold);
-  color: var(--gma-plum);
-}
-
-.event-manage-row {
+.event-manage-search {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid var(--gma-border);
+  border-radius: var(--gma-radius);
+  padding: 0.5rem 0.75rem;
+  background: var(--gma-card);
+
+  .search-icon {
+    margin-bottom: 4px;
+  }
 }
 
-.event-manage-thumb {
-  max-height: 150px;
-  object-fit: cover;
-  border-radius: 10px;
-  background-color: #f0f0f0;
+.event-manage-search input {
+  border: none;
+  outline: none;
+  margin-top: 2px;
+  flex: 1;
+  font-size: 0.9rem;
+  background: transparent;
+  color: var(--gma-text);
 }
+
+.event-manage-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.event-manage-filters select {
+  border: 1px solid var(--gma-border);
+  border-radius: var(--gma-radius);
+  padding: 0.7rem 0.75rem;
+  font-size: 0.9rem;
+  background: var(--gma-card);
+  color: var(--gma-text);
+  cursor: pointer;
+
+}
+
+.approval-actions.event-manage-actions {
+  display: flex;
+  margin-top: auto;
+  margin-left: auto; /* push actions to the right */
+
+  .btn-secondary {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    padding: 0.45rem 0.75rem;
+    transition: none;
+
+    &:hover {
+      transform: none;
+      background-color: transparent;
+      border: 1.5px solid var(--gma-gold);
+      color: var(--gma-primary-dark);
+    }
+
+  }
+
+  .btn-danger {
+    flex: 1;
+  }
+}
+

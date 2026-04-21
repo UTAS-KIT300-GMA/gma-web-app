@@ -1,17 +1,24 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
+  updateDoc,
   Timestamp,
   GeoPoint,
-  doc,
-  updateDoc,
-  getDoc,
 } from "firebase/firestore";
+import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { CalendarDays, Eye, MapPin, Tag, Ticket } from "lucide-react";
+import { useState } from "react";
+import {
+  CalendarDays, 
+  Eye,
+  MapPin,
+  Tag,
+  Ticket,
+} from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import { CATEGORIES, type Category } from "../../types/event-types";
 
@@ -54,6 +61,9 @@ function toDateTimeLocalString(value: unknown): string {
 }
 
 export function EventRegistrationPage() {
+  const { eventId } = useParams();
+  const isEditing = !!eventId;
+
   const { user, profile } = useAuth();
   const { eventId } = useParams<{ eventId?: string }>();
 
@@ -188,40 +198,6 @@ export function EventRegistrationPage() {
     );
   }
 
-  async function buildEventData(status: "draft" | "pending") {
-    const partnerId = profile?.partnerId ?? user?.uid ?? "";
-    const imageBase64 = imageFile
-      ? await readFileAsBase64(imageFile)
-      : existingImage;
-
-    return {
-      title,
-      description,
-      category: selectedCategories[0] ?? "connect",
-      categories: selectedCategories,
-      address,
-      location: coordinates
-        ? new GeoPoint(coordinates.lat, coordinates.lng)
-        : null,
-      dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
-      totalTickets,
-      image: imageBase64,
-      type: ticketAccess === "free_for_all" ? "free" : "paid",
-      ticketAccess,
-      memberPrice: 0,
-      nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
-      ticketPrices: {
-        member: 0,
-        nonMember: ticketAccess === "members_only" ? 1 : 0,
-      },
-      interestTags,
-      eventApprovalStatus: status,
-      submittedBy: partnerId,
-      status: "available",
-      updatedAt: Timestamp.now(),
-    };
-  }
-
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
 
@@ -236,20 +212,66 @@ export function EventRegistrationPage() {
     }
 
     try {
-      const eventData = await buildEventData("pending");
+      const partnerId = profile?.partnerId ?? user.uid;
+      const imageBase64 = imageFile ? await readFileAsBase64(imageFile) : "";
+      const eventData = {
+        title,
+        description,
+        category: selectedCategories[0] ?? "connect",
+        categories: selectedCategories,
 
-      if (draftId) {
-        await updateDoc(doc(db, "events", draftId), eventData);
-      } else {
-        await addDoc(collection(db, "events"), {
-          ...eventData,
-          ticketsSold: 0,
-          createdAt: Timestamp.now(),
-        });
-      }
+        address,
+
+        location: coordinates
+          ? new GeoPoint(coordinates.lat, coordinates.lng)
+          : null,
+
+        dateTime: Timestamp.fromDate(new Date(dateTime)),
+
+        totalTickets,
+        ticketsSold: 0,
+
+        image: imageBase64,
+
+        type: ticketAccess === "free_for_all" ? "free" : "paid",
+        ticketAccess,
+
+        memberPrice: 0,
+        nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
+
+        ticketPrices: {
+          member: 0,
+          nonMember: ticketAccess === "members_only" ? 1 : 0,
+        },
+
+        interestTags,
+
+        approvalStatus: "pending",
+
+        submittedBy: partnerId,
+
+        status: "available",
+
+        createdAt: Timestamp.now(),
+      };
+
+      await addDoc(collection(db, "events"), eventData);
 
       alert("✅ Event submitted successfully!");
-      resetForm();
+
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setSelectedCategories(["connect"]);
+      setAddress("");
+      setCoordinates(null);
+      setDateTime("");
+      setTotalTickets(50);
+      setImageName("");
+      setImageFile(null);
+      setInterestTags([]);
+      setTicketAccess("free_for_all");
+      setShowPreview(false);
     } catch (err) {
       console.error("Event submission error:", err);
       alert("❌ Failed to submit event");
@@ -310,9 +332,11 @@ export function EventRegistrationPage() {
   return (
     <div className="page dashboard-page event-create-page">
       <section className="dashboard-header event-create-header">
-        <h1>{draftId ? "Edit Event" : "Create Event"}</h1>
+        <h1>Create Event</h1>
         <p className="muted dashboard-hero-copy">
-          Draft and submit your event details for review before publishing.
+          {isEditing
+            ? "Update the event details below."
+            : "Draft and submit your event details for review before publishing."}
         </p>
       </section>
 
