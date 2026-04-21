@@ -79,7 +79,11 @@ export function EventManagePage() {
     setError(null);
     try {
       if (isAdmin) {
-        const snap = await getDocs(collection(db, "events"));
+        const q = query(
+          collection(db, "events"),
+          where("eventApprovalStatus", "==", "approved"),
+        );
+        const snap = await getDocs(q);
         const rows: EventRecord[] = snap.docs.map((d) => ({
           eventId: d.id,
           ...(d.data() as Omit<EventRecord, "eventId">),
@@ -188,6 +192,7 @@ export function EventManagePage() {
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
@@ -226,7 +231,6 @@ export function EventManagePage() {
             const allowed = canManageEvent(ev, user?.uid, isAdmin);
             return (
               <li key={ev.eventId} className="approval-card event-manage-card">
-                <div className="approval-inner">
                   <div className="approval-inner">
                     <div className="approval-img">
                       {ev.image ? (
@@ -274,7 +278,6 @@ export function EventManagePage() {
                         </div>
                       )}
                     </div>
-                  </div>
                 </div>
               </li>
             );
