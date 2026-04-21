@@ -28,28 +28,31 @@ import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
 
 import React from "react";
-import type {UserProfile} from "./types/user-types.ts";
-import {type User} from "firebase/auth";
+import type { UserProfile } from "./types/user-types.ts";
+import { type User } from "firebase/auth";
 
 interface RouteGuardProps {
-    user: User | null | undefined;
-    profile: UserProfile | null | undefined;
+  user: User | null | undefined;
+  profile: UserProfile | null | undefined;
 }
 
 const RouteGuardContent: React.FC<RouteGuardProps> = ({ user, profile }) => {
-    if (!user?.emailVerified && profile?.role !== "admin") {
-        return <VerifyEmailPage />;
-    }
-    if (!profile) {
-        return <ApplicationPage />;
-    }
-    if (profile.role === "partner" && profile.partnerApprovalStatus === "pending_approval") {
-        return <PendingApprovalPage />;
-    }
-    if (!profile.onboardingComplete && profile.role !== "admin") {
-        return <FinalSetupPage />;
-    }
-    return <AppLayout />;
+  if (!user?.emailVerified && profile?.role !== "admin") {
+    return <VerifyEmailPage />;
+  }
+  if (!profile) {
+    return <ApplicationPage />;
+  }
+  if (
+    profile.role === "partner" &&
+    profile.partnerApprovalStatus === "pending_approval"
+  ) {
+    return <PendingApprovalPage />;
+  }
+  if (!profile.onboardingComplete && profile.role !== "admin") {
+    return <FinalSetupPage />;
+  }
+  return <AppLayout />;
 };
 
 function LoginRoute() {
@@ -98,9 +101,9 @@ export default function AppRoutes() {
       <Route
         path="/"
         element={
-            <ProtectedRoute>
-                <RouteGuardContent user={user} profile={profile} />
-            </ProtectedRoute>
+          <ProtectedRoute>
+            <RouteGuardContent user={user} profile={profile} />
+          </ProtectedRoute>
         }
       >
         {/* Default route - redirect to correct dashboard based on role */}
@@ -126,11 +129,11 @@ export default function AppRoutes() {
         />
 
         <Route
-            path="partner/events/manage"
-            element={
-                <RoleGate roles={["partner"]}>
-                    <PartnerEventManagePage />
-                </RoleGate>
+          path="partner/events/manage"
+          element={
+            <RoleGate roles={["partner"]}>
+              <PartnerEventManagePage />
+            </RoleGate>
           }
         />
 
@@ -174,7 +177,7 @@ export default function AppRoutes() {
           path="admin/events/manage"
           element={
             <RoleGate roles={["admin"]}>
-                <AdminEventManagePage />
+              <AdminEventManagePage />
             </RoleGate>
           }
         />
@@ -196,7 +199,7 @@ export default function AppRoutes() {
             </RoleGate>
           }
         />
-        
+
         <Route
           path="admin/users/add"
           element={
