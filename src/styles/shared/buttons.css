@@ -75,7 +75,8 @@
   background: var(--gma-highlight);
   color: var(--gma-text-on-secondary);
   border-radius: var(--gma-radius);
-  padding: 0.95rem 1.4rem;
+  margin-top: 0.25rem;
+  padding: 0.8rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition:
