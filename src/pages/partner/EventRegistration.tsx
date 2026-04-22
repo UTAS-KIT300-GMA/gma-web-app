@@ -1,16 +1,24 @@
-import { addDoc, collection, Timestamp, GeoPoint } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  updateDoc,
+  Timestamp,
+  GeoPoint,
+} from "firebase/firestore";
+import { useParams } from "react-router-dom";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
-import { useState } from "react";
-import {
-  CalendarDays,
-  Eye,
-  MapPin,
-  Tag,
-  Ticket,
-} from "lucide-react";
+import { Eye, MapPin, Tag} from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
-import { CATEGORIES, type Category } from "../../types/event-types";
+import {
+  CATEGORIES,
+  type Category,
+  type EventRecord,
+  type TicketAccessType,
+} from "../../types/event-types";
 
 import { EventLocationInput } from "../../components/EventLocationInput";
 import { type EventLocation } from "../../services/geoService";
@@ -46,30 +54,33 @@ function readFileAsBase64(file: File): Promise<string> {
  */
 export function EventRegistrationPage() {
   const { user, profile } = useAuth();
-  const [title, setTitle] = useState(mockInitialForm.title);
-  const [description, setDescription] = useState(mockInitialForm.description);
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>(
-    mockInitialForm.categories,
-  );
-  const [address, setAddress] = useState(mockInitialForm.address);
+  const { eventId } = useParams<{ eventId?: string }>();
+  const isEditing = !!eventId;
+  const isAdmin = profile?.role === "admin";
 
+  // --- State Managed via EventRecord fields ---
+  const [draftId, setDraftId] = useState<string | null>(eventId ?? null);
+  const [title, setTitle] = useState<EventRecord["title"]>("");
+  const [description, setDescription] =
+    useState<EventRecord["description"]>("");
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([
+    "connect",
+  ]);
+  const [address, setAddress] = useState<EventRecord["address"]>("");
   const [coordinates, setCoordinates] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
-
-  const [dateTime, setDateTime] = useState(mockInitialForm.dateTime);
-  const [totalTickets, setTotalTickets] = useState<number>(
-    mockInitialForm.totalTickets,
-  );
-  const [imageName, setImageName] = useState(mockInitialForm.imageName);
+  const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
+  const [totalTickets, setTotalTickets] =
+    useState<EventRecord["totalTickets"]>(50);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [interestTags, setInterestTags] = useState<string[]>(
-    mockInitialForm.interestTags,
-  );
-  const [ticketAccess, setTicketAccess] = useState<TicketAccessType>(
-    mockInitialForm.ticketAccess,
-  );
+  const [imageName, setImageName] = useState<string>("");
+  const [existingImage, setExistingImage] = useState<EventRecord["image"]>("");
+  const [interestTags, setInterestTags] = useState<string[]>([]);
+  const [ticketAccess, setTicketAccess] =
+    useState<TicketAccessType>("free_for_all");
+
   const [showPreview, setShowPreview] = useState(false);
 
   /**
@@ -104,73 +115,201 @@ export function EventRegistrationPage() {
       alert("You must be logged in");
       return;
     }
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
 
-    if (!title || !description || !dateTime || !address) {
-      alert("Please fill in all required fields");
-      return;
+  const activeImageSource = imagePreviewUrl || existingImage;
+
+  useEffect(() => {
+    async function loadExistingEvent() {
+      if (!eventId || !user) return;
+      setLoadingExisting(true);
+
+      try {
+        const snap = await getDoc(doc(db, "events", eventId));
+        if (!snap.exists()) {
+          alert("Event not found.");
+          return;
+        }
+
+        const data = snap.data() as EventRecord;
+        const currentOwner = data.submittedBy;
+        const currentUserId = profile?.partnerId ?? user.uid;
+
+        if (!isAdmin && currentOwner && currentOwner !== currentUserId) {
+          alert("You do not have permission to edit this event.");
+          return;
+        }
+
+        setDraftId(snap.id);
+        setTitle(data.title || "");
+        setDescription(data.description || "");
+        setSelectedCategories(
+          data.categories || [data.category] || ["connect"],
+        );
+        setAddress(data.address || "");
+
+        // Handle GeoPoint if it exists on the record
+        const loc = (data as any).location; // Firestore GeoPoint
+        if (loc) {
+          setCoordinates({ lat: loc.latitude, lng: loc.longitude });
+        }
+
+        setDateTime(toDateTimeLocalString(data.dateTime));
+        setTotalTickets(data.totalTickets || 50);
+        setExistingImage(data.image || "");
+        setImageName(data.image ? "Current image" : "");
+        setInterestTags(data.interestTags || []);
+        setTicketAccess(data.ticketAccess || "free_for_all");
+      } catch (err) {
+        console.error("Failed to load event:", err);
+      } finally {
+        setLoadingExisting(false);
+      }
+    }
+    loadExistingEvent();
+  }, [eventId, user, profile, isAdmin]);
+
+  function resetForm() {
+    setDraftId(null);
+    setTitle("");
+    setDescription("");
+    setSelectedCategories(["connect"]);
+    setAddress("");
+    setCoordinates(null);
+    setDateTime("");
+    setTotalTickets(50);
+    setImageName("");
+    setImageFile(null);
+    setExistingImage("");
+    setInterestTags([]);
+    setTicketAccess("free_for_all");
+    setShowPreview(false);
+  }
+
+  async function buildEventData(
+    status: EventRecord["eventApprovalStatus"],
+  ): Promise<Partial<EventRecord>> {
+    const partnerId = profile?.partnerId ?? user?.uid ?? "";
+    const imageBase64 = imageFile
+      ? await readFileAsBase64(imageFile)
+      : existingImage;
+
+    return {
+      title,
+      description,
+      category: selectedCategories[0] ?? "connect",
+      categories: selectedCategories,
+      address,
+      // Note: mapping 'coordinates' to the GeoPoint location field
+      location: coordinates
+        ? new GeoPoint(coordinates.lat, coordinates.lng)
+        : null,
+      dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
+      totalTickets,
+      image: imageBase64,
+      type: ticketAccess === "free_for_all" ? "free" : "paid",
+      ticketAccess,
+      memberPrice: 0,
+      nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
+      ticketPrices: {
+        member: 0,
+        nonMember: ticketAccess === "members_only" ? 1 : 0,
+      },
+      interestTags,
+      eventApprovalStatus: status,
+      submittedBy: partnerId,
+      status: "available",
+      updatedAt: Timestamp.now(),
+    } as Partial<EventRecord>;
+  }
+
+  /**
+   * Handles both event submission and draft saving by building the event data
+   * and either creating a new document or updating an existing one based on the presence of draftId.
+   * Includes validation to ensure required fields are completed before submission.
+   * On successful submission, resets the form and shows an alert. On failure, logs the error and shows an alert.
+   * 
+   * @param e 
+   * @returns 
+   */
+  async function handleSubmit(e: SyntheticEvent) {
+    e.preventDefault();
+    if (!user) return alert("You must be logged in to submit an event.");
+
+    // Basic validation of required fields before submission inluding checking for empty strings 
+    // and ensuring at least one category and interest tag is selected
+    const missing = [];
+    if (!title.trim()) missing.push("Title");
+    if (!description.trim()) missing.push("Description");
+    if (!dateTime) missing.push("Start date & time");
+    if (!address.trim()) missing.push("Address");
+    if (!imageFile && !existingImage) missing.push("Event image");
+    if (selectedCategories.length === 0) missing.push("At least one category");
+    if (interestTags.length === 0) missing.push("At least one interest tag");
+
+    if (missing.length > 0) {
+      return alert(
+        `Please complete the following before submitting:\n\n• ${missing.join("\n• ")}`,
+      );
     }
 
     try {
-      const partnerId = profile?.partnerId ?? user.uid;
-      const imageBase64 = imageFile ? await readFileAsBase64(imageFile) : "";
-      const eventData = {
-        title,
-        description,
-        category: selectedCategories[0] ?? "connect",
-        categories: selectedCategories,
+      const eventData = await buildEventData("pending");
+      if (draftId) {
+        await updateDoc(doc(db, "events", draftId), eventData);
+      } else {
+        await addDoc(collection(db, "events"), {
+          ...eventData,
+          ticketsSold: 0,
+          createdAt: Timestamp.now(),
+        });
+      }
+      alert(
+        "✅ Event submitted successfully! GMA admin will review your event before publishing.",
+      );
+      resetForm();
+    } catch (err) {
+      console.log(err);
+      alert(
+        "❌ Something went wrong while submitting your event. Please try again.",
+      );
+    }
+  }
 
-        address,
+  /**
+   * Handles saving the current event details as a draft. If a draft already exists (indicated by draftId), 
+   * it updates that document; otherwise, it creates a new document in the "events" collection with an 
+   * "eventApprovalStatus" of "draft". Validates that the user is logged in and that a title is provided 
+   * before allowing the draft to be saved. On successful save, shows an alert confirming the draft has been saved. 
+   * On failure, logs the error and shows an alert.
+   * 
+   * @returns 
+   */
+  async function handleSaveDraft() {
+    if (!user) return alert("You must be logged in to save a draft.");
+    if (!title.trim())
+      return alert("Please enter a title before saving a draft.");
 
-        location: coordinates
-          ? new GeoPoint(coordinates.lat, coordinates.lng)
-          : null,
-
-        dateTime: Timestamp.fromDate(new Date(dateTime)),
-
-        totalTickets,
-        ticketsSold: 0,
-
-        image: imageBase64,
-
-        type: ticketAccess === "free_for_all" ? "free" : "paid",
-        ticketAccess,
-
-        memberPrice: 0,
-        nonMemberPrice: ticketAccess === "members_only" ? 1 : 0,
-
-        ticketPrices: {
-          member: 0,
-          nonMember: ticketAccess === "members_only" ? 1 : 0,
-        },
-
-        interestTags,
-
-        approvalStatus: "pending",
-
-        submittedBy: partnerId,
-
-        status: "available",
-
-        createdAt: Timestamp.now(),
-      };
-
-      await addDoc(collection(db, "events"), eventData);
-
-      alert("✅ Event submitted successfully!");
-
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setSelectedCategories(["connect"]);
-      setAddress("");
-      setCoordinates(null);
-      setDateTime("");
-      setTotalTickets(50);
-      setImageName("");
-      setImageFile(null);
-      setInterestTags([]);
-      setTicketAccess("free_for_all");
-      setShowPreview(false);
+    try {
+      const eventData = await buildEventData("draft");
+      if (draftId) {
+        await updateDoc(doc(db, "events", draftId), eventData);
+        alert("✅ Draft updated successfully!");
+      } else {
+        const newDoc = await addDoc(collection(db, "events"), {
+          ...eventData,
+          ticketsSold: 0,
+          createdAt: Timestamp.now(),
+        });
+        setDraftId(newDoc.id);
+        alert(
+          "✅ Draft saved! You can continue editing and submit when ready.",
+        );
+      }
+      resetForm();
     } catch (err) {
       console.error("Event submission error:", err);
       alert("❌ Failed to submit event");
@@ -190,19 +329,24 @@ export function EventRegistrationPage() {
     if (!file) return;
     if (file.size > 500 * 1024) {
       alert("Image must be 500KB or smaller.");
-      return;
     }
-    setImageFile(file);
-    setImageName(file.name);
-  }
+  };
+
+  if (loadingExisting)
+    return (
+      <div className="page dashboard-page">
+        <p>Loading event...</p>
+      </div>
+    );
 
   return (
     <div className="page dashboard-page event-create-page">
-
       <section className="dashboard-header event-create-header">
-        <h1>Create Event</h1>
+        <h1>{isEditing ? "Edit Event" : "Create Event"}</h1>
         <p className="muted dashboard-hero-copy">
-          Draft and submit your event details for review before publishing.
+          {isEditing
+            ? "Update the event details below."
+            : "Draft and submit your event details for review before publishing."}
         </p>
       </section>
 
@@ -260,20 +404,20 @@ export function EventRegistrationPage() {
 
             <label className="field span-2">
               <span>Address</span>
-              <div className="input-with-icon">
+              <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-
-                <EventLocationInput
-                  initialAddress={address}
-                  onLocationSelect={(location: EventLocation) => {
-                    setAddress(location.displayAddress);
-                    setCoordinates({
-                      lat: location.latitude,
-                      lng: location.longitude,
-                    });
-                  }}
-                />
-                {/* ------------------------------------------------------- */}
+                <div className="inline-icon-input-content">
+                  <EventLocationInput
+                    initialAddress={address}
+                    onLocationSelect={(location: EventLocation) => {
+                      setAddress(location.displayAddress);
+                      setCoordinates({
+                        lat: location.latitude,
+                        lng: location.longitude,
+                      });
+                    }}
+                  />
+                </div>
               </div>
             </label>
 
@@ -305,27 +449,21 @@ export function EventRegistrationPage() {
 
             <label className="field">
               <span>Starts at</span>
-              <div className="input-with-icon">
-                <CalendarDays size={16} strokeWidth={2} />
-                <input
-                  type="datetime-local"
-                  value={dateTime}
-                  onChange={(e) => setDateTime(e.target.value)}
-                />
-              </div>
+              <input
+                type="datetime-local"
+                value={dateTime}
+                onChange={(e) => setDateTime(e.target.value)}
+              />
             </label>
 
             <label className="field">
               <span>Total tickets</span>
-              <div className="input-with-icon">
-                <Ticket size={16} strokeWidth={2} />
-                <input
-                  type="number"
-                  min={1}
-                  value={totalTickets}
-                  onChange={(e) => setTotalTickets(Number(e.target.value))}
-                />
-              </div>
+              <input
+                type="number"
+                min={1}
+                value={totalTickets}
+                onChange={(e) => setTotalTickets(Number(e.target.value))}
+              />
             </label>
           </div>
         </section>
@@ -392,20 +530,15 @@ export function EventRegistrationPage() {
           <div className="field">
             <div className="tag-pick event-tag-pick scrollable-tag-pick">
               {INTEREST_TAG_OPTIONS.map(({ key, label }) => (
-                <label
+                <button
                   key={key}
-                  className={`tag-chip ${
-                    interestTags.includes(key) ? "selected" : ""
-                  }`}
+                  type="button"
+                  className={`tag-chip ${interestTags.includes(key) ? "selected" : ""}`}
+                  onClick={() => toggleTag(key)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={interestTags.includes(key)}
-                    onChange={() => toggleTag(key)}
-                  />
                   <Tag size={14} strokeWidth={2} />
                   <span>{label}</span>
-                </label>
+                </button>
               ))}
             </div>
           </div>
@@ -424,7 +557,7 @@ export function EventRegistrationPage() {
           <button
             type="button"
             className="btn-secondary event-action-btn"
-            onClick={handleMockSaveDraft}
+            onClick={handleSaveDraft}
           >
             Save draft
           </button>
@@ -435,91 +568,20 @@ export function EventRegistrationPage() {
         </div>
       </form>
 
-      {showPreview && (
-        <div className="preview-overlay" onClick={() => setShowPreview(false)}>
-          <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="preview-close-btn"
-              onClick={() => setShowPreview(false)}
-              aria-label="Close preview"
-            >
-              ✕
-            </button>
-
-            <div className="mobile-preview-wrap">
-              <div className="mobile-preview-phone">
-                <div className="mobile-preview-notch" />
-
-                <div className="mobile-preview-screen">
-                  <div className="android-preview-header">
-                    <button
-                      type="button"
-                      className="mobile-back-btn"
-                      aria-label="Back"
-                    >
-                      ‹
-                    </button>
-                    <h3>Event Details</h3>
-                    <div className="mobile-header-spacer" />
-                  </div>
-
-                  <div className="mobile-preview-scroll">
-                    <div className="mobile-preview-image android-preview-image">
-                      {imageName ? (
-                        <span>{imageName}</span>
-                      ) : (
-                        <span>Event image</span>
-                      )}
-                    </div>
-
-                    <div className="android-preview-content">
-                      <div className="android-preview-title-row">
-                        <h4>{title || "Your event title"}</h4>
-
-                        <button
-                          type="button"
-                          className="mobile-bookmark-btn"
-                          aria-label="Bookmark"
-                        >
-                          🔖
-                        </button>
-                      </div>
-
-                      <div className="android-preview-date">
-                        <span className="mobile-meta-icon">🗓</span>
-                        <span>{dateTime || "Apr 10, 2026 • 8:00 PM"}</span>
-                      </div>
-
-                      <p className="android-preview-description">
-                        {description || "No description provided."}
-                      </p>
-
-                      <div className="android-preview-access-row">
-                        <span className="mobile-meta-icon">🏷</span>
-                        <span>
-                          {ticketAccess === "free_for_all"
-                            ? "Free Event"
-                            : "Subscribers Only"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="android-preview-bottom-bar">
-                    <button
-                      type="button"
-                      className="mobile-rsvp-btn android-rsvp-btn"
-                    >
-                      RSVP / Book Now
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Preview Modal Logic remains as is, now powered by the new states */}
+      <EventPreviewModal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        event={{
+          title,
+          description,
+          address,
+          image: activeImageSource,
+          dateTime,
+          ticketAccess,
+        }}
+        actionLabel="Close"
+      />
     </div>
   );
 }

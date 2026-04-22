@@ -28,8 +28,12 @@ export type EventRecord = {
   };
 
   // --- Admin & Partner Portal Workflow ---
-  eventApprovalStatus?: "pending" | "approved" | "rejected";
-  submittedBy?: string;        // The partnerId of the creator
-  rejectionReason?: string;    // Feedback for the partner
-  interestTags?: string[];     
+  eventApprovalStatus?: "draft" | "pending" | "approved" | "rejected";
+  submittedBy?: string; // The partnerId of the creator
+  rejectionReason?: string; // Feedback for the partner
+  interestTags?: string[];
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 };
+
+export type TicketAccessType = "free_for_all" | "members_only";
