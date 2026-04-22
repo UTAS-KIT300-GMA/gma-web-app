@@ -8,21 +8,23 @@ import banner from "../../assets/banner.jpg";
 type ViewMode = "admin" | "partner";
 
 /**
- * LandingPage component serves as the entry point for users visiting the site. 
- * It allows users to select their role (admin or partner) and provides appropriate login and registration options based on the selected role.
- * 
- * @params 
+ * @summary Renders the public landing page allowing users to select their role and navigate to login or registration.
  */
 export function LandingPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>("partner"); // Default to partner view
+  const [viewMode, setViewMode] = useState<ViewMode>("partner");
   const navigate = useNavigate();
 
-  // Handle login button click based on the current view mode
+  /**
+   * @summary Navigates to the login page with the selected view mode as a query parameter.
+   * @param mode - The role view to pass to the login page (admin or partner).
+   */
   function handleLoginClick(mode: "admin" | "partner") {
     navigate(`/login?view=${mode}`);
   }
 
-  // Handle register button click for partners
+  /**
+   * @summary Navigates to the partner registration page.
+   */
   function handleRegisterClick() {
     navigate("/register");
   }

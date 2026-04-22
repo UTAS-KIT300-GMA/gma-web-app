@@ -13,6 +13,10 @@ import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import type { EventRecord } from "../../types/event-types";
 
+/**
+ * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
+ * @param ts - The Timestamp to format, or undefined if unavailable.
+ */
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
   try {
@@ -22,12 +26,21 @@ function formatWhen(ts: Timestamp | undefined) {
   }
 }
 
+/**
+ * @summary Determines whether the current user has permission to edit or delete an event.
+ * @param ev - The event record being evaluated.
+ * @param uid - The UID of the currently authenticated user.
+ * @param isAdmin - Whether the current user holds the admin role.
+ */
 function canManageEvent(ev: EventRecord, uid: string | undefined, isAdmin: boolean) {
   if (isAdmin) return true;
   if (!uid) return false;
   return ev.submittedBy === uid;
 }
 
+/**
+ * @summary Renders the event management table, allowing admins to view all events and partners to manage their own.
+ */
 export function EventManagePage() {
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === "admin";
@@ -36,6 +49,9 @@ export function EventManagePage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * @summary Loads events from Firestore into local state, filtered by role.
+   */
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -83,6 +99,10 @@ export function EventManagePage() {
     load();
   }, [load]);
 
+  /**
+   * @summary Prompts for confirmation then permanently deletes the given event from Firestore.
+   * @param ev - The event record to delete.
+   */
   async function onDelete(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
     const ok = window.confirm(

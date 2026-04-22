@@ -56,6 +56,9 @@ const mockDecisionMetrics = [
   { label: "Lowest Engagement", value: "Sunday" },
 ];
 
+/**
+ * @summary Renders the partner dashboard with live event counts, booking totals, and an engagement chart.
+ */
 export default function PartnerDashboard() {
   const { user, profile } = useAuth();
   const [filter, setFilter] = useState<FilterKey>("month");

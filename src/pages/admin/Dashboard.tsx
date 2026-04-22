@@ -86,6 +86,9 @@ const mockDecisionMetrics = [
   { label: "Lowest Engagement", value: "Sunday" },
 ];
 
+/**
+ * @summary Renders the admin dashboard with live Firestore KPI stats, an engagement chart, and recent activity.
+ */
 export default function AdminDashboard() {
   const [filter, setFilter] = useState<FilterKey>("month");
   const [stats, setStats] = useState<StatCard[]>(mockStats);

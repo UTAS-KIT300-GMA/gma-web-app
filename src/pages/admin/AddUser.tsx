@@ -2,6 +2,9 @@ import { ImagePlus, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../../styles/admin/user-management.css";
 
+/**
+ * @summary Renders the admin form for creating a new user account on the platform.
+ */
 export default function AddUserPage() {
   return (
     <section className="page-section user-management-page">

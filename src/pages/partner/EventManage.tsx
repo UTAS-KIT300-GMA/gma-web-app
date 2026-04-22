@@ -37,6 +37,9 @@ const mockEvents: EventRow[] = [
   },
 ];
 
+/**
+ * @summary Renders the partner event management table with filter controls for status and date range.
+ */
 export function EventManagePage() {
   const [eventStatus, setEventStatus] = useState("All");
   const [dateRange, setDateRange] = useState("All Time");

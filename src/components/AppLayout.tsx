@@ -16,23 +16,26 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
-/// Helper function to apply active class to NavLink
+/**
+ * @summary Returns the correct CSS class string for a NavLink based on its active state.
+ * @param isActive - Whether the NavLink currently matches the active route.
+ */
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `sidebar-link ${isActive ? "active" : ""}`;
 
 /**
- * AppLayout component that defines the main layout of the application with a sidebar and main content area.
- * The sidebar contains navigation links that are conditionally rendered based on the user's role.
- * The main content area renders the child routes using <Outlet />.
+ * @summary Renders the main application shell with a collapsible sidebar and role-aware navigation.
  */
 export function AppLayout() {
   const { profile, signOutUser } = useAuth();
   const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
-  // Mapping of pathname to page title
   const location = useLocation();
 
+  /**
+   * @summary Derives the current page title from the active route pathname.
+   */
   const pageTitle = () => {
     if (location.pathname.includes("dashboard")) return "Dashboard";
     if (location.pathname.includes("events/manage")) return "Manage Events";

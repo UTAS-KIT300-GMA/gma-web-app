@@ -8,12 +8,18 @@ import {
 } from "../../services/adminApprovalService";
 import type { UserProfile } from "../../types/user-types";
 
+/**
+ * @summary Renders the admin page for reviewing, approving, or rejecting pending partner applications.
+ */
 export function AdminApprovalPage() {
   const [partners, setPartners] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   useEffect(() => {
+    /**
+     * @summary Fetches all pending partner profiles from Firestore and populates local state.
+     */
     async function loadData() {
       try {
         setLoading(true);
@@ -28,6 +34,10 @@ export function AdminApprovalPage() {
     loadData();
   }, []);
 
+  /**
+   * @summary Calls the approval service for the given partner and removes them from the pending list.
+   * @param id - The Firestore document ID of the partner to approve.
+   */
   const handleApprove = async (id: string) => {
     try {
       await approvePartner(id);
@@ -37,6 +47,10 @@ export function AdminApprovalPage() {
     }
   };
 
+  /**
+   * @summary Calls the rejection service for the given partner and removes them from the pending list.
+   * @param id - The Firestore document ID of the partner to reject.
+   */
   const handleReject = async (id: string) => {
     try {
       await rejectPartner(id);
@@ -49,8 +63,10 @@ export function AdminApprovalPage() {
   if (loading) return <div style={{ padding: "20px" }}>Searching for pending applications...</div>;
   if (error) return <div style={{ color: "red", padding: "20px" }}>Error: {error}</div>;
 
-  //small back button for temporary use
-   const goBack = () => {
+  /**
+   * @summary Navigates back to the previous page in the browser history.
+   */
+  const goBack = () => {
     navigate(-1);
   };
   

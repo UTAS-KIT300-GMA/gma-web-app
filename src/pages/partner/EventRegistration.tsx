@@ -28,6 +28,10 @@ const mockInitialForm = {
   interestTags: [] as string[],
   ticketAccess: "free_for_all" as TicketAccessType,
 };
+/**
+ * @summary Reads a File object and resolves with its base64-encoded data URL string.
+ * @param file - The image file to encode.
+ */
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -37,6 +41,9 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
+/**
+ * @summary Renders the event creation form allowing partners to draft and submit events for admin review.
+ */
 export function EventRegistrationPage() {
   const { user, profile } = useAuth();
   const [title, setTitle] = useState(mockInitialForm.title);
@@ -65,12 +72,20 @@ export function EventRegistrationPage() {
   );
   const [showPreview, setShowPreview] = useState(false);
 
+  /**
+   * @summary Toggles an interest tag in or out of the selected tags list.
+   * @param key - The tag key to toggle.
+   */
   function toggleTag(key: string) {
     setInterestTags((prev) =>
       prev.includes(key) ? prev.filter((tag) => tag !== key) : [...prev, key],
     );
   }
 
+  /**
+   * @summary Toggles an event category in or out of the selected categories list.
+   * @param category - The category value to toggle.
+   */
   function toggleCategory(category: Category) {
     setSelectedCategories((prev) =>
       prev.includes(category)
@@ -79,6 +94,10 @@ export function EventRegistrationPage() {
     );
   }
 
+  /**
+   * @summary Validates the form, builds the event document, writes it to Firestore, and resets all fields.
+   * @param e - The form submission event.
+   */
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!user) {
@@ -158,8 +177,15 @@ export function EventRegistrationPage() {
     }
   }
 
+  /**
+   * @summary Placeholder handler for the save-draft action (not yet implemented).
+   */
   function handleMockSaveDraft() {}
 
+  /**
+   * @summary Validates the selected image file size and stores it in component state.
+   * @param file - The image file selected by the user, or undefined if none was chosen.
+   */
   function handleImageChange(file?: File) {
     if (!file) return;
     if (file.size > 500 * 1024) {

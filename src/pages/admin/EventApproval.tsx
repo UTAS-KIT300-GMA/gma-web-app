@@ -15,10 +15,8 @@ import type { EventRecord } from "../../types/event-types";
 import { Tag } from "lucide-react";
 
 /**
- * Helper to format Firestore Timestamp to readable string. Returns "—" if invalid or missing.
- *
- * @param ts
- * @returns
+ * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
+ * @param ts - The Timestamp to format, or undefined if unavailable.
  */
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
@@ -30,10 +28,8 @@ function formatWhen(ts: Timestamp | undefined) {
 }
 
 /**
- * Helper to get user name and organization from uid. Returns email or uid as fallback if user not found or error occurs.
- *
- * @param uid
- * @returns
+ * @summary Fetches the display name and organisation for a given user UID from Firestore.
+ * @param uid - The Firebase Auth UID to look up.
  */
 async function fetchUserInfo(
   uid: string,
@@ -57,9 +53,7 @@ async function fetchUserInfo(
 }
 
 /**
- * Admin page to approve or reject pending events.
- * Lists events with `eventApprovalStatus == "pending"`.
- * Admin can approve (sets status to "approved") or reject (sets status to "rejected" with optional reason).
+ * @summary Renders the admin page listing pending events and providing approve/reject actions.
  */
 export function EventApprovalPage() {
   const [pending, setPending] = useState<EventRecord[]>([]);
@@ -71,6 +65,9 @@ export function EventApprovalPage() {
     Record<string, { name: string; org: string }>
   >({});
 
+  /**
+   * @summary Queries Firestore for events with pending approval status and updates component state.
+   */
   const load = async () => {
     setLoading(true);
     try {
@@ -118,6 +115,10 @@ export function EventApprovalPage() {
     fetchAll();
   }, [pending]);
 
+  /**
+   * @summary Sets the given event's approval status to approved and refreshes the list.
+   * @param ev - The Firestore document ID of the event to approve.
+   */
   async function approve(ev: string) {
     setBusyId(ev);
     try {
@@ -131,6 +132,10 @@ export function EventApprovalPage() {
     }
   }
 
+  /**
+   * @summary Sets the given event's approval status to rejected with an optional reason.
+   * @param ev - The event record to reject.
+   */
   async function reject(ev: EventRecord) {
     const reason =
       (rejectReason[ev.eventId] ?? "").trim() || "Rejected by admin";

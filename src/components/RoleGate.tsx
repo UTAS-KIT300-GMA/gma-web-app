@@ -8,9 +8,9 @@ interface RoleGateProps {
 }
 
 /**
- * @summary Component-level security for granular UI visibility.
- * Use this to wrap specific buttons, tabs, or sections.
- * It returns null if unauthorized, keeping the user on the current page.
+ * @summary Component-level security gate that renders children only for authorized roles.
+ * @param roles - The list of roles permitted to see the wrapped content.
+ * @param children - The UI content to render when authorization passes.
  */
 export function RoleGate({ roles, children }: RoleGateProps) {
   const { profile, loading } = useAuth();

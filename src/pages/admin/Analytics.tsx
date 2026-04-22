@@ -6,6 +6,9 @@ import type { EventRecord, Category } from "../../types/event-types";
 
 type CatCount = Record<string, number>;
 
+/**
+ * @summary Renders the analytics page with event counts, bookings, category breakdowns, and top interest tags.
+ */
 export function AnalyticsPage() {
   const { user, profile } = useAuth();
   const [events, setEvents] = useState<EventRecord[]>([]);

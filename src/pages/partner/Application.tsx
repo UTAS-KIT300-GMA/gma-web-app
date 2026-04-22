@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { createInitialProfile } from "../../services/authService"; 
 
+/**
+ * @summary Renders the Stage 2 onboarding form for collecting partner organisation and representative details.
+ */
 export function ApplicationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -23,6 +26,10 @@ export function ApplicationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * @summary Validates and submits the partner application form, creating the initial Firestore profile.
+   * @param e - The form submission event.
+   */
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!user) return;

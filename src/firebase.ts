@@ -2,6 +2,10 @@ import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+/**
+ * @summary Reads a required environment variable and warns if it is missing.
+ * @param key - The Vite environment variable key to look up.
+ */
 const required = (key: string) => {
   const v = import.meta.env[key];
   if (!v) console.warn(`Missing ${key} — add it to .env for Firebase.`);
@@ -21,6 +25,9 @@ console.log("Firebase App loaded", firebaseConfig);
 
 let app: FirebaseApp | undefined;
 
+/**
+ * @summary Returns the singleton Firebase app instance, initializing it on first call.
+ */
 export function getFirebaseApp(): FirebaseApp {
   if (!app) {
     app = initializeApp(firebaseConfig);

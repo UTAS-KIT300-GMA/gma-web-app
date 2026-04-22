@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useCallback,
@@ -45,6 +46,7 @@ const allowedRoles: UserRole[] = ["admin", "partner"];
 
 /**
  * @summary Parses raw Firestore data into a typed UserProfile object.
+ * @param id
  * @param data The raw document data from Firestore.
  */
 function parseProfile(id: string, data: Record<string, unknown>): UserProfile {

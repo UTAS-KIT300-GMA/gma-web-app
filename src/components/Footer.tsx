@@ -1,9 +1,7 @@
 import "../styles/shared/footer.css";
 
 /**
- * Footer component for the landing page, potentially used across the entire application. 
- * Provides company information and quick links for users.
- * @returns 
+ * @summary Renders the site footer with contact details, social links, and quick navigation.
  */
 export function Footer() {
   return (

@@ -17,6 +17,9 @@ const mockUsers = [
   { id: 12, name: "Zara Falooda", email: "zara.falooda@gmail.com", role: "General User", status: "Active" },
 ];
 
+/**
+ * @summary Renders the admin user management page with a searchable user table and inline edit panel.
+ */
 export default function UserManagementPage() {
   return (
     <section className="page-section user-management-page">

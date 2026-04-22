@@ -9,8 +9,9 @@ interface ProtectedRouteProps {
 }
 
 /**
- * @summary Master Gatekeeper for Authentication and Authorization.
- * Specific stage-based redirects are handled in AppRoutes.
+ * @summary Redirects unauthenticated or unauthorized users away from protected routes.
+ * @param children - The route content to render when the user passes all checks.
+ * @param roles - Optional list of roles required to access this route.
  */
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();

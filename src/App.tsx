@@ -36,6 +36,11 @@ interface RouteGuardProps {
     profile: UserProfile | null | undefined;
 }
 
+/**
+ * @summary Determines which stage of the onboarding flow to render based on user and profile state.
+ * @param user - The currently authenticated Firebase user, or null.
+ * @param profile - The Firestore user profile, or null if not yet created.
+ */
 const RouteGuardContent: React.FC<RouteGuardProps> = ({ user, profile }) => {
     if (!user?.emailVerified && profile?.role !== "admin") {
         return <VerifyEmailPage />;
@@ -52,6 +57,9 @@ const RouteGuardContent: React.FC<RouteGuardProps> = ({ user, profile }) => {
     return <AppLayout />;
 };
 
+/**
+ * @summary Renders the login page or redirects authenticated users to the dashboard.
+ */
 function LoginRoute() {
   const { user, loading } = useAuth();
 
@@ -71,6 +79,9 @@ function LoginRoute() {
   return <LoginPage />;
 }
 
+/**
+ * @summary Defines the application route tree, applying role-based guards and onboarding stage checks.
+ */
 export default function AppRoutes() {
   const { user, profile, loading } = useAuth();
 

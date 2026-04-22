@@ -13,11 +13,9 @@ interface HeaderProps {
 }
 
 /**
- * Header component for the landing page, potentially used across the entire application. 
- * Provides navigation and branding for users.
- * @param viewMode - The current view mode (admin or partner) to determine which toggle is active.
- * @param setViewMode - Function to update the view mode when a toggle is clicked.
- * @returns 
+ * @summary Renders the top navigation bar with branding and an admin/partner view toggle.
+ * @param viewMode - The currently active view mode used to highlight the correct toggle.
+ * @param setViewMode - Callback to update the active view mode when a toggle is clicked.
  */
 export function Header({ viewMode, setViewMode }: HeaderProps) {
   return (
