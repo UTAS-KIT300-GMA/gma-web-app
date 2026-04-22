@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Eye, Trash2 } from "lucide-react";
+import { Pencil, Eye, Trash2, Search, X } from "lucide-react";
 import {
   collection,
   deleteDoc,
@@ -16,6 +16,9 @@ import { Link } from "react-router-dom";
 type FirestoreEventRow = {
   id: string;
   title: string;
+  description?: string;
+  address?: string;
+  image?: string;
   dateTime?: Timestamp | null;
   category?: string;
   categories?: string[];
@@ -27,10 +30,28 @@ type FirestoreEventRow = {
 
 function formatDate(ts?: Timestamp | null) {
   if (!ts?.toDate) return "—";
+
   try {
-    return ts.toDate().toLocaleDateString();
+    return ts.toDate().toLocaleDateString("en-AU", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
     return "—";
+  }
+}
+
+function formatTime(ts?: Timestamp | null) {
+  if (!ts?.toDate) return "Time not set";
+
+  try {
+    return ts.toDate().toLocaleTimeString("en-AU", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "Time not set";
   }
 }
 
@@ -49,10 +70,46 @@ function mapStatus(status?: string) {
   }
 }
 
+function mapCategoryLabel(event: FirestoreEventRow) {
+  return event.category || event.categories?.[0] || "Uncategorised";
+}
+
+function mapCategoryClass(category: string) {
+  const value = category.toLowerCase();
+
+  if (value.includes("connect") || value.includes("network")) {
+    return "partner-event-category networking";
+  }
+
+  if (
+    value.includes("grow") ||
+    value.includes("workshop") ||
+    value.includes("career")
+  ) {
+    return "partner-event-category workshop";
+  }
+
+  if (
+    value.includes("thrive") ||
+    value.includes("community") ||
+    value.includes("leadership")
+  ) {
+    return "partner-event-category community";
+  }
+
+  if (value.includes("business") || value.includes("finance")) {
+    return "partner-event-category business";
+  }
+
+  return "partner-event-category default";
+}
+
 export function EventManagePage() {
   const { user, profile } = useAuth();
+
   const [eventStatus, setEventStatus] = useState("All");
   const [dateRange, setDateRange] = useState("All Time");
+  const [searchTerm, setSearchTerm] = useState("");
   const [events, setEvents] = useState<FirestoreEventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -66,6 +123,7 @@ export function EventManagePage() {
       }
 
       setLoading(true);
+
       try {
         const partnerId = profile?.partnerId ?? user.uid;
 
@@ -104,6 +162,7 @@ export function EventManagePage() {
     if (!ok) return;
 
     setBusyId(eventId);
+
     try {
       await deleteDoc(doc(db, "events", eventId));
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
@@ -113,6 +172,12 @@ export function EventManagePage() {
     } finally {
       setBusyId(null);
     }
+  }
+
+  function clearFilters() {
+    setEventStatus("All");
+    setDateRange("All Time");
+    setSearchTerm("");
   }
 
   const filteredEvents = useMemo(() => {
@@ -129,6 +194,7 @@ export function EventManagePage() {
     if (dateRange === "Last 7 Days") {
       const cutoff = new Date();
       cutoff.setDate(now.getDate() - 7);
+
       filtered = filtered.filter((event) => {
         const date = event.dateTime?.toDate?.();
         return date ? date >= cutoff : false;
@@ -138,6 +204,7 @@ export function EventManagePage() {
     if (dateRange === "Last 30 Days") {
       const cutoff = new Date();
       cutoff.setDate(now.getDate() - 30);
+
       filtered = filtered.filter((event) => {
         const date = event.dateTime?.toDate?.();
         return date ? date >= cutoff : false;
@@ -154,19 +221,37 @@ export function EventManagePage() {
       });
     }
 
+    if (searchTerm.trim()) {
+      const keyword = searchTerm.trim().toLowerCase();
+
+      filtered = filtered.filter((event) => {
+        const title = event.title?.toLowerCase() ?? "";
+        const category = mapCategoryLabel(event).toLowerCase();
+        const address = event.address?.toLowerCase() ?? "";
+
+        return (
+          title.includes(keyword) ||
+          category.includes(keyword) ||
+          address.includes(keyword)
+        );
+      });
+    }
+
     return filtered;
-  }, [events, eventStatus, dateRange]);
+  }, [events, eventStatus, dateRange, searchTerm]);
 
   return (
     <div className="page dashboard-page partner-events-page">
-      <section className="dashboard-header">
-        <h1>Event Management</h1>
-        <p className="muted dashboard-hero-copy">
-          View and manage your submitted events.
-        </p>
+      <section className="dashboard-header partner-events-header">
+        <div>
+          <h1>Event Management</h1>
+          <p className="muted dashboard-hero-copy">
+            View, track and manage all your submitted events in one place.
+          </p>
+        </div>
       </section>
 
-      <section className="panel dashboard-panel">
+      <section className="panel dashboard-panel partner-events-filter-panel">
         <div className="dashboard-section-head">
           <div>
             <h2>Filter Events</h2>
@@ -200,27 +285,54 @@ export function EventManagePage() {
               <option>This Month</option>
             </select>
           </label>
+
+          <label className="field">
+            <span>Search</span>
+            <div className="partner-events-search">
+              <Search size={16} strokeWidth={2} />
+              <input
+                type="text"
+                placeholder="Search by title or category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </label>
+
+          <div className="partner-events-filter-actions">
+            <button
+              type="button"
+              className="btn-outline partner-events-clear-btn"
+              onClick={clearFilters}
+            >
+              <X size={16} strokeWidth={2} />
+              <span>Clear Filters</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      <section className="panel dashboard-panel">
-        <div className="dashboard-section-head">
-          <div>
-            <h2>Event Table</h2>
+      <section className="panel dashboard-panel partner-events-table-panel">
+        <div className="dashboard-section-head partner-events-table-head">
+          <div className="partner-events-heading-group">
+            <h2>My Events</h2>
+            <span className="partner-events-count-badge">
+              {filteredEvents.length}
+            </span>
           </div>
         </div>
 
         <div className="partner-events-table-wrap">
           {loading ? (
-            <p>Loading events...</p>
+            <p className="partner-events-state">Loading events...</p>
           ) : filteredEvents.length === 0 ? (
-            <p>No events found.</p>
+            <p className="partner-events-state">No events found.</p>
           ) : (
             <table className="partner-events-table">
               <thead>
                 <tr>
-                  <th>Event Title</th>
-                  <th>Date</th>
+                  <th>Event</th>
+                  <th>Date &amp; Time</th>
                   <th>Category</th>
                   <th>Registrations</th>
                   <th>Status</th>
@@ -231,17 +343,56 @@ export function EventManagePage() {
               <tbody>
                 {filteredEvents.map((event) => {
                   const displayStatus = mapStatus(event.eventApprovalStatus);
+                  const categoryLabel = mapCategoryLabel(event);
 
                   return (
                     <tr key={event.id}>
-                      <td>{event.title || "Untitled event"}</td>
-                      <td>{formatDate(event.dateTime)}</td>
                       <td>
-                        {event.category ||
-                          event.categories?.[0] ||
-                          "Uncategorised"}
+                        <div className="partner-event-cell">
+                          <div className="partner-event-thumb">
+                            {event.image ? (
+                              <img
+                                src={event.image}
+                                alt={event.title || "Event image"}
+                              />
+                            ) : (
+                              <div className="partner-event-thumb-fallback">
+                                {(event.title || "E").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="partner-event-info">
+                            <strong className="partner-event-title">
+                              {event.title || "Untitled event"}
+                            </strong>
+                            <span className="partner-event-location">
+                              {event.address || "No location"}
+                            </span>
+                          </div>
+                        </div>
                       </td>
-                      <td>{event.ticketsSold ?? 0}</td>
+
+                      <td>
+                        <div className="partner-event-date">
+                          <strong>{formatDate(event.dateTime)}</strong>
+                          <span>{formatTime(event.dateTime)}</span>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className={mapCategoryClass(categoryLabel)}>
+                          {categoryLabel}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="partner-events-registrations">
+                          <strong>{event.ticketsSold ?? 0}</strong>
+                          <span>/ {event.totalTickets ?? 0}</span>
+                        </span>
+                      </td>
+
                       <td>
                         <span
                           className={`partner-event-status partner-event-status-${displayStatus.toLowerCase()}`}
@@ -249,6 +400,7 @@ export function EventManagePage() {
                           {displayStatus}
                         </span>
                       </td>
+
                       <td>
                         <div className="partner-events-actions">
                           <Link
