@@ -159,7 +159,7 @@ export function EventRegistrationPage() {
       location: coordinates
         ? new GeoPoint(coordinates.lat, coordinates.lng)
         : null,
-      dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : undefined,
+      dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
       totalTickets,
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
@@ -178,11 +178,35 @@ export function EventRegistrationPage() {
     } as Partial<EventRecord>;
   }
 
+  /**
+   * Handles both event submission and draft saving by building the event data
+   * and either creating a new document or updating an existing one based on the presence of draftId.
+   * Includes validation to ensure required fields are completed before submission.
+   * On successful submission, resets the form and shows an alert. On failure, logs the error and shows an alert.
+   * 
+   * @param e 
+   * @returns 
+   */
   async function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    if (!user) return alert("You must be logged in");
-    if (!title || !description || !dateTime || !address)
-      return alert("Please fill in all required fields");
+    if (!user) return alert("You must be logged in to submit an event.");
+
+    // Basic validation of required fields before submission inluding checking for empty strings 
+    // and ensuring at least one category and interest tag is selected
+    const missing = [];
+    if (!title.trim()) missing.push("Title");
+    if (!description.trim()) missing.push("Description");
+    if (!dateTime) missing.push("Start date & time");
+    if (!address.trim()) missing.push("Address");
+    if (!imageFile && !existingImage) missing.push("Event image");
+    if (selectedCategories.length === 0) missing.push("At least one category");
+    if (interestTags.length === 0) missing.push("At least one interest tag");
+
+    if (missing.length > 0) {
+      return alert(
+        `Please complete the following before submitting:\n\n• ${missing.join("\n• ")}`,
+      );
+    }
 
     try {
       const eventData = await buildEventData("pending");
@@ -195,21 +219,37 @@ export function EventRegistrationPage() {
           createdAt: Timestamp.now(),
         });
       }
-      alert("✅ Event submitted successfully!");
+      alert(
+        "✅ Event submitted successfully! GMA admin will review your event before publishing.",
+      );
       resetForm();
     } catch (err) {
       console.log(err);
-      alert("❌ Failed to submit event");
+      alert(
+        "❌ Something went wrong while submitting your event. Please try again.",
+      );
     }
   }
 
+  /**
+   * Handles saving the current event details as a draft. If a draft already exists (indicated by draftId), 
+   * it updates that document; otherwise, it creates a new document in the "events" collection with an 
+   * "eventApprovalStatus" of "draft". Validates that the user is logged in and that a title is provided 
+   * before allowing the draft to be saved. On successful save, shows an alert confirming the draft has been saved. 
+   * On failure, logs the error and shows an alert.
+   * 
+   * @returns 
+   */
   async function handleSaveDraft() {
-    if (!user || !title.trim()) return alert("Enter a title to save a draft.");
+    if (!user) return alert("You must be logged in to save a draft.");
+    if (!title.trim())
+      return alert("Please enter a title before saving a draft.");
+
     try {
       const eventData = await buildEventData("draft");
       if (draftId) {
         await updateDoc(doc(db, "events", draftId), eventData);
-        alert("✅ Draft updated!");
+        alert("✅ Draft updated successfully!");
       } else {
         const newDoc = await addDoc(collection(db, "events"), {
           ...eventData,
@@ -217,11 +257,16 @@ export function EventRegistrationPage() {
           createdAt: Timestamp.now(),
         });
         setDraftId(newDoc.id);
-        alert("✅ Draft saved!");
+        alert(
+          "✅ Draft saved! You can continue editing and submit when ready.",
+        );
       }
+      resetForm();
     } catch (err) {
       console.log(err);
-      alert("❌ Failed to save draft");
+      alert(
+        "❌ Something went wrong while saving your draft. Please try again.",
+      );
     }
   }
 

@@ -8,23 +8,9 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import type { EventRecord } from "../types/event-types";
 
-export type PartnerEventRow = {
-  id: string;
-  title: string;
-  description?: string;
-  address?: string;
-  image?: string;
-  dateTime?: Timestamp | null;
-  category?: string;
-  categories?: string[];
-  ticketsSold?: number;
-  totalTickets?: number;
-  attendees?: string[];
-  eventApprovalStatus?: "draft" | "pending" | "approved" | "rejected";
-  submittedBy?: string;
-  ticketAccess?: "free_for_all" | "members_only";
-};
+export type PartnerEventRow = EventRecord & { id: string };
 
 function sortEventsByDateDesc(events: PartnerEventRow[]): PartnerEventRow[] {
   return [...events].sort((a, b) => {
