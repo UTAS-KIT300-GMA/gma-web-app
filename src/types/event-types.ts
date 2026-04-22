@@ -35,3 +35,5 @@ export type EventRecord = {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 };
+
+export type TicketAccessType = "free_for_all" | "members_only";
