@@ -131,7 +131,7 @@ export default function AppRoutes() {
         <Route
           path="partner/events/manage"
           element={
-            <RoleGate roles={["partner"]}>
+            <RoleGate roles={["partner","admin"]}>
               <PartnerEventManagePage />
             </RoleGate>
           }

@@ -1,32 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Eye, Trash2, Search, X } from "lucide-react";
+import { Timestamp } from "firebase/firestore";
 import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+  deletePartnerEvent,
+  getPartnerEvents,
+  getRegistrationCount,
+  type PartnerEventRow,
+} from "../../services/partnerEventService";
 import { useAuth } from "../../hooks/useAuth";
+import { EventPreviewModal } from "../../components/EventPreviewModal";
 import { Link } from "react-router-dom";
-
-type FirestoreEventRow = {
-  id: string;
-  title: string;
-  description?: string;
-  address?: string;
-  image?: string;
-  dateTime?: Timestamp | null;
-  category?: string;
-  categories?: string[];
-  ticketsSold?: number;
-  totalTickets?: number;
-  eventApprovalStatus?: "draft" | "pending" | "approved" | "rejected";
-  submittedBy?: string;
-};
 
 function formatDate(ts?: Timestamp | null) {
   if (!ts?.toDate) return "—";
@@ -70,23 +53,35 @@ function mapStatus(status?: string) {
   }
 }
 
-function mapCategoryLabel(event: FirestoreEventRow) {
-  return event.category || event.categories?.[0] || "Uncategorised";
+function mapCategoryLabels(event: PartnerEventRow) {
+  const categories = [
+    ...(event.category ? [event.category] : []),
+    ...(event.categories ?? []),
+  ];
+
+  const cleaned = categories
+    .map((category) => category?.trim())
+    .filter(Boolean);
+
+  const unique = [...new Set(cleaned)];
+
+  return unique.length ? unique : ["Uncategorised"];
 }
 
 function mapCategoryClass(category: string) {
   const value = category.toLowerCase();
 
   if (value.includes("connect") || value.includes("network")) {
-    return "partner-event-category networking";
+    return "partner-event-category connect";
   }
 
   if (
+    value.includes("growth") ||
     value.includes("grow") ||
     value.includes("workshop") ||
     value.includes("career")
   ) {
-    return "partner-event-category workshop";
+    return "partner-event-category growth";
   }
 
   if (
@@ -94,11 +89,7 @@ function mapCategoryClass(category: string) {
     value.includes("community") ||
     value.includes("leadership")
   ) {
-    return "partner-event-category community";
-  }
-
-  if (value.includes("business") || value.includes("finance")) {
-    return "partner-event-category business";
+    return "partner-event-category thrive";
   }
 
   return "partner-event-category default";
@@ -107,12 +98,17 @@ function mapCategoryClass(category: string) {
 export function EventManagePage() {
   const { user, profile } = useAuth();
 
-  const [eventStatus, setEventStatus] = useState("All");
-  const [dateRange, setDateRange] = useState("All Time");
+  const [eventStatus, setEventStatus] = useState("All statuses");
+  const [dateRange, setDateRange] = useState("All time");
   const [searchTerm, setSearchTerm] = useState("");
-  const [events, setEvents] = useState<FirestoreEventRow[]>([]);
+  const [events, setEvents] = useState<PartnerEventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [selectedEvent, setSelectedEvent] = useState<PartnerEventRow | null>(
+    null,
+  );
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     async function loadEvents() {
@@ -127,24 +123,7 @@ export function EventManagePage() {
       try {
         const partnerId = profile?.partnerId ?? user.uid;
 
-        const q = query(
-          collection(db, "events"),
-          where("submittedBy", "==", partnerId),
-        );
-
-        const snap = await getDocs(q);
-
-        const rows: FirestoreEventRow[] = snap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Omit<FirestoreEventRow, "id">),
-        }));
-
-        rows.sort((a, b) => {
-          const ta = a.dateTime?.toMillis?.() ?? 0;
-          const tb = b.dateTime?.toMillis?.() ?? 0;
-          return tb - ta;
-        });
-
+        const rows = await getPartnerEvents(partnerId);
         setEvents(rows);
       } catch (error) {
         console.error("Failed to load partner events:", error);
@@ -164,7 +143,7 @@ export function EventManagePage() {
     setBusyId(eventId);
 
     try {
-      await deleteDoc(doc(db, "events", eventId));
+      await deletePartnerEvent(eventId);
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
     } catch (error) {
       console.error("Failed to delete event:", error);
@@ -175,15 +154,15 @@ export function EventManagePage() {
   }
 
   function clearFilters() {
-    setEventStatus("All");
-    setDateRange("All Time");
+    setEventStatus("All statuses");
+    setDateRange("All time");
     setSearchTerm("");
   }
 
   const filteredEvents = useMemo(() => {
     let filtered = [...events];
 
-    if (eventStatus !== "All") {
+    if (eventStatus !== "All statuses") {
       filtered = filtered.filter(
         (event) => mapStatus(event.eventApprovalStatus) === eventStatus,
       );
@@ -226,12 +205,12 @@ export function EventManagePage() {
 
       filtered = filtered.filter((event) => {
         const title = event.title?.toLowerCase() ?? "";
-        const category = mapCategoryLabel(event).toLowerCase();
+        const categories = mapCategoryLabels(event).join(" ").toLowerCase();
         const address = event.address?.toLowerCase() ?? "";
 
         return (
           title.includes(keyword) ||
-          category.includes(keyword) ||
+          categories.includes(keyword) ||
           address.includes(keyword)
         );
       });
@@ -252,61 +231,49 @@ export function EventManagePage() {
       </section>
 
       <section className="panel dashboard-panel partner-events-filter-panel">
-        <div className="dashboard-section-head">
-          <div>
-            <h2>Filter Events</h2>
+        <div className="partner-events-toolbar">
+          <div className="partner-events-toolbar-search">
+            <Search size={18} strokeWidth={2} />
+            <input
+              type="text"
+              placeholder="Search by title, description or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        </div>
 
-        <div className="form-grid partner-events-filter-grid">
-          <label className="field">
-            <span>Event Status</span>
+          <div className="partner-events-toolbar-selects">
             <select
               value={eventStatus}
               onChange={(e) => setEventStatus(e.target.value)}
+              className="partner-events-toolbar-select"
             >
-              <option>All</option>
+              <option>All statuses</option>
               <option>Draft</option>
               <option>Pending</option>
               <option>Approved</option>
               <option>Rejected</option>
             </select>
-          </label>
 
-          <label className="field">
-            <span>Date Range</span>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
+              className="partner-events-toolbar-select"
             >
-              <option>All Time</option>
+              <option>All time</option>
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
               <option>This Month</option>
             </select>
-          </label>
 
-          <label className="field">
-            <span>Search</span>
-            <div className="partner-events-search">
-              <Search size={16} strokeWidth={2} />
-              <input
-                type="text"
-                placeholder="Search by title or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </label>
-
-          <div className="partner-events-filter-actions">
             <button
               type="button"
-              className="btn-outline partner-events-clear-btn"
+              className="partner-events-toolbar-clear"
               onClick={clearFilters}
+              aria-label="Clear filters"
+              title="Clear filters"
             >
               <X size={16} strokeWidth={2} />
-              <span>Clear Filters</span>
             </button>
           </div>
         </div>
@@ -343,7 +310,7 @@ export function EventManagePage() {
               <tbody>
                 {filteredEvents.map((event) => {
                   const displayStatus = mapStatus(event.eventApprovalStatus);
-                  const categoryLabel = mapCategoryLabel(event);
+                  const categoryLabels = mapCategoryLabels(event);
 
                   return (
                     <tr key={event.id}>
@@ -381,14 +348,24 @@ export function EventManagePage() {
                       </td>
 
                       <td>
-                        <span className={mapCategoryClass(categoryLabel)}>
-                          {categoryLabel}
-                        </span>
+                        <div className="partner-event-categories">
+                          {/* First category */}
+                          <span className={mapCategoryClass(categoryLabels[0])}>
+                            {categoryLabels[0]}
+                          </span>
+
+                          {/* Remaining count */}
+                          {categoryLabels.length > 1 && (
+                            <span className="partner-event-category more">
+                              +{categoryLabels.length - 1}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td>
                         <span className="partner-events-registrations">
-                          <strong>{event.ticketsSold ?? 0}</strong>
+                          <strong>{getRegistrationCount(event)}</strong>
                           <span>/ {event.totalTickets ?? 0}</span>
                         </span>
                       </td>
@@ -417,9 +394,10 @@ export function EventManagePage() {
                             className="icon-action-btn"
                             aria-label="View event details"
                             title="View Details"
-                            onClick={() =>
-                              alert(`View details for "${event.title}"`)
-                            }
+                            onClick={() => {
+                              setSelectedEvent(event);
+                              setShowPreview(true);
+                            }}
                           >
                             <Eye size={16} strokeWidth={2} />
                           </button>
@@ -446,6 +424,25 @@ export function EventManagePage() {
           )}
         </div>
       </section>
+      <EventPreviewModal
+        open={showPreview}
+        onClose={() => {
+          setShowPreview(false);
+          setSelectedEvent(null);
+        }}
+        event={
+          selectedEvent
+            ? {
+                title: selectedEvent.title,
+                description: selectedEvent.description,
+                address: selectedEvent.address,
+                image: selectedEvent.image,
+                dateTime: selectedEvent.dateTime,
+              }
+            : null
+        }
+        actionLabel="Close"
+      />
     </div>
   );
 }
