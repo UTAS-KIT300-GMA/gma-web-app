@@ -21,6 +21,7 @@ import "./styles/admin/dashboard.css";
 import "./styles/partner/forms.css";
 import "./styles/partner/image-upload.css";
 import "./styles/partner/dashboard.css";
+import "./styles/partner/event-manage.css";
 
 import App from "./App.tsx";
 
