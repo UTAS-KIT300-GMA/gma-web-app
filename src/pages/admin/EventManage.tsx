@@ -15,15 +15,10 @@ import type { EventRecord } from "../../types/event-types";
 import { Search } from "lucide-react";
 
 /**
-<<<<<<< HEAD
- * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
- * @param ts - The Timestamp to format, or undefined if unavailable.
-=======
  * Helper to format Firestore Timestamp to readable string. Returns "—" if invalid or missing.
  * 
  * @param ts 
  * @returns 
->>>>>>> 6ead320802180101c92d7b599c93e554d2adf2de
  */
 function formatWhen(ts: Timestamp | undefined) {
   if (!ts?.toDate) return "—";
@@ -44,14 +39,6 @@ function formatWhen(ts: Timestamp | undefined) {
 }
 
 /**
-<<<<<<< HEAD
- * @summary Determines whether the current user has permission to edit or delete an event.
- * @param ev - The event record being evaluated.
- * @param uid - The UID of the currently authenticated user.
- * @param isAdmin - Whether the current user holds the admin role.
- */
-function canManageEvent(ev: EventRecord, uid: string | undefined, isAdmin: boolean) {
-=======
  * Helper function to determine if the current user can manage (edit/delete) a given event. Admins can manage all events, partners can only manage their own events.
  *
  * @param ev
@@ -64,20 +51,15 @@ function canManageEvent(
   uid: string | undefined,
   isAdmin: boolean,
 ) {
->>>>>>> 6ead320802180101c92d7b599c93e554d2adf2de
   if (isAdmin) return true;
   if (!uid) return false;
   return ev.submittedBy === uid;
 }
 
 /**
-<<<<<<< HEAD
- * @summary Renders the event management table, allowing admins to view all events and partners to manage their own.
-=======
  * Admin page to view and manage events. Admins see all events, partners see only their own.
  *
  * @returns
->>>>>>> 6ead320802180101c92d7b599c93e554d2adf2de
  */
 export function EventManagePage() {
   const { user, profile } = useAuth();
@@ -87,17 +69,11 @@ export function EventManagePage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-<<<<<<< HEAD
-  /**
-   * @summary Loads events from Firestore into local state, filtered by role.
-   */
-=======
   // Search and filter state
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
->>>>>>> 6ead320802180101c92d7b599c93e554d2adf2de
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -149,12 +125,6 @@ export function EventManagePage() {
     load();
   }, [load]);
 
-<<<<<<< HEAD
-  /**
-   * @summary Prompts for confirmation then permanently deletes the given event from Firestore.
-   * @param ev - The event record to delete.
-   */
-=======
   // Derive unique categories from loaded events
   const categories = [
     "all",
@@ -178,7 +148,6 @@ export function EventManagePage() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
->>>>>>> 6ead320802180101c92d7b599c93e554d2adf2de
   async function onDelete(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
     const ok = window.confirm(`Delete “${ev.title}”? This cannot be undone.`);
