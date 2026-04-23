@@ -9,9 +9,10 @@ import {
 } from "firebase/firestore";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, type SyntheticEvent } from "react";
+import { EventPreviewModal } from "../../components/EventPreviewModal";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
-import { Eye, MapPin, Tag} from "lucide-react";
+import { Eye, MapPin, Tag } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import {
   CATEGORIES,
@@ -23,19 +24,6 @@ import {
 import { EventLocationInput } from "../../components/EventLocationInput";
 import { type EventLocation } from "../../services/geoService";
 
-type TicketAccessType = "free_for_all" | "members_only";
-
-const mockInitialForm = {
-  title: "",
-  description: "",
-  categories: ["connect"] as Category[],
-  address: "",
-  dateTime: "",
-  totalTickets: 50,
-  imageName: "",
-  interestTags: [] as string[],
-  ticketAccess: "free_for_all" as TicketAccessType,
-};
 /**
  * @summary Reads a File object and resolves with its base64-encoded data URL string.
  * @param file - The image file to encode.
@@ -47,6 +35,21 @@ function readFileAsBase64(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function toDateTimeLocalString(ts?: Timestamp | null): string {
+  if (!ts?.toDate) return "";
+
+  const date = ts.toDate();
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 /**
@@ -80,6 +83,8 @@ export function EventRegistrationPage() {
   const [interestTags, setInterestTags] = useState<string[]>([]);
   const [ticketAccess, setTicketAccess] =
     useState<TicketAccessType>("free_for_all");
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+  const [loadingExisting, setLoadingExisting] = useState(false);
 
   const [showPreview, setShowPreview] = useState(false);
 
@@ -105,18 +110,15 @@ export function EventRegistrationPage() {
     );
   }
 
-  /**
-   * @summary Validates the form, builds the event document, writes it to Firestore, and resets all fields.
-   * @param e - The form submission event.
-   */
-  async function handleSubmit(e: React.SyntheticEvent) {
-    e.preventDefault();
-    if (!user) {
-      alert("You must be logged in");
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl("");
       return;
     }
+
     const objectUrl = URL.createObjectURL(imageFile);
     setImagePreviewUrl(objectUrl);
+
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile]);
 
@@ -231,15 +233,15 @@ export function EventRegistrationPage() {
    * and either creating a new document or updating an existing one based on the presence of draftId.
    * Includes validation to ensure required fields are completed before submission.
    * On successful submission, resets the form and shows an alert. On failure, logs the error and shows an alert.
-   * 
-   * @param e 
-   * @returns 
+   *
+   * @param e
+   * @returns
    */
   async function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
     if (!user) return alert("You must be logged in to submit an event.");
 
-    // Basic validation of required fields before submission inluding checking for empty strings 
+    // Basic validation of required fields before submission inluding checking for empty strings
     // and ensuring at least one category and interest tag is selected
     const missing = [];
     if (!title.trim()) missing.push("Title");
@@ -280,13 +282,13 @@ export function EventRegistrationPage() {
   }
 
   /**
-   * Handles saving the current event details as a draft. If a draft already exists (indicated by draftId), 
-   * it updates that document; otherwise, it creates a new document in the "events" collection with an 
-   * "eventApprovalStatus" of "draft". Validates that the user is logged in and that a title is provided 
-   * before allowing the draft to be saved. On successful save, shows an alert confirming the draft has been saved. 
+   * Handles saving the current event details as a draft. If a draft already exists (indicated by draftId),
+   * it updates that document; otherwise, it creates a new document in the "events" collection with an
+   * "eventApprovalStatus" of "draft". Validates that the user is logged in and that a title is provided
+   * before allowing the draft to be saved. On successful save, shows an alert confirming the draft has been saved.
    * On failure, logs the error and shows an alert.
-   * 
-   * @returns 
+   *
+   * @returns
    */
   async function handleSaveDraft() {
     if (!user) return alert("You must be logged in to save a draft.");
@@ -327,10 +329,15 @@ export function EventRegistrationPage() {
    */
   function handleImageChange(file?: File) {
     if (!file) return;
+
     if (file.size > 500 * 1024) {
       alert("Image must be 500KB or smaller.");
+      return;
     }
-  };
+
+    setImageFile(file);
+    setImageName(file.name);
+  }
 
   if (loadingExisting)
     return (
