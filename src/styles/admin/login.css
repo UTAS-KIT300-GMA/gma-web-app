@@ -197,3 +197,50 @@
     font-size: 0.9rem;
   }
 }
+
+.verify-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.verify-btn {
+  width: auto;
+  min-width: 220px;
+  background: #f1cb5f;
+  color: #2b0f1d;
+}
+
+.verify-btn:hover {
+  background: #f1cb5f;
+  color: #2b0f1d;
+  filter: brightness(0.98);
+}
+
+.verify-support {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--gma-primary-dark);
+}
+
+.verify-support a {
+  color: var(--gma-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.register-actions .btn-primary {
+  width: auto;
+  min-width: 180px;
+}
+
+.register-footer {
+  margin-top: 1.2rem;
+  text-align: center;
+}
