@@ -111,7 +111,7 @@ export function RegisterPage() {
             </label>
           </div>
 
-          <div className="form-actions register-actions">
+          <div className="form-actions">
             <button
               type="submit"
               className="btn-primary"
@@ -121,7 +121,7 @@ export function RegisterPage() {
             </button>
           </div>
 
-          <p className="auth-footer register-footer">
+          <p className="auth-footer">
             Already have an account? <Link to="/login">Log in here</Link>
           </p>
         </form>

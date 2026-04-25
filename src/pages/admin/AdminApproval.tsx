@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   getPendingPartnerApprovals,
   approvePartner,
-  rejectPartner
+  rejectPartner,
 } from "../../services/adminApprovalService";
 import type { UserProfile } from "../../types/user-types";
 
@@ -41,7 +41,7 @@ export function AdminApprovalPage() {
   const handleApprove = async (id: string) => {
     try {
       await approvePartner(id);
-      setPartners(prev => prev.filter(p => p.id !== id));
+      setPartners((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       alert("Error approving partner");
     }
@@ -54,14 +54,20 @@ export function AdminApprovalPage() {
   const handleReject = async (id: string) => {
     try {
       await rejectPartner(id);
-      setPartners(prev => prev.filter(p => p.id !== id));
+      setPartners((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       alert("Error rejecting partner");
     }
   };
 
-  if (loading) return <div style={{ padding: "20px" }}>Searching for pending applications...</div>;
-  if (error) return <div style={{ color: "red", padding: "20px" }}>Error: {error}</div>;
+  if (loading)
+    return (
+      <div style={{ padding: "20px" }}>
+        Searching for pending applications...
+      </div>
+    );
+  if (error)
+    return <div style={{ color: "red", padding: "20px" }}>Error: {error}</div>;
 
   /**
    * @summary Navigates back to the previous page in the browser history.
@@ -69,69 +75,167 @@ export function AdminApprovalPage() {
   const goBack = () => {
     navigate(-1);
   };
-  
-
 
   return (
-    <div style={{ padding: "40px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ borderBottom: "2px solid #eee", paddingBottom: "10px" }}>
-        Admin: Partner Approvals
-      </h1>
-
-      <button onClick={goBack} style={{ marginBottom: "20px" }}>
-      Go Back
-    </button>
-
-      {partners.length === 0 ? (
-        <p style={{ marginTop: "20px", color: "#666" }}>
-          No users currently waiting for approval.
-        </p>
-      ) : (
-        <div style={{ display: "grid", gap: "15px", marginTop: "20px" }}>
-          {partners.map((p) => (
-            <div
-              key={p.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: "20px",
-                borderRadius: "8px",
-                backgroundColor: "#f9f9f9"
-              }}
-            >
-              <div style={{ marginBottom: "15px" }}>
-                <h3 style={{ margin: "0 0 5px 0" }}>{p.orgName || "Unnamed Org"}</h3>
-                <p style={{ margin: "0", fontSize: "14px", color: "#555" }}>
-                  <strong>Representative:</strong> {p.firstName} {p.lastName} ({p.email})
-                </p>
-                <p style={{ margin: "0", fontSize: "14px", color: "#555" }}>
-                  <strong>ABN:</strong> {p.abn} | <strong>UID:</strong> {p.id}
-                </p>
-              </div>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  onClick={() => handleApprove(p.id)}
-                  style={{
-                    backgroundColor: "#2ecc71", color: "white", border: "none",
-                    padding: "8px 16px", borderRadius: "4px", cursor: "pointer"
-                  }}
-                >
-                  Approve Partner
-                </button>
-                <button
-                  onClick={() => handleReject(p.id)}
-                  style={{
-                    backgroundColor: "#e74c3c", color: "white", border: "none",
-                    padding: "8px 16px", borderRadius: "4px", cursor: "pointer"
-                  }}
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
-          ))}
+    <section className="page-section user-management-page">
+      <div className="user-header">
+        <div>
+          <h1 className="user-title">Partner Approvals</h1>
+          <p className="user-subtitle">
+            Review and approve new partner applications.
+          </p>
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="user-management-card">
+        <div className="user-management-card-header">
+          <h2>Pending Partners</h2>
+          <p className="user-management-card-note">{partners.length} pending</p>
+        </div>
+
+        {partners.length === 0 ? (
+          <p style={{ padding: "20px", color: "#666" }}>
+            No users currently waiting for approval.
+          </p>
+        ) : (
+          <div className="user-management-table-wrap">
+            <table className="user-management-table">
+              <thead>
+                <tr>
+                  <th>Organisation</th>
+                  <th>Representative</th>
+                  <th>ABN</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {partners.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.orgName || "Unnamed"}</td>
+
+                    <td>
+                      {p.firstName} {p.lastName}
+                      <br />
+                      <span style={{ fontSize: "12px", color: "#777" }}>
+                        {p.email}
+                      </span>
+                    </td>
+
+                    <td>{p.abn || "-"}</td>
+
+                    <td>
+                      <span className="user-management-badge pending">
+                        Pending
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="user-management-actions">
+                        <button
+                          className="user-management-btn primary"
+                          onClick={() => handleApprove(p.id)}
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          className="user-management-btn secondary danger"
+                          onClick={() => handleReject(p.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+  return (
+    <section className="page-section user-management-page">
+      <div className="user-header">
+        <div>
+          <h1 className="user-title">Partner Approvals</h1>
+          <p className="user-subtitle">
+            Review and approve new partner applications.
+          </p>
+        </div>
+      </div>
+
+      <div className="user-management-card">
+        <div className="user-management-card-header">
+          <h2>Pending Partners</h2>
+          <p className="user-management-card-note">{partners.length} pending</p>
+        </div>
+
+        {partners.length === 0 ? (
+          <p style={{ padding: "20px", color: "#666" }}>
+            No users currently waiting for approval.
+          </p>
+        ) : (
+          <div className="user-management-table-wrap">
+            <table className="user-management-table">
+              <thead>
+                <tr>
+                  <th>Organisation</th>
+                  <th>Representative</th>
+                  <th>ABN</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {partners.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.orgName || "Unnamed"}</td>
+
+                    <td>
+                      {p.firstName} {p.lastName}
+                      <br />
+                      <span style={{ fontSize: "12px", color: "#777" }}>
+                        {p.email}
+                      </span>
+                    </td>
+
+                    <td>{p.abn || "-"}</td>
+
+                    <td>
+                      <span className="user-management-badge pending">
+                        Pending
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="user-management-actions">
+                        <button
+                          className="user-management-btn primary"
+                          onClick={() => handleApprove(p.id)}
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          className="user-management-btn secondary danger"
+                          onClick={() => handleReject(p.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
