@@ -48,11 +48,11 @@ const RouteGuardContent: React.FC<RouteGuardProps> = ({ user, profile }) => {
   if (!profile) {
     return <ApplicationPage />;
   }
- if (
+  if (
     profile.role === "partner" &&
-    profile.status === "pending_approval"
+    profile.partnerApprovalStatus === "pending_approval"
   ) {
-  return <PendingApprovalPage />;
+    return <PendingApprovalPage />;
   }
   if (!profile.onboardingComplete && profile.role !== "admin") {
     return <FinalSetupPage />;

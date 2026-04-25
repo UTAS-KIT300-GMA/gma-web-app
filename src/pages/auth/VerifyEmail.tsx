@@ -83,23 +83,14 @@ export function VerifyEmailPage() {
               {sending ? "Sending..." : "Resend Email"}
             </button>
 
-            <div className="verify-actions">
-                <button
-                  className="btn-secondary verify-btn"
-                  onClick={async () => {
-                    await signOutUser();
-                  }}
-                >
-                  Sign out & Check later
-                </button>
-            </div>
-
-            <p className="verify-support">
-              Need help? Contact{" "}
-              <a href="mailto:contact@guessmyaccent.com.au">
-                  contact@guessmyaccent.com.au
-              </a>
-            </p>
+            <button 
+              className="btn-ghost theme-black-text" 
+              onClick={async () => {
+                await signOutUser();
+              }}
+            >
+              Back to Login
+            </button>
           </div>
         </div>
       </div>
