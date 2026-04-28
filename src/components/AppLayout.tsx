@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -15,6 +15,28 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import {
+  collection,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  writeBatch,
+  type Timestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+
+type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt?: Timestamp;
+  data?: Record<string, string>;
+};
 
 /**
  * @summary Returns the correct CSS class string for a NavLink based on its active state.
@@ -27,9 +49,13 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
  * @summary Renders the main application shell with a collapsible sidebar and role-aware navigation.
  */
 export function AppLayout() {
-  const { profile, signOutUser } = useAuth();
+  const { user, profile, signOutUser } = useAuth();
   const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const notificationPanelRef = useRef<HTMLDivElement | null>(null);
 
   const location = useLocation();
 
@@ -54,6 +80,97 @@ export function AppLayout() {
   // Add state for active role to support with admin "view as partner" toggle in the future
   const [viewAsPartner, setViewAsPartner] = useState(false);
   const effectiveIsAdmin = isAdmin && !viewAsPartner;
+  const unreadCount = useMemo(
+    () => notifications.filter((item) => !item.read).length,
+    [notifications],
+  );
+
+  useEffect(() => {
+    if (!user) return;
+
+    setNotificationLoading(true);
+    const notifQuery = query(
+      collection(db, "users", user.uid, "notifications"),
+      orderBy("createdAt", "desc"),
+      limit(20),
+    );
+
+    const unsubscribe = onSnapshot(
+      notifQuery,
+      (snap) => {
+        const rows: AppNotification[] = snap.docs.map((item) => ({
+          id: item.id,
+          ...(item.data() as Omit<AppNotification, "id">),
+        }));
+        setNotifications(rows);
+        setNotificationLoading(false);
+      },
+      () => setNotificationLoading(false),
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target || !notificationPanelRef.current) return;
+      if (!notificationPanelRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showNotifications]);
+
+  async function markAllNotificationsRead() {
+    if (!user) return;
+    const unread = notifications.filter((item) => !item.read);
+    if (unread.length === 0) return;
+
+    const batch = writeBatch(db);
+    unread.forEach((item) => {
+      batch.update(doc(db, "users", user.uid, "notifications", item.id), {
+        read: true,
+        readAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+
+  async function openNotification(item: AppNotification) {
+    if (!user) return;
+
+    if (!item.read) {
+      await updateDoc(doc(db, "users", user.uid, "notifications", item.id), {
+        read: true,
+        readAt: serverTimestamp(),
+      });
+    }
+
+    const eventId = item.data?.eventId;
+    if (eventId && effectiveIsAdmin) {
+      navigate("/admin/events/approval");
+      setShowNotifications(false);
+      return;
+    }
+
+    if (eventId && !effectiveIsAdmin) {
+      navigate("/partner/events/manage");
+      setShowNotifications(false);
+      return;
+    }
+
+    if (effectiveIsAdmin) {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/partner/dashboard");
+    }
+    setShowNotifications(false);
+  }
 
   return (
     <div
@@ -223,13 +340,57 @@ export function AppLayout() {
               </button>
             )}
 
-            <button
-              className="dashboard-icon-btn"
-              type="button"
-              aria-label="Notifications"
-            >
-              <Bell size={24} strokeWidth={1.7} />
-            </button>
+            <div className="notification-wrap" ref={notificationPanelRef}>
+              <button
+                className="dashboard-icon-btn"
+                type="button"
+                aria-label="Notifications"
+                onClick={() => setShowNotifications((prev) => !prev)}
+              >
+                <Bell size={24} strokeWidth={1.7} />
+                {unreadCount > 0 && (
+                  <span className="notification-badge">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="notification-panel">
+                  <div className="notification-panel-head">
+                    <strong>Notifications</strong>
+                    <button
+                      type="button"
+                      className="notification-mark-all"
+                      onClick={markAllNotificationsRead}
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+
+                  {notificationLoading ? (
+                    <div className="notification-empty">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="notification-empty">No notifications yet.</div>
+                  ) : (
+                    <ul className="notification-list">
+                      {notifications.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            className={`notification-item ${item.read ? "" : "unread"}`}
+                            onClick={() => openNotification(item)}
+                          >
+                            <div className="notification-item-title">{item.title}</div>
+                            <div className="notification-item-body">{item.body}</div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* User's role and name added here */}
             <div className="dashboard-userbox">

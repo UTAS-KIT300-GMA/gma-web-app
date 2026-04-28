@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import {
   getPendingPartnerApprovals,
@@ -7,6 +6,7 @@ import {
   rejectPartner,
 } from "../../services/adminApprovalService";
 import type { UserProfile } from "../../types/user-types";
+import { notifyPartnerApprovalDecision } from "../../services/notificationService";
 
 /**
  * @summary Renders the admin page for reviewing, approving, or rejecting pending partner applications.
@@ -15,7 +15,6 @@ export function AdminApprovalPage() {
   const [partners, setPartners] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   useEffect(() => {
     /**
      * @summary Fetches all pending partner profiles from Firestore and populates local state.
@@ -41,6 +40,7 @@ export function AdminApprovalPage() {
   const handleApprove = async (id: string) => {
     try {
       await approvePartner(id);
+      await notifyPartnerApprovalDecision(id, true);
       setPartners((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       alert("Error approving partner");
@@ -54,6 +54,7 @@ export function AdminApprovalPage() {
   const handleReject = async (id: string) => {
     try {
       await rejectPartner(id);
+      await notifyPartnerApprovalDecision(id, false);
       setPartners((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       alert("Error rejecting partner");
@@ -68,13 +69,6 @@ export function AdminApprovalPage() {
     );
   if (error)
     return <div style={{ color: "red", padding: "20px" }}>Error: {error}</div>;
-
-  /**
-   * @summary Navigates back to the previous page in the browser history.
-   */
-  const goBack = () => {
-    navigate(-1);
-  };
 
   return (
     <section className="page-section user-management-page">

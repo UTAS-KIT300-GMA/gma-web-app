@@ -16,6 +16,10 @@ import {
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import type { UserProfile, UserRole, AccountStatus } from "../types/user-types";
+import {
+  canReceivePortalPush,
+  registerUserFcmToken,
+} from "../services/notificationService";
 
 export type AuthState = {
   user: User | null;
@@ -144,6 +148,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (unsubProfile) unsubProfile();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || !canReceivePortalPush(profile?.role)) return;
+    registerUserFcmToken(user.uid).catch((err) => {
+      console.warn("FCM token registration failed:", err);
+    });
+  }, [user, profile?.role]);
 
   /**
    * @summary Authenticates a user with email and password via Firebase Auth.

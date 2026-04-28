@@ -48,4 +48,6 @@ export interface UserProfile {
   // --- Workflow & Extras ---
   selectedTags?: string[];     // Interests (Migrant) or Categories (Partner)
   updatedAt?: Timestamp;       // Tracks last profile edit
+  fcmTokens?: string[];
+  fcmTokenUpdatedAt?: Timestamp;
 }
