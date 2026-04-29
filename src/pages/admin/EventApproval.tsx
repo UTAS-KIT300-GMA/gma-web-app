@@ -13,6 +13,7 @@ import {
 import { db } from "../../firebase";
 import type { EventRecord } from "../../types/event-types";
 import { Tag } from "lucide-react";
+import { notifyPartnerEventDecision } from "../../services/notificationService";
 
 /**
  * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
@@ -131,10 +132,19 @@ export function EventApprovalPage() {
   async function approve(ev: string) {
     setBusyId(ev);
     try {
+      const targetEvent = pending.find((item) => item.eventId === ev);
       await updateDoc(doc(db, "events", ev), {
         eventApprovalStatus: "approved",
         rejectionReason: deleteField(),
       });
+      if (targetEvent?.submittedBy) {
+        await notifyPartnerEventDecision(
+          targetEvent.submittedBy,
+          ev,
+          targetEvent.title,
+          true,
+        );
+      }
       await load();
     } finally {
       setBusyId(null);
@@ -154,6 +164,15 @@ export function EventApprovalPage() {
         eventApprovalStatus: "rejected",
         rejectionReason: reason,
       });
+      if (ev.submittedBy) {
+        await notifyPartnerEventDecision(
+          ev.submittedBy,
+          ev.eventId,
+          ev.title,
+          false,
+          reason,
+        );
+      }
       await load();
     } finally {
       setBusyId(null);

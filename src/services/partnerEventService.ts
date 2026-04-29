@@ -5,7 +5,6 @@ import {
   getDocs,
   query,
   where,
-  type Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import type { EventRecord } from "../types/event-types";

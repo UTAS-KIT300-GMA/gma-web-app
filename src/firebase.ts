@@ -2,6 +2,7 @@ import { getStorage } from "firebase/storage";
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, isSupported, type Messaging } from "firebase/messaging";
 
 /**
  * @summary Reads a required environment variable and warns if it is missing.
@@ -39,3 +40,17 @@ export function getFirebaseApp(): FirebaseApp {
 export const auth =  getAuth(getFirebaseApp());
 export const db =  getFirestore(getFirebaseApp());
 export const storage = getStorage(getFirebaseApp());
+
+let messagingInstance: Messaging | null = null;
+
+/**
+ * @summary Returns Firebase messaging when browser support is available.
+ */
+export async function getFirebaseMessaging(): Promise<Messaging | null> {
+  if (typeof window === "undefined") return null;
+  if (!(await isSupported())) return null;
+  if (!messagingInstance) {
+    messagingInstance = getMessaging(getFirebaseApp());
+  }
+  return messagingInstance;
+}
