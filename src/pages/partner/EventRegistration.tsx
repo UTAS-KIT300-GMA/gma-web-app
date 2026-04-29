@@ -416,7 +416,7 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <div className="inline-icon-input-content">
+                <div className="inline-icon-input-content" style={{ width: "100%" }}>
                   <EventLocationInput
                     initialAddress={address}
                     onLocationSelect={(location: EventLocation) => {

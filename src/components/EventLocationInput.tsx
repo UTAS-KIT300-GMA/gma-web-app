@@ -69,7 +69,7 @@ export const EventLocationInput: React.FC<EventLocationInputProps> = ({
         style={{ width: '100%' }}
       />
       
-      {isSearching && <small style={{ position: 'absolute', right: '10px', top: '10px', color: '#666' }}>Searching...</small>}
+      {isSearching && <small style={{ position: 'absolute', right: "10px", top: '15px', color: '#666' }}>Searching...</small>}
       
       {results.length > 0 && (
         <ul style={{ 
