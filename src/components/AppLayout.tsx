@@ -13,10 +13,12 @@ import {
   Handshake,
   Users,
   Bell,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
   collection,
+  deleteDoc,
   doc,
   limit,
   onSnapshot,
@@ -170,6 +172,20 @@ export function AppLayout() {
       navigate("/partner/dashboard");
     }
     setShowNotifications(false);
+  }
+
+  async function deleteNotification(notificationId: string) {
+    if (!user) return;
+    await deleteDoc(doc(db, "users", user.uid, "notifications", notificationId));
+  }
+
+  async function clearAllNotifications() {
+    if (!user || notifications.length === 0) return;
+    const batch = writeBatch(db);
+    notifications.forEach((item) => {
+      batch.delete(doc(db, "users", user.uid, "notifications", item.id));
+    });
+    await batch.commit();
   }
 
   return (
@@ -359,13 +375,22 @@ export function AppLayout() {
                 <div className="notification-panel">
                   <div className="notification-panel-head">
                     <strong>Notifications</strong>
-                    <button
-                      type="button"
-                      className="notification-mark-all"
-                      onClick={markAllNotificationsRead}
-                    >
-                      Mark all as read
-                    </button>
+                    <div className="notification-head-actions">
+                      <button
+                        type="button"
+                        className="notification-mark-all"
+                        onClick={markAllNotificationsRead}
+                      >
+                        Mark all as read
+                      </button>
+                      <button
+                        type="button"
+                        className="notification-clear-all"
+                        onClick={clearAllNotifications}
+                      >
+                        Clear all
+                      </button>
+                    </div>
                   </div>
 
                   {notificationLoading ? (
@@ -376,14 +401,27 @@ export function AppLayout() {
                     <ul className="notification-list">
                       {notifications.map((item) => (
                         <li key={item.id}>
-                          <button
-                            type="button"
-                            className={`notification-item ${item.read ? "" : "unread"}`}
-                            onClick={() => openNotification(item)}
-                          >
-                            <div className="notification-item-title">{item.title}</div>
-                            <div className="notification-item-body">{item.body}</div>
-                          </button>
+                          <div className={`notification-item ${item.read ? "" : "unread"}`}>
+                            <button
+                              type="button"
+                              className="notification-item-content"
+                              onClick={() => openNotification(item)}
+                            >
+                              <div className="notification-item-title">{item.title}</div>
+                              <div className="notification-item-body">{item.body}</div>
+                            </button>
+                            <button
+                              type="button"
+                              className="notification-delete-btn"
+                              aria-label="Delete notification"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteNotification(item.id);
+                              }}
+                            >
+                              <Trash2 size={14} strokeWidth={2} />
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>
