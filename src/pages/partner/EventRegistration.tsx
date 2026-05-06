@@ -76,6 +76,7 @@ export function EventRegistrationPage() {
     lng: number;
   } | null>(null);
   const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
+  const [eventDuration, setEventDuration] = useState<string>("");
   const [totalTickets, setTotalTickets] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState<string>("");
@@ -160,6 +161,7 @@ export function EventRegistrationPage() {
         }
 
         setDateTime(toDateTimeLocalString(data.dateTime));
+        setEventDuration((data as any).eventDuration || "");
         setTotalTickets(data.totalTickets ? String(data.totalTickets) : "");
         setExistingImage(data.image || "");
         setImageName(data.image ? "Current image" : "");
@@ -182,6 +184,7 @@ export function EventRegistrationPage() {
     setAddress("");
     setCoordinates(null);
     setDateTime("");
+    setEventDuration("");
     setTotalTickets("");
     setImageName("");
     setImageFile(null);
@@ -210,6 +213,7 @@ export function EventRegistrationPage() {
         ? new GeoPoint(coordinates.lat, coordinates.lng)
         : null,
       dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
+      eventDuration,
       totalTickets: Number(totalTickets),
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
@@ -247,6 +251,7 @@ export function EventRegistrationPage() {
     if (!title.trim()) missing.push("Title");
     if (!description.trim()) missing.push("Description");
     if (!dateTime) missing.push("Start date & time");
+    if (!eventDuration.trim()) missing.push("Event duration");
     if (!address.trim()) missing.push("Address");
     if (!imageFile && !existingImage) missing.push("Event image");
     if (selectedCategories.length === 0) missing.push("At least one category");
@@ -425,6 +430,10 @@ export function EventRegistrationPage() {
                 >
                   <EventLocationInput
                     initialAddress={address}
+                    onAddressChange={(value) => {
+                      setAddress(value);
+                      setCoordinates(null);
+                    }}
                     onLocationSelect={(location: EventLocation) => {
                       setAddress(location.displayAddress);
                       setCoordinates({
@@ -470,6 +479,24 @@ export function EventRegistrationPage() {
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
               />
+            </label>
+
+            <label className="field">
+              <span>Event duration</span>
+
+              <select
+                value={eventDuration}
+                onChange={(e) => setEventDuration(e.target.value)}
+              >
+                <option value="">Select duration</option>
+                <option value="30 minutes">30 minutes</option>
+                <option value="1 hour">1 hour</option>
+                <option value="2 hours">2 hours</option>
+                <option value="3 hours">3 hours</option>
+                <option value="Half day">Half day</option>
+                <option value="Full day">Full day</option>
+                <option value="Multiple days">Multiple days</option>
+              </select>
             </label>
 
             <label className="field">
