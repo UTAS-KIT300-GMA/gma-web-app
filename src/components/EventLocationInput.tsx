@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { GeocodingService, type EventLocation } from '../services/geoService';
+import React, { useState, useEffect } from "react";
+import { GeocodingService, type EventLocation } from "../services/geoService";
 
 interface EventLocationInputProps {
   onLocationSelect: (location: EventLocation) => void;
+  onAddressChange?: (address: string) => void;
   initialAddress?: string;
   disabled?: boolean;
 }
@@ -14,10 +15,11 @@ interface EventLocationInputProps {
  * @param props.initialAddress - The starting address string (defaults to an empty string).
  * @param props.disabled - Controls whether the input is interactive (defaults to false).
  */
-export const EventLocationInput: React.FC<EventLocationInputProps> = ({ 
-  onLocationSelect, 
-  initialAddress = '',
-  disabled = false
+export const EventLocationInput: React.FC<EventLocationInputProps> = ({
+  onLocationSelect,
+  onAddressChange,
+  initialAddress = "",
+  disabled = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>(initialAddress);
   const [results, setResults] = useState<EventLocation[]>([]);
@@ -35,7 +37,8 @@ export const EventLocationInput: React.FC<EventLocationInputProps> = ({
    */
   const handleSearch = async (text: string) => {
     setSearchQuery(text);
-    
+    onAddressChange?.(text);
+
     if (text.length <= 2) {
       setResults([]);
       return;
@@ -52,44 +55,76 @@ export const EventLocationInput: React.FC<EventLocationInputProps> = ({
    * @param location - The location object selected from the dropdown list.
    */
   const handleSelect = (location: EventLocation) => {
-    setSearchQuery(location.displayAddress);
+    const streetNumberMatch = searchQuery.trim().match(/^\d+/);
+    const streetNumber = streetNumberMatch ? streetNumberMatch[0] : "";
+
+    const displayAddress =
+      streetNumber && !location.displayAddress.startsWith(streetNumber)
+        ? `${streetNumber} ${location.displayAddress}`
+        : location.displayAddress;
+
+    const selectedLocation = {
+      ...location,
+      displayAddress,
+    };
+
+    setSearchQuery(displayAddress);
     setResults([]);
-    onLocationSelect(location);
+    onLocationSelect(selectedLocation);
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <input 
-        type="text" 
+    <div style={{ position: "relative", width: "100%" }}>
+      <input
+        type="text"
         value={searchQuery}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
-        placeholder="Enter event address" 
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          handleSearch(e.target.value)
+        }
+        placeholder="Enter event address"
         disabled={disabled}
         required
-        style={{ width: '100%' }}
+        style={{ width: "100%" }}
       />
-      
-      {isSearching && <small style={{ position: 'absolute', right: "10px", top: '15px', color: '#666' }}>Searching...</small>}
-      
+
+      {isSearching && (
+        <small
+          style={{
+            position: "absolute",
+            right: "10px",
+            top: "15px",
+            color: "#666",
+          }}
+        >
+          Searching...
+        </small>
+      )}
+
       {results.length > 0 && (
-        <ul style={{ 
-          position: 'absolute', 
-          zIndex: 10, 
-          background: 'white', 
-          border: '1px solid #ccc',
-          listStyle: 'none',
-          padding: 0,
-          margin: 0,
-          width: '100%',
-          maxHeight: '200px',
-          overflowY: 'auto',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-        }}>
+        <ul
+          style={{
+            position: "absolute",
+            zIndex: 10,
+            background: "white",
+            border: "1px solid #ccc",
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            width: "100%",
+            maxHeight: "200px",
+            overflowY: "auto",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          }}
+        >
           {results.map((loc, index) => (
-            <li 
-              key={index} 
+            <li
+              key={index}
               onClick={() => handleSelect(loc)}
-              style={{ cursor: 'pointer', padding: '8px 12px', borderBottom: '1px solid #eee' }}
+              style={{
+                cursor: "pointer",
+                padding: "8px 12px",
+                borderBottom: "1px solid #eee",
+              }}
             >
               {loc.displayAddress}
             </li>
