@@ -76,8 +76,7 @@ export function EventRegistrationPage() {
     lng: number;
   } | null>(null);
   const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
-  const [totalTickets, setTotalTickets] =
-    useState<EventRecord["totalTickets"]>(50);
+  const [totalTickets, setTotalTickets] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState<string>("");
   const [existingImage, setExistingImage] = useState<EventRecord["image"]>("");
@@ -161,7 +160,7 @@ export function EventRegistrationPage() {
         }
 
         setDateTime(toDateTimeLocalString(data.dateTime));
-        setTotalTickets(data.totalTickets || 50);
+        setTotalTickets(data.totalTickets ? String(data.totalTickets) : "");
         setExistingImage(data.image || "");
         setImageName(data.image ? "Current image" : "");
         setInterestTags(data.interestTags || []);
@@ -183,7 +182,7 @@ export function EventRegistrationPage() {
     setAddress("");
     setCoordinates(null);
     setDateTime("");
-    setTotalTickets(50);
+    setTotalTickets("");
     setImageName("");
     setImageFile(null);
     setExistingImage("");
@@ -211,7 +210,7 @@ export function EventRegistrationPage() {
         ? new GeoPoint(coordinates.lat, coordinates.lng)
         : null,
       dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
-      totalTickets,
+      totalTickets: Number(totalTickets),
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
       ticketAccess,
@@ -257,6 +256,10 @@ export function EventRegistrationPage() {
       return alert(
         `Please complete the following before submitting:\n\n• ${missing.join("\n• ")}`,
       );
+    }
+
+    if (!totalTickets || Number(totalTickets) < 1) {
+      missing.push("Total tickets");
     }
 
     try {
@@ -416,7 +419,10 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <div className="inline-icon-input-content" style={{ width: "100%" }}>
+                <div
+                  className="inline-icon-input-content"
+                  style={{ width: "100%" }}
+                >
                   <EventLocationInput
                     initialAddress={address}
                     onLocationSelect={(location: EventLocation) => {
@@ -469,10 +475,18 @@ export function EventRegistrationPage() {
             <label className="field">
               <span>Total tickets</span>
               <input
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={totalTickets}
-                onChange={(e) => setTotalTickets(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (/^\d*$/.test(value)) {
+                    setTotalTickets(value);
+                  }
+                }}
+                placeholder="Enter total tickets"
               />
             </label>
           </div>
