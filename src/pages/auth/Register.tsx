@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerPartner } from "../../services/authService"; 
+import { registerPartner } from "../../services/authService";
 
 /**
  * @summary Renders the registration interface for Stage 1 of the partner onboarding process.
@@ -11,7 +11,9 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+
   const navigate = useNavigate();
 
   /**
@@ -22,6 +24,10 @@ export function RegisterPage() {
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!acceptedTerms) {
+      return setError("You must accept the Terms & Conditions.");
+    }
 
     if (password !== confirmPassword) {
       return setError("Passwords do not match.");
@@ -36,17 +42,17 @@ export function RegisterPage() {
     try {
       await registerPartner({
         email,
-        password, 
-        orgName: "", 
+        password,
+        orgName: "",
         orgType: "",
-        abn: "", 
+        abn: "",
         address: "",
-        firstName: "", 
-        lastName: "", 
-        position: "", 
-        phoneNumber: ""
+        firstName: "",
+        lastName: "",
+        position: "",
+        phoneNumber: "",
       });
-      
+
       navigate("/verify-email");
     } catch (err: any) {
       console.error("Registration failed:", err);
@@ -109,14 +115,36 @@ export function RegisterPage() {
                 disabled={loading}
               />
             </label>
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
+            <label
+              className="field"
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
             >
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                disabled={loading}
+                style={{ width: "auto" }}
+              />
+
+              <span style={{ fontSize: "14px" }}>
+                I agree to the{" "}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setShowTerms(true)}
+                >
+                  Terms & Conditions
+                </button>
+              </span>
+            </label>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? "Creating Account..." : "Register Account"}
             </button>
           </div>
@@ -126,6 +154,29 @@ export function RegisterPage() {
           </p>
         </form>
       </div>
+      {showTerms && (
+        <div className="modal-backdrop">
+          <div className="terms-modal">
+            <h2>GMA Terms & Conditions</h2>
+
+            <ol>
+              <li>Users must use the platform respectfully.</li>
+              <li>Partners must provide accurate information.</li>
+              <li>GMA may moderate platform content.</li>
+              <li>User information may be stored for platform purposes.</li>
+              <li>Terms may change over time.</li>
+            </ol>
+
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setShowTerms(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
