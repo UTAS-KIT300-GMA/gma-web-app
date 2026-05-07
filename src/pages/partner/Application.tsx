@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { createInitialProfile } from "../../services/authService"; 
+import { createInitialProfile } from "../../services/authService";
 
 /**
  * @summary Renders the Stage 2 onboarding form for collecting partner organisation and representative details.
@@ -10,19 +10,19 @@ import { createInitialProfile } from "../../services/authService";
 export function ApplicationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   // Organization State
   const [orgName, setOrgName] = useState("");
   const [orgType, setOrgType] = useState("");
   const [abn, setAbn] = useState("");
   const [address, setAddress] = useState("");
-  
+
   // Representative State (Normalized)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [position, setPosition] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,31 +33,37 @@ export function ApplicationPage() {
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!user) return;
-    
+
     setError(null);
+    const cleanedAbn = abn.replace(/\s/g, "");
+
+    if (cleanedAbn && !/^\d{11}$/.test(cleanedAbn)) {
+      return setError("ABN must contain exactly 11 digits.");
+    }
+
     setLoading(true);
 
     try {
-      
       await createInitialProfile(user, {
         email: user.email!,
-        password: "", 
+        password: "",
         orgName,
         orgType,
-        abn,
+        abn: cleanedAbn,
         address,
         firstName,
         lastName,
         position,
-        phoneNumber
+        phoneNumber,
       });
-      
+
       // Trigger the "Traffic Controller" to move them to the Pending screen
-      navigate("/pending-approval"); 
-      
+      navigate("/pending-approval");
     } catch (err) {
       console.error("Profile creation failed:", err);
-      setError("Failed to submit application. Please check your details and try again.");
+      setError(
+        "Failed to submit application. Please check your details and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -68,7 +74,7 @@ export function ApplicationPage() {
       <form className="login-card" onSubmit={handleSubmit}>
         <h2>Partner Application</h2>
         <p className="muted">Step 2: Tell us about your organization</p>
-        
+
         {error && (
           <div className="alert error" role="alert">
             {error}
@@ -79,13 +85,23 @@ export function ApplicationPage() {
           {/* --- Organization Details --- */}
           <label className="field">
             <span>Organization Name</span>
-            <input value={orgName} onChange={e => setOrgName(e.target.value)} required />
+            <input
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              required
+            />
           </label>
 
           <label className="field">
             <span>Organization Type</span>
-            <select value={orgType} onChange={e => setOrgType(e.target.value)} required>
-              <option value="" disabled>Select a type...</option>
+            <select
+              value={orgType}
+              onChange={(e) => setOrgType(e.target.value)}
+              required
+            >
+              <option value="" disabled>
+                Select a type...
+              </option>
               <option value="Non-Profit">Non-Profit / Charity</option>
               <option value="Education">Education</option>
               <option value="Government">Government</option>
@@ -96,12 +112,23 @@ export function ApplicationPage() {
 
           <label className="field">
             <span>ABN (Australian Business Number)</span>
-            <input value={abn} onChange={e => setAbn(e.target.value)} placeholder="11 digits" required />
+            <input
+              value={abn}
+              onChange={(e) => setAbn(e.target.value)}
+              placeholder="11 digits (optional)"
+              inputMode="numeric"
+              maxLength={11}
+            />
           </label>
 
           <label className="field">
             <span>Business Address</span>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, Suburb, State, Postcode" required />
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Street, Suburb, State, Postcode"
+              required
+            />
           </label>
 
           <hr style={{ margin: "20px 0", borderTop: "1px solid #eee" }} />
@@ -110,26 +137,49 @@ export function ApplicationPage() {
           <div style={{ display: "flex", gap: "10px" }}>
             <label className="field" style={{ flex: 1 }}>
               <span>First Name</span>
-              <input value={firstName} onChange={e => setFirstName(e.target.value)} required />
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
             </label>
             <label className="field" style={{ flex: 1 }}>
               <span>Last Name</span>
-              <input value={lastName} onChange={e => setLastName(e.target.value)} required />
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
             </label>
           </div>
 
           <label className="field">
             <span>Your Position / Title</span>
-            <input value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g., Event Manager" required />
+            <input
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="e.g., Event Manager"
+              required
+            />
           </label>
 
           <label className="field">
             <span>Direct Phone Number</span>
-            <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} required />
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              required
+            />
           </label>
         </div>
 
-        <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: "20px" }}>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={loading}
+          style={{ marginTop: "20px" }}
+        >
           {loading ? "Submitting..." : "Submit for Approval"}
         </button>
       </form>
