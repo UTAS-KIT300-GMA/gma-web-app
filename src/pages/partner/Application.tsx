@@ -107,6 +107,7 @@ export function ApplicationPage() {
               <option value="Government">Government</option>
               <option value="Corporate">Corporate</option>
               <option value="Small Business">Small Business</option>
+              <option value="Ambassador">Ambassador</option>
             </select>
           </label>
 

@@ -76,8 +76,8 @@ export function EventRegistrationPage() {
     lng: number;
   } | null>(null);
   const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
-  const [totalTickets, setTotalTickets] =
-    useState<EventRecord["totalTickets"]>(50);
+  const [eventDuration, setEventDuration] = useState<string>("");
+  const [totalTickets, setTotalTickets] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState<string>("");
   const [existingImage, setExistingImage] = useState<EventRecord["image"]>("");
@@ -161,7 +161,8 @@ export function EventRegistrationPage() {
         }
 
         setDateTime(toDateTimeLocalString(data.dateTime));
-        setTotalTickets(data.totalTickets || 50);
+        setEventDuration((data as any).eventDuration || "");
+        setTotalTickets(data.totalTickets ? String(data.totalTickets) : "");
         setExistingImage(data.image || "");
         setImageName(data.image ? "Current image" : "");
         setInterestTags(data.interestTags || []);
@@ -183,7 +184,8 @@ export function EventRegistrationPage() {
     setAddress("");
     setCoordinates(null);
     setDateTime("");
-    setTotalTickets(50);
+    setEventDuration("");
+    setTotalTickets("");
     setImageName("");
     setImageFile(null);
     setExistingImage("");
@@ -211,7 +213,8 @@ export function EventRegistrationPage() {
         ? new GeoPoint(coordinates.lat, coordinates.lng)
         : null,
       dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
-      totalTickets,
+      eventDuration,
+      totalTickets: Number(totalTickets),
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
       ticketAccess,
@@ -248,6 +251,7 @@ export function EventRegistrationPage() {
     if (!title.trim()) missing.push("Title");
     if (!description.trim()) missing.push("Description");
     if (!dateTime) missing.push("Start date & time");
+    if (!eventDuration.trim()) missing.push("Event duration");
     if (!address.trim()) missing.push("Address");
     if (!imageFile && !existingImage) missing.push("Event image");
     if (selectedCategories.length === 0) missing.push("At least one category");
@@ -257,6 +261,10 @@ export function EventRegistrationPage() {
       return alert(
         `Please complete the following before submitting:\n\n• ${missing.join("\n• ")}`,
       );
+    }
+
+    if (!totalTickets || Number(totalTickets) < 1) {
+      missing.push("Total tickets");
     }
 
     try {
@@ -416,9 +424,16 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <div className="inline-icon-input-content" style={{ width: "100%" }}>
+                <div
+                  className="inline-icon-input-content"
+                  style={{ width: "100%" }}
+                >
                   <EventLocationInput
                     initialAddress={address}
+                    onAddressChange={(value) => {
+                      setAddress(value);
+                      setCoordinates(null);
+                    }}
                     onLocationSelect={(location: EventLocation) => {
                       setAddress(location.displayAddress);
                       setCoordinates({
@@ -467,12 +482,38 @@ export function EventRegistrationPage() {
             </label>
 
             <label className="field">
+              <span>Event duration</span>
+
+              <select
+                value={eventDuration}
+                onChange={(e) => setEventDuration(e.target.value)}
+              >
+                <option value="">Select duration</option>
+                <option value="30 minutes">30 minutes</option>
+                <option value="1 hour">1 hour</option>
+                <option value="2 hours">2 hours</option>
+                <option value="3 hours">3 hours</option>
+                <option value="Half day">Half day</option>
+                <option value="Full day">Full day</option>
+                <option value="Multiple days">Multiple days</option>
+              </select>
+            </label>
+
+            <label className="field">
               <span>Total tickets</span>
               <input
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={totalTickets}
-                onChange={(e) => setTotalTickets(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (/^\d*$/.test(value)) {
+                    setTotalTickets(value);
+                  }
+                }}
+                placeholder="Enter total tickets"
               />
             </label>
           </div>
