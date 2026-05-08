@@ -49,11 +49,27 @@ function getBadgeClass(status?: AccountStatus) {
   return "inactive";
 }
 
+type SortKey = "name" | "email" | "role" | "status";
+type SortDirection = "asc" | "desc";
+
+function getSortValue(user: UserProfile, key: SortKey) {
+  if (key === "name") return getDisplayName(user).toLowerCase();
+  if (key === "email") return (user.email || "").toLowerCase();
+  if (key === "role") return formatRole(user.role).toLowerCase();
+  return formatStatus(user.partnerApprovalStatus).toLowerCase();
+}
+
 export default function UserManagementPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [searchText, setSearchText] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | UserRole>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | AccountStatus>(
+    "all",
+  );
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -100,13 +116,25 @@ export default function UserManagementPage() {
     });
     setPreviewImage(selectedUser.photoURL || null);
   }, [selectedUser]);
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(key);
+    setSortDirection("asc");
+  };
+
+  const getSortLabel = (key: SortKey) => {
+    if (sortKey !== key) return "↕";
+    return sortDirection === "asc" ? "↑" : "↓";
+  };
 
   const filteredUsers = useMemo(() => {
     const keyword = searchText.toLowerCase().trim();
 
-    if (!keyword) return users;
-
-    return users.filter((user) => {
+    const filtered = users.filter((user) => {
       const searchableText = [
         getDisplayName(user),
         user.email,
@@ -117,9 +145,23 @@ export default function UserManagementPage() {
         .join(" ")
         .toLowerCase();
 
-      return searchableText.includes(keyword);
+      const matchesSearch = !keyword || searchableText.includes(keyword);
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" || user.partnerApprovalStatus === statusFilter;
+
+      return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, searchText]);
+
+    return [...filtered].sort((a, b) => {
+      const aValue = getSortValue(a, sortKey);
+      const bValue = getSortValue(b, sortKey);
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [users, searchText, roleFilter, statusFilter, sortKey, sortDirection]);
 
   const handleSave = async () => {
     if (!selectedUser) return;
@@ -232,6 +274,31 @@ export default function UserManagementPage() {
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
           />
+          <select
+            className="user-management-filter"
+            value={roleFilter}
+            onChange={(event) =>
+              setRoleFilter(event.target.value as "all" | UserRole)
+            }
+          >
+            <option value="all">All roles</option>
+            <option value="admin">Admin</option>
+            <option value="partner">Partner</option>
+            <option value="general">General User</option>
+          </select>
+
+          <select
+            className="user-management-filter"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as "all" | AccountStatus)
+            }
+          >
+            <option value="all">All statuses</option>
+            <option value="approved">Active</option>
+            <option value="pending_approval">Pending</option>
+            <option value="rejected">Inactive</option>
+          </select>
         </div>
       </div>
 
@@ -250,10 +317,42 @@ export default function UserManagementPage() {
             <table className="user-management-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
+                  <th>
+                    <button
+                      type="button"
+                      className="user-table-sort-btn"
+                      onClick={() => handleSort("name")}
+                    >
+                      Name {getSortLabel("name")}
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      type="button"
+                      className="user-table-sort-btn"
+                      onClick={() => handleSort("email")}
+                    >
+                      Email {getSortLabel("email")}
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      type="button"
+                      className="user-table-sort-btn"
+                      onClick={() => handleSort("role")}
+                    >
+                      Role {getSortLabel("role")}
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      type="button"
+                      className="user-table-sort-btn"
+                      onClick={() => handleSort("status")}
+                    >
+                      Status {getSortLabel("status")}
+                    </button>
+                  </th>
                   <th>Actions</th>
                 </tr>
               </thead>

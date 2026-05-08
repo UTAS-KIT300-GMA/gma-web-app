@@ -130,6 +130,29 @@ and responsive adjustments.
   white-space: nowrap;
 }
 
+.partner-events-table th button.partner-events-sort-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.partner-events-table th button.partner-events-sort-btn:hover {
+  color: #a42169;
+}
+
+.partner-events-table th button.partner-events-sort-btn:focus-visible {
+  outline: 2px solid rgba(164, 33, 105, 0.28);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
 .partner-events-table td {
   text-align: left;
   font-size: 0.92rem;
@@ -514,6 +537,8 @@ and responsive adjustments.
   .partner-events-table td {
     padding: 0.85rem 0.75rem;
   }
+
+  
 
   .icon-action-btn {
     width: 38px;
