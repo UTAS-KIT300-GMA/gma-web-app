@@ -16,6 +16,7 @@ import { EventRegistrationPage } from "./pages/partner/EventRegistration";
 import { ApplicationPage } from "./pages/partner/Application";
 import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { EventManagePage as PartnerEventManagePage } from "./pages/partner/EventManage";
+import SettingsPage from "./pages/partner/SettingsP";
 
 // Admin pages
 import { AnalyticsPage } from "./pages/admin/Analytics";
@@ -162,6 +163,15 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["partner", "admin"]}>
               <EventRegistrationPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="partner/settings"
+          element={
+            <RoleGate roles={["partner", "admin"]}>
+              <SettingsPage />
             </RoleGate>
           }
         />

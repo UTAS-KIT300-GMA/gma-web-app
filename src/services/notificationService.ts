@@ -4,6 +4,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   updateDoc,
@@ -85,20 +86,6 @@ export async function queueNotification(payload: NotificationPayload): Promise<v
     status: "pending",
     createdAt: Timestamp.now(),
   });
-
-  const batch = writeBatch(db);
-  uniqueTargetUserIds.forEach((userId) => {
-    const notifRef = doc(collection(db, "users", userId, "notifications"));
-    batch.set(notifRef, {
-      kind: payload.kind,
-      title: payload.title,
-      body: payload.body,
-      data: payload.data ?? {},
-      read: false,
-      createdAt: Timestamp.now(),
-    });
-  });
-  await batch.commit();
 }
 
 /**
@@ -140,12 +127,36 @@ export async function notifyPartnerApprovalDecision(
 }
 
 export async function notifyPartnerEventDecision(
+  
+  
   partnerId: string,
   eventId: string,
   eventTitle: string,
   approved: boolean,
   rejectionReason?: string,
 ): Promise<void> {
+  console.log("Notifications started",);
+  // check partner notification setting and if off does not sent notification.
+  console.log("partnerID:", partnerId); //console log delete after test
+  const userDoc = await getDoc(doc(db, "users", partnerId));
+  console.log("partner exists:", userDoc.exists()); //console log delete after test
+  console.log("User Data:", userDoc.data()); //console log delete after test
+
+  const preferences = userDoc.exists()
+    ? (userDoc.data()?.notificationPreferences as
+        | { eventApprovalResults?: boolean }
+        | undefined)
+    : undefined;
+
+      console.log("eventnotification results:", preferences?.eventApprovalResults); //console log delete after test
+
+  if (preferences?.eventApprovalResults !== true) {
+      console.log("notifications off:" ); //console log delete after test
+
+    return;
+  }
+  console.log("notifications on:" ); //console log delete after test
+
   await queueNotification({
     kind: "event_approval_result",
     title: approved ? "Event approved" : "Event rejected",
