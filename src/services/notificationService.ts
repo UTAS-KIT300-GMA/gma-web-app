@@ -191,6 +191,23 @@ export async function notifyAdminsEventReminder3Days(
 // ─── Partner notifications ────────────────────────────────────────────────────
 
 /**
+ * @summary Notifies a partner that an admin has edited their event.
+ */
+export async function notifyPartnerEventEdited(
+  partnerId: string,
+  eventId: string,
+  eventTitle: string,
+): Promise<void> {
+  await queueNotification({
+    kind: "event_edited",
+    title: "Your event was updated by admin",
+    body: `An admin has made changes to "${eventTitle}". Tap to review the updated details.`,
+    targetUserIds: [partnerId],
+    data: { eventId },
+  });
+}
+
+/**
  * @summary Notifies a partner of the approval decision for their partner application.
  */
 export async function notifyPartnerApprovalDecision(

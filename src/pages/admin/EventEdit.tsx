@@ -5,7 +5,11 @@ import { EventPreviewModal } from "../../components/EventPreviewModal";
 import { db } from "../../firebase";
 import { Eye, MapPin, Tag } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
-import { notifyUsersEventEdited, getEventAttendeeIds } from "../../services/notificationService";
+import {
+  notifyUsersEventEdited,
+  notifyPartnerEventEdited,
+  getEventAttendeeIds,
+} from "../../services/notificationService";
 import {
   CATEGORIES,
   type Category,
@@ -151,13 +155,17 @@ export function AdminEventEditPage() {
         updatedAt: Timestamp.now(),
       });
 
-      const attendeeIds = await getEventAttendeeIds(eventId);
-      if (attendeeIds.length > 0) {
-        await notifyUsersEventEdited(attendeeIds, eventId, title.trim());
-      }
-
       alert("✅ Event updated successfully!");
       navigate("/admin/events/manage");
+
+      getEventAttendeeIds(eventId).then((attendeeIds) => {
+        if (attendeeIds.length > 0) {
+          notifyUsersEventEdited(attendeeIds, eventId, title.trim()).catch(console.error);
+        }
+      }).catch(console.error);
+      if (originalSubmittedBy) {
+        notifyPartnerEventEdited(originalSubmittedBy, eventId, title.trim()).catch(console.error);
+      }
     } catch (err) {
       console.error("Failed to save event:", err);
       alert("❌ Something went wrong while saving. Please try again.");
