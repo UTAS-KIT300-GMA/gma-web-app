@@ -13,7 +13,11 @@ import {
 import { db } from "../../firebase";
 import type { EventRecord } from "../../types/event-types";
 import { Tag } from "lucide-react";
-import { notifyPartnerEventDecision } from "../../services/notificationService";
+import {
+  notifyPartnerEventDecision,
+  notifyUsersEventEdited,
+  getEventAttendeeIds,
+} from "../../services/notificationService";
 
 /**
  * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
@@ -46,7 +50,6 @@ async function fetchUserInfo(
 ): Promise<{ name: string; org: string }> {
   try {
     const snap = await getDoc(doc(db, "users", uid));
-    console.log("fetchUserInfo:", uid, "exists:", snap.exists(), snap.data()); // 👈 add this
 
     if (snap.exists()) {
       const data = snap.data();
@@ -86,11 +89,6 @@ export function EventApprovalPage() {
         where("eventApprovalStatus", "==", "pending"),
       );
       const snap = await getDocs(q);
-      console.log(
-        "Fetched events:",
-        snap.size,
-        snap.docs.map((d) => d.data()),
-      ); // 👈 add this
 
       const rows: EventRecord[] = snap.docs.map((d) => ({
         eventId: d.id,
@@ -98,7 +96,6 @@ export function EventApprovalPage() {
       }));
       setPending(rows);
     } catch (err) {
-      console.error("Load error:", err); // 👈 add this
       setPending([]);
     } finally {
       setLoading(false);
@@ -144,6 +141,10 @@ export function EventApprovalPage() {
           targetEvent.title,
           true,
         );
+      }
+      const attendeeIds = await getEventAttendeeIds(ev);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventEdited(attendeeIds, ev, targetEvent?.title ?? "");
       }
       await load();
     } finally {

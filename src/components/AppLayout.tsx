@@ -33,6 +33,7 @@ import { db } from "../firebase";
 
 type AppNotification = {
   id: string;
+  kind?: string;
   title: string;
   body: string;
   read: boolean;
@@ -153,23 +154,33 @@ export function AppLayout() {
       });
     }
 
-    const eventId = item.data?.eventId;
-    if (eventId && effectiveIsAdmin) {
-      navigate("/admin/events/approval");
-      setShowNotifications(false);
-      return;
-    }
-
-    if (eventId && !effectiveIsAdmin) {
-      navigate("/partner/events/manage");
-      setShowNotifications(false);
-      return;
-    }
+    const { kind } = item;
 
     if (effectiveIsAdmin) {
-      navigate("/admin/dashboard");
+      if (kind === "event_submitted_for_review") {
+        navigate("/admin/events/approval");
+      } else if (kind === "event_reminder_5days" || kind === "event_reminder_3days") {
+        navigate("/admin/events/manage?view=upcoming");
+      } else if (kind === "event_edited" || kind === "event_cancelled") {
+        navigate("/admin/events/manage");
+      } else {
+        navigate("/admin/dashboard");
+      }
     } else {
-      navigate("/partner/dashboard");
+      if (kind === "partner_approval_result") {
+        navigate("/partner/dashboard");
+      } else if (
+        kind === "event_approval_result" ||
+        kind === "event_reminder_5days" ||
+        kind === "event_reminder_3days" ||
+        kind === "partner_sponsor_payment"
+      ) {
+        navigate("/partner/events/manage");
+      } else if (kind === "event_edited" || kind === "event_cancelled") {
+        navigate("/partner/events/manage");
+      } else {
+        navigate("/partner/dashboard");
+      }
     }
     setShowNotifications(false);
   }
