@@ -1,0 +1,35 @@
+/*
+event-list-noti.css
+Styles for the admin Upcoming Events page — section headings,
+days-away urgency badges, and error state.
+*/
+
+.upcoming-section {
+  margin-top: 2rem;
+}
+
+.upcoming-section h2 {
+  margin-bottom: 0.75rem;
+}
+
+.days-away-badge {
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.days-away-badge.urgent {
+  background: #fbf0e4;
+  color: #b45309;
+}
+
+.days-away-badge.soon {
+  background: rgba(64, 15, 50, 0.07);
+  color: #400f32;
+}
+
+.upcoming-error {
+  color: #b42318;
+}
