@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../firebase";
-import type { EventRecord } from "../../types/event-types";
+import {
+  getPartnerEvents,
+  getRegistrationCount,
+} from "../../services/partnerEventService";
+import type { PartnerEventRow } from "../../services/partnerEventService";
 
 type FilterKey = "week" | "month" | "year";
 
@@ -24,38 +26,6 @@ type ActivityItem = {
   time: string;
 };
 
-const chartData: Record<FilterKey, ChartPoint[]> = {
-  week: [
-    { label: "Mon", value: 18 },
-    { label: "Tue", value: 26 },
-    { label: "Wed", value: 20 },
-    { label: "Thu", value: 32 },
-    { label: "Fri", value: 28 },
-    { label: "Sat", value: 22 },
-    { label: "Sun", value: 16 },
-  ],
-  month: [
-    { label: "W1", value: 65 },
-    { label: "W2", value: 82 },
-    { label: "W3", value: 74 },
-    { label: "W4", value: 96 },
-  ],
-  year: [
-    { label: "Jan", value: 110 },
-    { label: "Feb", value: 125 },
-    { label: "Mar", value: 132 },
-    { label: "Apr", value: 148 },
-    { label: "May", value: 138 },
-    { label: "Jun", value: 154 },
-    { label: "Jul", value: 162 },
-    { label: "Aug", value: 149 },
-    { label: "Sep", value: 170 },
-    { label: "Oct", value: 181 },
-    { label: "Nov", value: 176 },
-    { label: "Dec", value: 188 },
-  ],
-};
-
 function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -73,12 +43,6 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function getEventBookings(event: EventRecord): number {
-  if (typeof event.ticketsSold === "number") return event.ticketsSold;
-  if (Array.isArray(event.attendees)) return event.attendees.length;
-  return 0;
-}
-
 /**
  * @summary Renders the partner dashboard with live event counts, booking totals, and an engagement chart.
  */
@@ -92,7 +56,7 @@ export default function PartnerDashboard() {
   const [publishedEvents, setPublishedEvents] = useState(0);
   const [pendingReview, setPendingReview] = useState(0);
   const [totalBookings, setTotalBookings] = useState<number | null>(null);
-  const [partnerEvents, setPartnerEvents] = useState<EventRecord[]>([]);
+  const [partnerEvents, setPartnerEvents] = useState<PartnerEventRow[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState(0);
 
   useEffect(() => {
@@ -102,19 +66,9 @@ export default function PartnerDashboard() {
 
     (async () => {
       try {
-        const eventsQuery = query(
-          collection(db, "events"),
-          where("submittedBy", "==", partnerID),
-        );
-
-        const eventSnap = await getDocs(eventsQuery);
+        const events = await getPartnerEvents(partnerID);
 
         if (cancelled) return;
-
-        const events: EventRecord[] = eventSnap.docs.map((docSnap) => ({
-          ...(docSnap.data() as Omit<EventRecord, "eventId">),
-          eventId: docSnap.id,
-        }));
 
         if (!cancelled) setPartnerEvents(events);
 
@@ -148,13 +102,10 @@ export default function PartnerDashboard() {
 
         if (!cancelled) setUpcomingEvents(upcoming);
 
-        const bookingsCount = events.reduce((sum, event) => {
-          if (typeof event.ticketsSold === "number")
-            return sum + event.ticketsSold;
-          if (Array.isArray(event.attendees))
-            return sum + event.attendees.length;
-          return sum;
-        }, 0);
+        const bookingsCount = events.reduce(
+          (sum, event) => sum + getRegistrationCount(event),
+          0,
+        );
 
         if (!cancelled) setTotalBookings(bookingsCount);
       } catch (err) {
@@ -284,93 +235,156 @@ export default function PartnerDashboard() {
     });
 
   const weekdayStats = [
-  { label: "Monday", value: 0 },
-  { label: "Tuesday", value: 0 },
-  { label: "Wednesday", value: 0 },
-  { label: "Thursday", value: 0 },
-  { label: "Friday", value: 0 },
-  { label: "Saturday", value: 0 },
-  { label: "Sunday", value: 0 },
-];
+    { label: "Monday", value: 0 },
+    { label: "Tuesday", value: 0 },
+    { label: "Wednesday", value: 0 },
+    { label: "Thursday", value: 0 },
+    { label: "Friday", value: 0 },
+    { label: "Saturday", value: 0 },
+    { label: "Sunday", value: 0 },
+  ];
 
-partnerEvents.forEach((event) => {
-  const eventDate = event.dateTime?.toDate?.();
-  if (!eventDate) return;
+  partnerEvents.forEach((event) => {
+    const eventDate = event.dateTime?.toDate?.();
+    if (!eventDate) return;
 
-  const bookings = getEventBookings(event);
-  const jsDay = eventDate.getDay();
-  const mondayFirstIndex = jsDay === 0 ? 6 : jsDay - 1;
+    const bookings = getRegistrationCount(event);
+    const jsDay = eventDate.getDay();
+    const mondayFirstIndex = jsDay === 0 ? 6 : jsDay - 1;
 
-  weekdayStats[mondayFirstIndex].value += bookings;
-});
+    weekdayStats[mondayFirstIndex].value += bookings;
+  });
 
-const bestPeriod =
-  weekdayStats.length > 0
-    ? [...weekdayStats].sort((a, b) => b.value - a.value)[0]
-    : null;
+  const bestPeriod =
+    weekdayStats.length > 0
+      ? [...weekdayStats].sort((a, b) => b.value - a.value)[0]
+      : null;
 
-const lowestEngagement =
-  weekdayStats.length > 0
-    ? [...weekdayStats].sort((a, b) => a.value - b.value)[0]
-    : null;
+  const lowestEngagement =
+    weekdayStats.length > 0
+      ? [...weekdayStats].sort((a, b) => a.value - b.value)[0]
+      : null;
 
-const now = new Date();
-const currentMonth = now.getMonth();
-const currentYear = now.getFullYear();
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
 
-const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
-const previousMonth = previousMonthDate.getMonth();
-const previousMonthYear = previousMonthDate.getFullYear();
+  const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+  const previousMonth = previousMonthDate.getMonth();
+  const previousMonthYear = previousMonthDate.getFullYear();
 
-let currentMonthBookings = 0;
-let previousMonthBookings = 0;
+  let currentMonthBookings = 0;
+  let previousMonthBookings = 0;
 
-partnerEvents.forEach((event) => {
-  const eventDate = event.dateTime?.toDate?.();
-  if (!eventDate) return;
+  partnerEvents.forEach((event) => {
+    const eventDate = event.dateTime?.toDate?.();
+    if (!eventDate) return;
 
-  const bookings = getEventBookings(event);
-  const eventMonth = eventDate.getMonth();
-  const eventYear = eventDate.getFullYear();
+    const bookings = getRegistrationCount(event);
+    const eventMonth = eventDate.getMonth();
+    const eventYear = eventDate.getFullYear();
 
-  if (eventMonth === currentMonth && eventYear === currentYear) {
-    currentMonthBookings += bookings;
-  }
+    if (eventMonth === currentMonth && eventYear === currentYear) {
+      currentMonthBookings += bookings;
+    }
 
-  if (eventMonth === previousMonth && eventYear === previousMonthYear) {
-    previousMonthBookings += bookings;
-  }
-});
+    if (eventMonth === previousMonth && eventYear === previousMonthYear) {
+      previousMonthBookings += bookings;
+    }
+  });
 
-const averageBookingGrowth =
-  previousMonthBookings > 0
-    ? `${Math.round(
-        ((currentMonthBookings - previousMonthBookings) / previousMonthBookings) * 100
-      )}%`
-    : currentMonthBookings > 0
-      ? "+100%"
-      : "0%";
+  const averageBookingGrowth =
+    previousMonthBookings > 0
+      ? `${Math.round(
+          ((currentMonthBookings - previousMonthBookings) /
+            previousMonthBookings) *
+            100,
+        )}%`
+      : currentMonthBookings > 0
+        ? "+100%"
+        : "0%";
 
-const decisionMetrics = [
-  {
-    label: "Top Event",
-    value: topPerformingEvent?.title || "No event data yet",
-  },
-  {
-    label: "Best Period",
-    value: bestPeriod?.label || "-",
-  },
-  {
-    label: "Average Booking Growth",
-    value: averageBookingGrowth,
-  },
-  {
-    label: "Lowest Engagement",
-    value: lowestEngagement?.label || "-",
-  },
-];
+  const decisionMetrics = [
+    {
+      label: "Top Event",
+      value: topPerformingEvent?.title || "No event data yet",
+    },
+    {
+      label: "Best Period",
+      value: bestPeriod?.label || "-",
+    },
+    {
+      label: "Average Booking Growth",
+      value: averageBookingGrowth,
+    },
+    {
+      label: "Lowest Engagement",
+      value: lowestEngagement?.label || "-",
+    },
+  ];
+
+  const weeklyChartData: ChartPoint[] = [
+    { label: "Mon", value: 0 },
+    { label: "Tue", value: 0 },
+    { label: "Wed", value: 0 },
+    { label: "Thu", value: 0 },
+    { label: "Fri", value: 0 },
+    { label: "Sat", value: 0 },
+    { label: "Sun", value: 0 },
+  ];
+
+  const monthlyChartData: ChartPoint[] = [
+    { label: "W1", value: 0 },
+    { label: "W2", value: 0 },
+    { label: "W3", value: 0 },
+    { label: "W4", value: 0 },
+    { label: "W5", value: 0 },
+  ];
+
+  const yearlyChartData: ChartPoint[] = [
+    { label: "Jan", value: 0 },
+    { label: "Feb", value: 0 },
+    { label: "Mar", value: 0 },
+    { label: "Apr", value: 0 },
+    { label: "May", value: 0 },
+    { label: "Jun", value: 0 },
+    { label: "Jul", value: 0 },
+    { label: "Aug", value: 0 },
+    { label: "Sep", value: 0 },
+    { label: "Oct", value: 0 },
+    { label: "Nov", value: 0 },
+    { label: "Dec", value: 0 },
+  ];
+
+  partnerEvents.forEach((event) => {
+    const eventDate = event.dateTime?.toDate?.();
+
+    if (!eventDate) return;
+
+    const bookings = getRegistrationCount(event);
+
+    // WEEK
+    const jsDay = eventDate.getDay();
+    const weekIndex = jsDay === 0 ? 6 : jsDay - 1;
+    weeklyChartData[weekIndex].value += bookings;
+
+    // MONTH
+    const dayOfMonth = eventDate.getDate();
+    const monthWeekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+    monthlyChartData[monthWeekIndex].value += bookings;
+
+    // YEAR
+    const monthIndex = eventDate.getMonth();
+    yearlyChartData[monthIndex].value += bookings;
+  });
+
+  const chartData: Record<FilterKey, ChartPoint[]> = {
+    week: weeklyChartData,
+    month: monthlyChartData,
+    year: yearlyChartData,
+  };
   const activeData = chartData[filter];
-  const maxValue = Math.max(...activeData.map((item) => item.value));
+  const maxValue = Math.max(...activeData.map((item) => item.value), 1);
 
   return (
     <div className="page dashboard-page">
