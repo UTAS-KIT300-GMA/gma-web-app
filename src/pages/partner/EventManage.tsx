@@ -94,7 +94,22 @@ function mapCategoryClass(category: string) {
 
   return "partner-event-category default";
 }
+type EventSortKey = "event" | "dateTime" | "category" | "status";
+type SortDirection = "asc" | "desc";
 
+function getEventSortValue(event: PartnerEventRow, key: EventSortKey) {
+  if (key === "event") return (event.title || "").toLowerCase();
+
+  if (key === "dateTime") {
+    return event.dateTime?.toDate?.().getTime() ?? 0;
+  }
+
+  if (key === "category") {
+    return mapCategoryLabels(event)[0].toLowerCase();
+  }
+
+  return mapStatus(event.eventApprovalStatus).toLowerCase();
+}
 /**
  * @summary Renders the partner event management table with filter controls for status and date range.
  */
@@ -107,6 +122,8 @@ export function EventManagePage() {
   const [events, setEvents] = useState<PartnerEventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<EventSortKey>("dateTime");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const [selectedEvent, setSelectedEvent] = useState<PartnerEventRow | null>(
     null,
@@ -154,6 +171,21 @@ export function EventManagePage() {
     } finally {
       setBusyId(null);
     }
+  }
+
+  function handleSort(key: EventSortKey) {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(key);
+    setSortDirection("asc");
+  }
+
+  function getSortLabel(key: EventSortKey) {
+    if (sortKey !== key) return "↕";
+    return sortDirection === "asc" ? "↑" : "↓";
   }
 
   function clearFilters() {
@@ -219,8 +251,15 @@ export function EventManagePage() {
       });
     }
 
-    return filtered;
-  }, [events, eventStatus, dateRange, searchTerm]);
+    return [...filtered].sort((a, b) => {
+      const aValue = getEventSortValue(a, sortKey);
+      const bValue = getEventSortValue(b, sortKey);
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [events, eventStatus, dateRange, searchTerm, sortKey, sortDirection]);
 
   return (
     <div className="page dashboard-page partner-events-page">
@@ -301,11 +340,48 @@ export function EventManagePage() {
             <table className="partner-events-table">
               <thead>
                 <tr>
-                  <th>Event</th>
-                  <th>Date &amp; Time</th>
-                  <th>Category</th>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleSort("event")}
+                    >
+                      Event {getSortLabel("event")}
+                    </button>
+                  </th>
+
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleSort("dateTime")}
+                    >
+                      Date &amp; Time {getSortLabel("dateTime")}
+                    </button>
+                  </th>
+
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleSort("category")}
+                    >
+                      Category {getSortLabel("category")}
+                    </button>
+                  </th>
+
                   <th>Registrations</th>
-                  <th>Status</th>
+
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleSort("status")}
+                    >
+                      Status {getSortLabel("status")}
+                    </button>
+                  </th>
+
                   <th>Actions</th>
                 </tr>
               </thead>

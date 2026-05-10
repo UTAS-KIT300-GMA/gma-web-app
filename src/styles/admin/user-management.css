@@ -705,3 +705,27 @@
     align-items: stretch;
   }
 }
+
+.user-management-filter {
+  min-height: 42px;
+  border: 1px solid var(--gma-border);
+  border-radius: 10px;
+  padding: 0 0.75rem;
+  background: #fff;
+  color: var(--gma-text);
+  font: inherit;
+}
+
+.user-table-sort-btn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.user-table-sort-btn:hover {
+  color: var(--gma-primary);
+}
