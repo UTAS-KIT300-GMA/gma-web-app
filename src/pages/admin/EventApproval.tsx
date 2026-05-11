@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import type { EventRecord } from "../../types/event-types";
-import { Tag } from "lucide-react";
+import { Tag, ArrowUpDown } from "lucide-react";
 import {
   notifyPartnerEventDecision,
   notifyUsersEventEdited,
@@ -74,6 +74,7 @@ export function EventApprovalPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [userInfo, setUserInfo] = useState<
     Record<string, { name: string; org: string }>
   >({});
@@ -180,23 +181,38 @@ export function EventApprovalPage() {
     }
   }
 
+  const sorted = [...pending].sort((a, b) => {
+    const ta = a.createdAt?.toMillis?.() ?? 0;
+    const tb = b.createdAt?.toMillis?.() ?? 0;
+    return sortOrder === "newest" ? tb - ta : ta - tb;
+  });
+
   return (
     <div className="page">
-      <h1>Approve events</h1>
-      <p className="muted">
-        Lists <code>events</code> with{" "}
-        <code>eventApprovalStatus == &quot;pending&quot;</code>.
-      </p>
+      <div className="approval-page-header">
+        <div>
+          <h1>Approve events</h1>
+          <p className="muted">Review and action pending event submissions.</p>
+        </div>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={() => setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))}
+        >
+          <ArrowUpDown size={15} strokeWidth={2} />
+          {sortOrder === "newest" ? "Newest first" : "Oldest first"}
+        </button>
+      </div>
 
       {loading ? (
         <div className="centered">
           <div className="spinner" />
         </div>
-      ) : pending.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p>No pending events.</p>
       ) : (
         <ul className="approval-list">
-          {pending.map((ev) => (
+          {sorted.map((ev) => (
             <li key={ev.eventId} className="approval-card">
               <div className="approval-inner">
                 {/* Left — image */}
