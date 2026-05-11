@@ -26,6 +26,7 @@ import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
+import { LearningPublicationPage } from "./pages/admin/LearningPublication";
 
 import React from "react";
 import type { UserProfile } from "./types/user-types.ts";
@@ -142,7 +143,7 @@ export default function AppRoutes() {
         <Route
           path="partner/events/manage"
           element={
-            <RoleGate roles={["partner","admin"]}>
+            <RoleGate roles={["partner", "admin"]}>
               <PartnerEventManagePage />
             </RoleGate>
           }
@@ -234,6 +235,15 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["admin"]}>
               <AdminApprovalPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="admin/learning/publication"
+          element={
+            <RoleGate roles={["admin"]}>
+              <LearningPublicationPage />
             </RoleGate>
           }
         />
