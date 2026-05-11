@@ -1,20 +1,125 @@
 import { useState, type FormEvent } from "react";
-import { Eye, Save, UploadCloud, Video } from "lucide-react";
-import "../../styles/admin/learning-publication.css";
+import {
+  Eye,
+  FileImage,
+  FileVideo,
+  LinkIcon,
+  Tag,
+  UploadCloud,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { createLearningContent } from "../../services/learningService";
+import {
+  uploadImageToCloudinary,
+  uploadVideoToCloudinary,
+} from "../../services/cloudinaryService";
 import { LearningPreviewModal } from "../../components/LearningPreviewModal";
+import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
+import { CATEGORIES } from "../../types/event-types";
+import type { LearningCategory } from "../../types/learning-types";
+import "../../styles/admin/learning-publication.css";
 
 export function LearningPublicationPage() {
+  const { user } = useAuth();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [accessType, setAccessType] = useState<"free" | "paid">("free");
-  const [cloudinaryPublicId, setCloudinaryPublicId] = useState("");
   const [fileId, setFileId] = useState("");
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<LearningCategory>("connect");
+  const [interestTags, setInterestTags] = useState<string[]>([]);
 
-  function handleSubmit(event: FormEvent) {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  function toggleTag(key: string) {
+    setInterestTags((prev) =>
+      prev.includes(key) ? prev.filter((tag) => tag !== key) : [...prev, key],
+    );
+  }
+
+  async function publishLearningContent() {
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !duration.trim() ||
+      interestTags.length === 0
+    ) {
+      alert(
+        "Please complete all required fields and select at least one interest tag.",
+      );
+      return;
+    }
+
+    if (!videoFile) {
+      alert("Please upload a video.");
+      return;
+    }
+
+    if (!user) {
+      alert("You must be logged in.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setUploadingVideo(true);
+
+      const uploadedPublicId = await uploadVideoToCloudinary(videoFile);
+
+      const uploadedThumbnailUrl = thumbnailFile
+        ? await uploadImageToCloudinary(thumbnailFile)
+        : "";
+
+      setUploadingVideo(false);
+
+      await createLearningContent({
+        title,
+        description,
+        duration,
+        accessType,
+        cloudinaryPublicId: uploadedPublicId,
+        fileId,
+        thumbnailUrl: uploadedThumbnailUrl,
+        category: selectedCategory,
+        categories: [selectedCategory],
+        interestTags,
+        status: "published",
+        createdBy: user.uid,
+      });
+
+      alert("Learning content published successfully.");
+
+      setTitle("");
+      setDescription("");
+      setDuration("");
+      setAccessType("free");
+      setFileId("");
+      setVideoFile(null);
+      setThumbnailFile(null);
+      setSelectedCategory("connect");
+      setInterestTags([]);
+    } catch (error) {
+      console.error("Failed to publish learning content:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to publish learning content.",
+      );
+    } finally {
+      setSaving(false);
+      setUploadingVideo(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    alert("UI ready. Backend connection will be added in the next commit.");
+    await publishLearningContent();
   }
 
   return (
@@ -36,89 +141,135 @@ export function LearningPublicationPage() {
           </div>
         </div>
 
-        <form className="add-user-form" onSubmit={handleSubmit}>
-          <aside className="add-user-image-panel">
-            <h3>Content Preview</h3>
-            <p>Preview how this learning content may appear to users.</p>
+        <form className="learning-publication-form" onSubmit={handleSubmit}>
+          <div className="learning-upload-grid">
+            <section className="learning-upload-panel">
+              <div className="learning-upload-header">
+                <div className="learning-upload-icon">
+                  <FileVideo size={34} />
+                </div>
 
-            <div className="learning-preview-box">
-              <div className="learning-preview-video">
-                <Video size={42} />
-                <span>{cloudinaryPublicId || "Cloudinary video preview"}</span>
+                <div>
+                  <h3>Upload Learning Video *</h3>
+                  <p>
+                    Select a video file to upload to Cloudinary. The uploaded
+                    video will be linked to this learning module.
+                  </p>
+                </div>
               </div>
 
-              <div className="learning-preview-content">
-                <strong>{title || "Learning title"}</strong>
-                <p>{description || "Learning description will appear here."}</p>
+              <label className="learning-video-upload-dropzone">
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="sr-only-input"
+                  onChange={(event) =>
+                    setVideoFile(event.target.files?.[0] || null)
+                  }
+                />
 
-                <span className="learning-preview-pill">
-                  {accessType === "paid" ? "Subscribers only" : "Free"}
+                <UploadCloud size={30} />
+                <span>
+                  {videoFile ? videoFile.name : "Drag & drop your video here"}
                 </span>
+                <small>or click to browse</small>
+                <em>MP4, MOV or WEBM recommended</em>
+              </label>
+            </section>
 
-                {duration && <small>{duration}</small>}
+            <section className="learning-upload-panel">
+              <div className="learning-upload-header">
+                <div className="learning-upload-icon">
+                  <FileImage size={34} />
+                </div>
+
+                <div>
+                  <h3>Upload Thumbnail Image</h3>
+                  <p>
+                    Add an optional thumbnail image for the learning card. This
+                    will be stored in Cloudinary.
+                  </p>
+                </div>
               </div>
+
+              <label className="learning-video-upload-dropzone">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="sr-only-input"
+                  onChange={(event) =>
+                    setThumbnailFile(event.target.files?.[0] || null)
+                  }
+                />
+
+                <UploadCloud size={30} />
+                <span>
+                  {thumbnailFile
+                    ? thumbnailFile.name
+                    : "Drag & drop your image here"}
+                </span>
+                <small>or click to browse</small>
+                <em>PNG, JPG or WEBP recommended</em>
+              </label>
+            </section>
+          </div>
+
+          <div className="user-management-form-grid">
+            <div className="user-management-field">
+              <label>Title *</label>
+              <input
+                className="user-management-input"
+                placeholder="e.g. Module 1: Getting Started with GMA Connect"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
             </div>
 
-            <button
-              type="button"
-              className="user-management-btn secondary"
-              onClick={() => setIsPreviewOpen(true)}
-            >
-              <Eye size={16} />
-              Preview
-            </button>
-          </aside>
+            <div className="user-management-field">
+              <label>Duration *</label>
+              <input
+                className="user-management-input"
+                placeholder="e.g. 0:15"
+                value={duration}
+                onChange={(event) => setDuration(event.target.value)}
+              />
+            </div>
 
-          <div className="add-user-fields">
-            <div className="user-management-form-grid">
-              <div className="user-management-field">
-                <label>Title *</label>
-                <input
-                  className="user-management-input"
-                  placeholder="e.g. Module 1: Getting Started with GMA Connect"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                />
-              </div>
+            <div className="user-management-field">
+              <label>Access Type *</label>
+              <select
+                className="user-management-select"
+                value={accessType}
+                onChange={(event) =>
+                  setAccessType(event.target.value as "free" | "paid")
+                }
+              >
+                <option value="free">Free</option>
+                <option value="paid">Subscribers only</option>
+              </select>
+            </div>
 
-              <div className="user-management-field">
-                <label>Duration *</label>
-                <input
-                  className="user-management-input"
-                  placeholder="e.g. 0:15"
-                  value={duration}
-                  onChange={(event) => setDuration(event.target.value)}
-                />
-              </div>
+            <div className="user-management-field">
+              <label>Pillar Category *</label>
+              <select
+                className="user-management-select"
+                value={selectedCategory}
+                onChange={(event) =>
+                  setSelectedCategory(event.target.value as LearningCategory)
+                }
+              >
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="user-management-field">
-                <label>Access Type *</label>
-                <select
-                  className="user-management-select"
-                  value={accessType}
-                  onChange={(event) =>
-                    setAccessType(event.target.value as "free" | "paid")
-                  }
-                >
-                  <option value="free">Free</option>
-                  <option value="paid">Subscribers only</option>
-                </select>
-              </div>
-
-              <div className="user-management-field">
-                <label>Cloudinary Public ID *</label>
-                <input
-                  className="user-management-input"
-                  placeholder="e.g. learning/module-1-intro"
-                  value={cloudinaryPublicId}
-                  onChange={(event) =>
-                    setCloudinaryPublicId(event.target.value)
-                  }
-                />
-              </div>
-
-              <div className="user-management-field">
-                <label>Learning Material File URL</label>
+            <div className="user-management-field col-span">
+              <label>Learning Material File URL</label>
+              <div className="learning-url-input-wrap">
+                <LinkIcon size={18} />
                 <input
                   className="user-management-input"
                   placeholder="Optional PDF, document, or resource link"
@@ -126,30 +277,83 @@ export function LearningPublicationPage() {
                   onChange={(event) => setFileId(event.target.value)}
                 />
               </div>
+            </div>
 
-              <div className="user-management-field col-span">
-                <label>Description *</label>
-                <textarea
-                  className="user-management-input"
-                  placeholder="Describe what users will learn from this module."
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={5}
-                />
-              </div>
+            <div className="user-management-field col-span">
+              <label>Description *</label>
+              <textarea
+                className="user-management-input"
+                placeholder="Describe what users will learn from this module."
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={6}
+              />
             </div>
           </div>
 
-          <div className="add-user-footer">
-            <div className="user-management-form-actions">
-              <button type="button" className="user-management-btn secondary">
-                <Save size={16} />
-                Save Draft
+          <section className="learning-tags-panel">
+            <div>
+              <h3>Interest Tags *</h3>
+              <p>Select tags to support personalised recommendations.</p>
+            </div>
+
+            <div className="tag-pick event-tag-pick scrollable-tag-pick">
+              {INTEREST_TAG_OPTIONS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`tag-chip ${
+                    interestTags.includes(key) ? "selected" : ""
+                  }`}
+                  onClick={() => toggleTag(key)}
+                >
+                  <Tag size={14} strokeWidth={2} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <div className="add-user-footer learning-publication-footer">
+            <div className="user-management-form-actions learning-publication-actions">
+              <button
+                type="button"
+                className="user-management-btn secondary"
+                onClick={() => {
+                  setTitle("");
+                  setDescription("");
+                  setDuration("");
+                  setAccessType("free");
+                  setFileId("");
+                  setVideoFile(null);
+                  setThumbnailFile(null);
+                  setSelectedCategory("connect");
+                  setInterestTags([]);
+                }}
+              >
+                Cancel
               </button>
 
-              <button type="submit" className="user-management-btn primary">
+              <button
+                type="button"
+                className="user-management-btn secondary"
+                onClick={() => setIsPreviewOpen(true)}
+              >
+                <Eye size={16} />
+                Show Preview
+              </button>
+
+              <button
+                type="submit"
+                className="user-management-btn primary"
+                disabled={saving}
+              >
                 <UploadCloud size={16} />
-                Publish Content
+                {uploadingVideo
+                  ? "Uploading Content..."
+                  : saving
+                    ? "Publishing..."
+                    : "Publish Content"}
               </button>
             </div>
           </div>
@@ -164,7 +368,8 @@ export function LearningPublicationPage() {
           description,
           duration,
           accessType,
-          cloudinaryPublicId,
+          cloudinaryPublicId: videoFile?.name || "",
+          thumbnailUrl: thumbnailFile ? URL.createObjectURL(thumbnailFile) : "",
           fileId,
         }}
       />

@@ -1,11 +1,12 @@
 import { BookOpen, FileText, Lock, Video } from "lucide-react";
 
 type LearningPreviewData = {
-  title?: string;
+ title?: string;
   description?: string;
   duration?: string;
   accessType?: "free" | "paid";
   cloudinaryPublicId?: string;
+  thumbnailUrl?: string;
   fileId?: string;
 };
 
@@ -47,11 +48,21 @@ export function LearningPreviewModal({
 
                 <div className="learning-phone-card">
                   <div className="learning-phone-video">
-                    <Video size={42} />
-                    <span>
-                      {learning.cloudinaryPublicId ||
-                        "Cloudinary video preview"}
-                    </span>
+                    {learning.thumbnailUrl ? (
+                      <img
+                        src={learning.thumbnailUrl}
+                        alt="Learning thumbnail"
+                        className="learning-phone-thumbnail"
+                      />
+                    ) : (
+                      <>
+                        <Video size={42} />
+                        <span>
+                          {learning.cloudinaryPublicId ||
+                            "Cloudinary video preview"}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div className="learning-phone-content">
