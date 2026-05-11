@@ -17,7 +17,7 @@ import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import {
   notifyAdminsEventSubmitted,
   notifyUsersEventEdited,
-  getEventAttendeeIds,
+  getEventInterestedUserIds,
 } from "../../services/notificationService";
 import {
   CATEGORIES,
@@ -281,7 +281,7 @@ export function EventRegistrationPage() {
       if (draftId) {
         await updateDoc(doc(db, "events", draftId), eventData);
         notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel).catch(console.error);
-        getEventAttendeeIds(draftId).then((attendeeIds) => {
+        getEventInterestedUserIds(draftId).then((attendeeIds) => {
           if (attendeeIds.length > 0) {
             notifyUsersEventEdited(attendeeIds, draftId, title.trim()).catch(console.error);
           }

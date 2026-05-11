@@ -13,7 +13,7 @@ import {
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import type { EventRecord } from "../../types/event-types";
-import { notifyUsersEventCancelled } from "../../services/notificationService";
+import { notifyUsersEventCancelled, notifyPartnerEventCancelled, getEventInterestedUserIds } from "../../services/notificationService";
 import { Search } from "lucide-react";
 
 /**
@@ -155,12 +155,16 @@ export function EventManagePage() {
 
   async function onDelete(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
-    const ok = window.confirm(`Delete “${ev.title}”? This cannot be undone. All users booked for this event will be notified of the cancellation.`);
+    const ok = window.confirm(`Delete “${ev.title}”? This cannot be undone. All users booked or bookmarked this event will be notified of the cancellation.`);
     if (!ok) return;
     setBusyId(ev.eventId);
     try {
-      if (ev.attendees && ev.attendees.length > 0) {
-        await notifyUsersEventCancelled(ev.attendees, ev.eventId, ev.title);
+      const attendeeIds = await getEventInterestedUserIds(ev.eventId);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventCancelled(attendeeIds, ev.eventId, ev.title);
+      }
+      if (ev.submittedBy) {
+        await notifyPartnerEventCancelled(ev.submittedBy, ev.eventId, ev.title);
       }
       await deleteDoc(doc(db, "events", ev.eventId));
       await load();
@@ -195,7 +199,7 @@ export function EventManagePage() {
             className={`dashboard-filter-btn ${activeView === "upcoming" ? "active" : ""}`}
             onClick={() => setSearchParams({ view: "upcoming" })}
           >
-            Upcoming (within 5 days)
+            Upcoming Events
           </button>
         )}
       </div>

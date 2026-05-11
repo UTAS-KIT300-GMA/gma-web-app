@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import type { EventRecord } from "../../types/event-types";
-import { notifyUsersEventCancelled } from "../../services/notificationService";
+import { notifyUsersEventCancelled, notifyPartnerEventCancelled, getEventInterestedUserIds } from "../../services/notificationService";
 import { Tag } from "lucide-react";
 
 type UpcomingEvent = EventRecord & { partnerName: string; daysAway: number };
@@ -51,12 +51,6 @@ async function fetchPartnerName(uid?: string): Promise<string> {
   }
 }
 
-function cutoffTimestamp(days: number): Timestamp {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  d.setHours(23, 59, 59, 999);
-  return Timestamp.fromDate(d);
-}
 
 function DaysAwayBadge({ days }: { days: number }) {
   const label =
@@ -154,6 +148,7 @@ function EventSection({
 export function UpcomingEventsView() {
   const [events3, setEvents3] = useState<UpcomingEvent[]>([]);
   const [events5, setEvents5] = useState<UpcomingEvent[]>([]);
+  const [eventsAhead, setEventsAhead] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -162,28 +157,35 @@ export function UpcomingEventsView() {
     if (!window.confirm(`Delete "${ev.title}"? This cannot be undone. All users that booked this event will be notified.`)) return;
     setBusyId(ev.eventId);
     try {
-      if (ev.attendees && ev.attendees.length > 0) {
-        await notifyUsersEventCancelled(ev.attendees, ev.eventId, ev.title);
+      const attendeeIds = await getEventInterestedUserIds(ev.eventId);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventCancelled(attendeeIds, ev.eventId, ev.title);
+      }
+      if (ev.submittedBy) {
+        await notifyPartnerEventCancelled(ev.submittedBy, ev.eventId, ev.title);
       }
       await deleteDoc(doc(db, "events", ev.eventId));
-      setEvents3((prev) => prev.filter((e) => e.eventId !== ev.eventId));
-      setEvents5((prev) => prev.filter((e) => e.eventId !== ev.eventId));
+      const remove = (prev: UpcomingEvent[]) => prev.filter((e) => e.eventId !== ev.eventId);
+      setEvents3(remove);
+      setEvents5(remove);
+      setEventsAhead(remove);
     } finally {
       setBusyId(null);
     }
   }
-
+ 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
+      // Fetch all approved events from Firestore that are happening today or in the future,
+      // then enrich with partner name and days away, then split into the 3 sections: 0–3 days, 4–5 days, and 6+ days.
       try {
         const now = Timestamp.now();
         const q = query(
           collection(db, "events"),
           where("eventApprovalStatus", "==", "approved"),
           where("dateTime", ">=", now),
-          where("dateTime", "<=", cutoffTimestamp(5)),
         );
         const snap = await getDocs(q);
 
@@ -203,7 +205,8 @@ export function UpcomingEventsView() {
         enriched.sort((a, b) => a.daysAway - b.daysAway);
 
         setEvents3(enriched.filter((e) => e.daysAway <= 3));
-        setEvents5(enriched.filter((e) => e.daysAway > 3));
+        setEvents5(enriched.filter((e) => e.daysAway > 3 && e.daysAway <= 5));
+        setEventsAhead(enriched.filter((e) => e.daysAway > 5));
       } catch (err: any) {
         setError(err?.message ?? "Failed to load upcoming events.");
       } finally {
@@ -238,6 +241,13 @@ export function UpcomingEventsView() {
         title="In 4–5 days"
         events={events5}
         emptyMessage="No events in the 4–5 day window."
+        busyId={busyId}
+        onDelete={onDelete}
+      />
+      <EventSection
+        title="All upcoming events"
+        events={eventsAhead}
+        emptyMessage="No further upcoming events."
         busyId={busyId}
         onDelete={onDelete}
       />

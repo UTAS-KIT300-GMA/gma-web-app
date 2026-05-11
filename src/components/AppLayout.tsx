@@ -161,7 +161,7 @@ export function AppLayout() {
         navigate("/admin/events/approval");
       } else if (kind === "event_reminder_5days" || kind === "event_reminder_3days") {
         navigate("/admin/events/manage?view=upcoming");
-      } else if (kind === "event_edited" || kind === "event_cancelled") {
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_partner") {
         navigate("/admin/events/manage");
       } else {
         navigate("/admin/dashboard");
@@ -176,7 +176,7 @@ export function AppLayout() {
         kind === "partner_sponsor_payment"
       ) {
         navigate("/partner/events/manage");
-      } else if (kind === "event_edited" || kind === "event_cancelled") {
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_admin") {
         navigate("/partner/events/manage");
       } else {
         navigate("/partner/dashboard");

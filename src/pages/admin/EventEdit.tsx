@@ -8,7 +8,7 @@ import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import {
   notifyUsersEventEdited,
   notifyPartnerEventEdited,
-  getEventAttendeeIds,
+  getEventInterestedUserIds,
 } from "../../services/notificationService";
 import {
   CATEGORIES,
@@ -158,7 +158,7 @@ export function AdminEventEditPage() {
       alert("✅ Event updated successfully!");
       navigate("/admin/events/manage");
 
-      getEventAttendeeIds(eventId).then((attendeeIds) => {
+      getEventInterestedUserIds(eventId).then((attendeeIds) => {
         if (attendeeIds.length > 0) {
           notifyUsersEventEdited(attendeeIds, eventId, title.trim()).catch(console.error);
         }

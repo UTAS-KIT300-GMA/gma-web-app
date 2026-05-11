@@ -21,6 +21,10 @@ type NotificationKind =
   | "event_edited"
   | "event_cancelled"
 
+  // Cancellation notifications
+  | "event_cancelled_by_partner"
+  | "event_cancelled_by_admin"
+
   // Partner & Admin event submission and approval
   | "event_submitted_for_review"
   | "event_approval_result"
@@ -333,6 +337,41 @@ export async function notifyUsersEventCancelled(
 }
 
 /**
+ * @summary Notifies all admins that a partner has cancelled an event.
+ */
+export async function notifyAdminsEventCancelled(
+  eventId: string,
+  eventTitle: string,
+  partnerName: string,
+): Promise<void> {
+  const adminIds = await getAdminUserIds();
+  await queueNotification({
+    kind: "event_cancelled_by_partner",
+    title: "Event cancelled by partner",
+    body: `${partnerName} has cancelled "${eventTitle}".`,
+    targetUserIds: adminIds,
+    data: { eventId },
+  });
+}
+
+/**
+ * @summary Notifies a partner that an admin has cancelled their event.
+ */
+export async function notifyPartnerEventCancelled(
+  partnerId: string,
+  eventId: string,
+  eventTitle: string,
+): Promise<void> {
+  await queueNotification({
+    kind: "event_cancelled_by_admin",
+    title: "Your event was cancelled by admin",
+    body: `An admin has cancelled "${eventTitle}".`,
+    targetUserIds: [partnerId],
+    data: { eventId },
+  });
+}
+
+/**
  * @summary Reminds a registered user their event is coming up in 2 days.
  */
 export async function notifyUserEventReminder2Days(
@@ -374,14 +413,31 @@ export async function notifyUserEventReminder1Day(
  * the users/{uid}/bookings subcollection.
  */
 export async function getEventAttendeeIds(eventId: string): Promise<string[]> {
-  const eventSnap = await getDoc(doc(db, "events", eventId));
-  if (eventSnap.exists()) {
-    const attendees = (eventSnap.data().attendees ?? []) as string[];
-    if (attendees.length > 0) return [...new Set(attendees)];
-  }
   const q = query(collectionGroup(db, "bookings"), where("eventId", "==", eventId));
   const snap = await getDocs(q);
   return [...new Set(snap.docs.map((d) => d.ref.parent.parent!.id))];
+}
+
+/**
+ * @summary Returns IDs of all users who have bookmarked a given event.
+ * Queries the users/{uid}/bookmarks subcollection via collectionGroup.
+ * Requires a Firestore collection-group index on bookmarks.eventId.
+ */
+export async function getEventBookmarkedUserIds(eventId: string): Promise<string[]> {
+  const q = query(collectionGroup(db, "bookmarks"), where("eventId", "==", eventId));
+  const snap = await getDocs(q);
+  return [...new Set(snap.docs.map((d) => d.ref.parent.parent!.id))];
+}
+
+/**
+ * @summary Returns the union of booked and bookmarked user IDs for a given event.
+ */
+export async function getEventInterestedUserIds(eventId: string): Promise<string[]> {
+  const [booked, bookmarked] = await Promise.all([
+    getEventAttendeeIds(eventId),
+    getEventBookmarkedUserIds(eventId),
+  ]);
+  return [...new Set([...booked, ...bookmarked])];
 }
 
 async function getPartnerName(uid?: string): Promise<string> {
@@ -411,7 +467,7 @@ export async function checkAndSendEventReminders(): Promise<void> {
     return Timestamp.fromDate(d);
   };
 
-  async function processWindow(withinDays: number, kind: "5days" | "3days") {
+  async function processAdminPartnerWindow(withinDays: number, kind: "5days" | "3days") {
     const sentField = kind === "5days" ? "reminder5daySent" : "reminder3daySent";
     const q = query(
       collection(db, "events"),
@@ -453,8 +509,39 @@ export async function checkAndSendEventReminders(): Promise<void> {
     await batch.commit();
   }
 
-  await processWindow(5, "5days");
-  await processWindow(3, "3days");
+  async function processUserWindow(withinDays: number, kind: "2days" | "1day") {
+    const sentField = kind === "2days" ? "userReminder2daySent" : "userReminder1daySent";
+    const notifyFn = kind === "2days" ? notifyUserEventReminder2Days : notifyUserEventReminder1Day;
+    const q = query(
+      collection(db, "events"),
+      where("eventApprovalStatus", "==", "approved"),
+      where("dateTime", ">=", now),
+      where("dateTime", "<=", cutoff(withinDays)),
+    );
+    const snap = await getDocs(q);
+    const unsent = snap.docs.filter((d) => !d.data()[sentField]);
+    if (unsent.length === 0) return;
+
+    await Promise.all(
+      unsent.map(async (d) => {
+        const eventId = d.id;
+        const title = d.data().title as string;
+        const attendeeIds = await getEventAttendeeIds(eventId);
+        if (attendeeIds.length > 0) {
+          await Promise.all(attendeeIds.map((uid) => notifyFn(uid, eventId, title)));
+        }
+      }),
+    );
+
+    const batch = writeBatch(db);
+    unsent.forEach((d) => batch.update(d.ref, { [sentField]: true }));
+    await batch.commit();
+  }
+
+  await processAdminPartnerWindow(5, "5days");
+  await processAdminPartnerWindow(3, "3days");
+  await processUserWindow(2, "2days");
+  await processUserWindow(1, "1day");
 }
 
 /**
