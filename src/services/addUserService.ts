@@ -1,5 +1,9 @@
 import { initializeApp, deleteApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  signOut,
+} from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db, firebaseConfig } from "../firebase";
 import type { UserRole, AccountStatus } from "../types/user-types";
@@ -13,16 +17,26 @@ export type AddUserInput = {
   phoneNumber: string;
   password: string;
   photoURL?: string;
+  orgName?: string;
+  abn?: string;
 };
 
 export async function createUserProfile(input: AddUserInput) {
-  const secondaryApp = initializeApp(firebaseConfig, `create-user-${Date.now()}`);
+  const email = input.email.trim().toLowerCase();
+
+  if (!email) {
+    throw new Error("Email is required.");
+  }
+  const secondaryApp = initializeApp(
+    firebaseConfig,
+    `create-user-${Date.now()}`,
+  );
   const secondaryAuth = getAuth(secondaryApp);
 
   try {
     const credential = await createUserWithEmailAndPassword(
       secondaryAuth,
-      input.email,
+      email,
       input.password,
     );
 
@@ -34,9 +48,11 @@ export async function createUserProfile(input: AddUserInput) {
       partnerId: credential.user.uid,
       firstName: input.firstName,
       lastName: input.lastName,
-      email: input.email,
+      email,
       role: input.role,
       partnerApprovalStatus: status,
+      orgName: input.orgName || "",
+      abn: input.abn || "",
       dateOfBirth: input.dateOfBirth,
       phoneNumber: input.phoneNumber,
       photoURL: input.photoURL || "",
