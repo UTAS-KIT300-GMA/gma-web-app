@@ -234,17 +234,20 @@ export async function notifyPartnerApprovalDecision(
     targetUserIds: [partnerId],
   });
 }
-
-export async function checkNotificationSetting(userId: string): Promise<boolean> {
+// check the notification setting 
+export async function checkNotificationSetting( 
+  userId: string,
+  notificationType: 'eventApprovalResults' | 'eventReminder5Days' | 'eventReminder3Days' = 'eventApprovalResults',
+): Promise<boolean> {
   const userDoc = await getDoc(doc(db, "users", userId));
 
   const preferences = userDoc.exists()
       ? (userDoc.data()?.notificationPreferences as
-          | { eventApprovalResults?: boolean }
+          | { eventApprovalResults?: boolean; eventReminder5Days?: boolean; eventReminder3Days?: boolean }
           | undefined)
       : undefined;
 
-  return !!preferences?.eventApprovalResults
+  return !!preferences?.[notificationType]
 }
 
 /**
@@ -280,6 +283,9 @@ export async function notifyPartnerEventReminder5Days(
   eventId: string,
   eventTitle: string,
 ): Promise<void> {
+  const isNotificationOn = await checkNotificationSetting(partnerId, 'eventReminder5Days'); //check setting for 5 day reminder and send 
+  if (!isNotificationOn) return
+
   await queueNotification({
     kind: "event_reminder_5days",
     title: "Your event is in 5 days",
@@ -297,6 +303,9 @@ export async function notifyPartnerEventReminder3Days(
   eventId: string,
   eventTitle: string,
 ): Promise<void> {
+  const isNotificationOn = await checkNotificationSetting(partnerId, 'eventReminder3Days'); //check setting for 3 day reminder
+  if (!isNotificationOn) return
+
   await queueNotification({
     kind: "event_reminder_3days",
     title: "Your event starts in 3 days",
