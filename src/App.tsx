@@ -16,6 +16,7 @@ import { EventRegistrationPage } from "./pages/partner/EventRegistration";
 import { ApplicationPage } from "./pages/partner/Application";
 import { FinalSetupPage } from "./pages/partner/FinalSetup";
 import { EventManagePage as PartnerEventManagePage } from "./pages/partner/EventManage";
+import SettingsPage from "./pages/partner/SettingsP";
 
 // Admin pages
 import { AnalyticsPage } from "./pages/admin/Analytics";
@@ -26,6 +27,8 @@ import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
+import { LearningPublicationPage } from "./pages/admin/LearningPublication";
+import AdminSettingsPage from "./pages/admin/AdminSettings";
 
 import React from "react";
 import type { UserProfile } from "./types/user-types.ts";
@@ -48,11 +51,11 @@ const RouteGuardContent: React.FC<RouteGuardProps> = ({ user, profile }) => {
   if (!profile) {
     return <ApplicationPage />;
   }
- if (
+  if (
     profile.role === "partner" &&
-    profile.status === "pending_approval"
+    profile.partnerApprovalStatus === "pending_approval"
   ) {
-  return <PendingApprovalPage />;
+    return <PendingApprovalPage />;
   }
   if (!profile.onboardingComplete && profile.role !== "admin") {
     return <FinalSetupPage />;
@@ -142,7 +145,7 @@ export default function AppRoutes() {
         <Route
           path="partner/events/manage"
           element={
-            <RoleGate roles={["partner","admin"]}>
+            <RoleGate roles={["partner", "admin"]}>
               <PartnerEventManagePage />
             </RoleGate>
           }
@@ -162,6 +165,15 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["partner", "admin"]}>
               <EventRegistrationPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="partner/settings"
+          element={
+            <RoleGate roles={["partner", "admin"]}>
+              <SettingsPage />
             </RoleGate>
           }
         />
@@ -194,6 +206,15 @@ export default function AppRoutes() {
         />
 
         <Route
+          path="admin/events/manage/:eventId"
+          element={
+            <RoleGate roles={["admin"]}>
+              <EventRegistrationPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
           path="admin/events/approval"
           element={
             <RoleGate roles={["admin"]}>
@@ -221,6 +242,16 @@ export default function AppRoutes() {
         />
 
         <Route
+          path="admin/settings"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AdminSettingsPage />
+            </RoleGate>
+          }
+/>
+
+
+        <Route
           path="admin/partners/manage"
           element={
             <RoleGate roles={["admin"]}>
@@ -237,7 +268,24 @@ export default function AppRoutes() {
             </RoleGate>
           }
         />
+
+        <Route
+          path="admin/learning/publication"
+          element={
+            <RoleGate roles={["admin"]}>
+              <LearningPublicationPage />
+            </RoleGate>
+          }
+        />
       </Route>
+      <Route
+        path="admin/learning/publication/:learningId"
+        element={
+          <RoleGate roles={["admin"]}>
+            <LearningPublicationPage />
+          </RoleGate>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

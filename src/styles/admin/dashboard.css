@@ -3,6 +3,11 @@ dashboard.css
 Dashboard-specific styles including top bar, KPI cards, charts,
 summary sections, featured insight panels, and activity feed layout.
 */
+.dashboard-stat-link {
+  text-decoration: none;
+  display: contents;
+}
+
 .app-main .dashboard-page.admin {
   background-color: var(--gma-surface);
   min-height: 100%;

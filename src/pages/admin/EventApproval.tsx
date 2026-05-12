@@ -12,7 +12,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import type { EventRecord } from "../../types/event-types";
-import { Tag } from "lucide-react";
+import { Tag, ArrowUpDown } from "lucide-react";
+import {
+  notifyPartnerEventDecision,
+  notifyUsersEventEdited,
+  getEventAttendeeIds,
+} from "../../services/notificationService";
 
 /**
  * @summary Converts a Firestore Timestamp to a locale-formatted date/time string.
@@ -45,7 +50,6 @@ async function fetchUserInfo(
 ): Promise<{ name: string; org: string }> {
   try {
     const snap = await getDoc(doc(db, "users", uid));
-    console.log("fetchUserInfo:", uid, "exists:", snap.exists(), snap.data()); // 👈 add this
 
     if (snap.exists()) {
       const data = snap.data();
@@ -70,6 +74,7 @@ export function EventApprovalPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [userInfo, setUserInfo] = useState<
     Record<string, { name: string; org: string }>
   >({});
@@ -85,11 +90,6 @@ export function EventApprovalPage() {
         where("eventApprovalStatus", "==", "pending"),
       );
       const snap = await getDocs(q);
-      console.log(
-        "Fetched events:",
-        snap.size,
-        snap.docs.map((d) => d.data()),
-      ); // 👈 add this
 
       const rows: EventRecord[] = snap.docs.map((d) => ({
         eventId: d.id,
@@ -97,7 +97,6 @@ export function EventApprovalPage() {
       }));
       setPending(rows);
     } catch (err) {
-      console.error("Load error:", err); // 👈 add this
       setPending([]);
     } finally {
       setLoading(false);
@@ -131,10 +130,23 @@ export function EventApprovalPage() {
   async function approve(ev: string) {
     setBusyId(ev);
     try {
+      const targetEvent = pending.find((item) => item.eventId === ev);
       await updateDoc(doc(db, "events", ev), {
         eventApprovalStatus: "approved",
         rejectionReason: deleteField(),
       });
+      if (targetEvent?.submittedBy) {
+        await notifyPartnerEventDecision(
+          targetEvent.submittedBy,
+          ev,
+          targetEvent.title,
+          true,
+        );
+      }
+      const attendeeIds = await getEventAttendeeIds(ev);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventEdited(attendeeIds, ev, targetEvent?.title ?? "");
+      }
       await load();
     } finally {
       setBusyId(null);
@@ -154,29 +166,53 @@ export function EventApprovalPage() {
         eventApprovalStatus: "rejected",
         rejectionReason: reason,
       });
+      if (ev.submittedBy) {
+        await notifyPartnerEventDecision(
+          ev.submittedBy,
+          ev.eventId,
+          ev.title,
+          false,
+          reason,
+        );
+      }
       await load();
     } finally {
       setBusyId(null);
     }
   }
 
+  const sorted = [...pending].sort((a, b) => {
+    const ta = a.createdAt?.toMillis?.() ?? 0;
+    const tb = b.createdAt?.toMillis?.() ?? 0;
+    return sortOrder === "newest" ? tb - ta : ta - tb;
+  });
+
   return (
     <div className="page">
-      <h1>Approve events</h1>
-      <p className="muted">
-        Lists <code>events</code> with{" "}
-        <code>eventApprovalStatus == &quot;pending&quot;</code>.
-      </p>
+      <div className="approval-page-header">
+        <div>
+          <h1>Approve events</h1>
+          <p className="muted">Review and action pending event submissions.</p>
+        </div>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={() => setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))}
+        >
+          <ArrowUpDown size={15} strokeWidth={2} />
+          {sortOrder === "newest" ? "Newest first" : "Oldest first"}
+        </button>
+      </div>
 
       {loading ? (
         <div className="centered">
           <div className="spinner" />
         </div>
-      ) : pending.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p>No pending events.</p>
       ) : (
         <ul className="approval-list">
-          {pending.map((ev) => (
+          {sorted.map((ev) => (
             <li key={ev.eventId} className="approval-card">
               <div className="approval-inner">
                 {/* Left — image */}

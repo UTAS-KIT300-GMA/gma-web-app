@@ -74,30 +74,31 @@ export function VerifyEmailPage() {
         </p>
       </div>
 
-    <div className="verify-button-group">
-      <button
-        className="btn-primary verify-btn"
-        onClick={handleResend}
-        disabled={sending}
-      >
+      <div className="verify-button-group">
+        <button
+          className="btn-primary verify-btn"
+          onClick={handleResend}
+          disabled={sending}
+        >
           {sending ? "Sending..." : "Resend Email"}
-      </button>
+        </button>
 
-      <button
-        className="btn-outline verify-btn-light"
-        onClick={async () => {
-          await signOutUser();
-        }}
-      >
-        Sign out & Check later
-      </button>
-    </div>
-            <p className="verify-support">
-              Need help? Contact{" "}
-              <a href="mailto:contact@guessmyaccent.com.au">
-                  contact@guessmyaccent.com.au
-              </a>
-            </p>
+        <button
+          className="btn-outline verify-btn-light"
+          onClick={async () => {
+            await signOutUser();
+          }}
+        >
+          Sign out & Check later
+        </button>
+      </div>
+
+      <p className="verify-support">
+        Need help? Contact{" "}
+        <a href="mailto:contact@guessmyaccent.com.au">
+          contact@guessmyaccent.com.au
+        </a>
+      </p>
           </div>
         </div>
       </div>

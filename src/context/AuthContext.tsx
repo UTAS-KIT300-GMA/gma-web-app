@@ -16,6 +16,10 @@ import {
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import type { UserProfile, UserRole, AccountStatus } from "../types/user-types";
+import {
+  canReceivePortalPush,
+  registerUserFcmToken,
+} from "../services/notificationService";
 
 export type AuthState = {
   user: User | null;
@@ -56,25 +60,19 @@ function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
           ? (rawRole as UserRole)
           : "general";
 
-  const rawStatus = String
-    (data.status ?? data.partnerApprovalStatus ?? "pending_approval"
-  )
-      .toLowerCase()
-      .trim();
+  const rawStatus = data.partnerApprovalStatus as string | undefined;
 
-  const status: AccountStatus =
-    rawStatus === "approved" ||
-    rawStatus === "rejected" ||
-    rawStatus === "pending_approval"
-      ? (rawStatus as AccountStatus)
-      : "pending_approval";
+  const partnerApprovalStatus: AccountStatus =
+      rawStatus === "approved" || rawStatus === "rejected" || rawStatus === "pending_approval"
+          ? (rawStatus as AccountStatus)
+          : "pending_approval";
 
   return {
     id: id,
     email: String(data.email ?? ""),
     partnerId: data.partnerId as string | undefined,
     role,
-    status,
+    partnerApprovalStatus,
     createdAt: parseTimestamp(data.createdAt) as any,
     applicationAt: parseTimestamp(data.applicationAt),
     orgName: data.orgName as string | undefined,
@@ -90,8 +88,17 @@ function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
     missionStatement: data.missionStatement as string | undefined,
     socials: data.socials as UserProfile["socials"],
     selectedTags: data.selectedTags as string[] | undefined,
-    updatedAt: parseTimestamp(data.updatedAt),     
-  };
+    notificationPreferences:  // validation of notification setting
+      typeof data.notificationPreferences === "object" && data.notificationPreferences !== null
+        ? {
+            eventApprovalResults:
+              typeof (data.notificationPreferences as Record<string, unknown>).eventApprovalResults ===
+              "boolean"
+                ? (data.notificationPreferences as Record<string, unknown>).eventApprovalResults
+                : false,
+          }
+        : { eventApprovalResults: false },     
+  }; 
 }
 
 /**
@@ -150,6 +157,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (unsubProfile) unsubProfile();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || !canReceivePortalPush(profile?.role)) return;
+    registerUserFcmToken(user.uid).catch((err) => {
+      console.warn("FCM token registration failed:", err);
+    });
+  }, [user, profile?.role]);
 
   /**
    * @summary Authenticates a user with email and password via Firebase Auth.

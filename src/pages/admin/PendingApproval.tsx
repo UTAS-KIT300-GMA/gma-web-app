@@ -15,17 +15,14 @@ export function PendingApprovalPage() {
       <div className="login-inner centered-text">
         <div className="login-card">
           <div className="centered">
-
+            {/* Spinning indicator to show the 'Review' process is active */}
+            <div className="spinner"></div>
+            
             <h1 className="title-spacing">Email Verified!</h1>
             
             <p className="login-sub">
-              Thanks,{" "}
-              <strong>
-                {[profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "Partner"}
-              </strong>
-              . Your account for{" "}
-              <strong>{profile?.orgName || "your organization"}</strong> is now being
-              reviewed by our administration team.
+              Thanks, <strong>{profile?.firstName && profile?.lastName || "Partner"}</strong>. 
+              Your account for <strong>{profile?.orgName || "your organization"}</strong> is now being reviewed by our administration team.
             </p>
 
             <div className="alert ok left-text">
@@ -36,26 +33,21 @@ export function PendingApprovalPage() {
               </p>
             </div>
 
-            <div className="verify-actions">
-              <button
-                type="button"
-                className="btn-secondary verify-btn"
-                onClick={signOutUser}
-              >
-                Sign out & Check later
-              </button>
-            </div>
-
-            <p className="verify-support">
-              Need help? Contact{" "}
-              <a href="mailto:contact@guessmyaccent.com.au">
-                contact@guessmyaccent.com.au
-              </a>
-            </p>
-
-            </div>
+            {/* Logout button allows users to leave the 'Waiting Room' safely */}
+            <button 
+              type="button"
+              className="btn-ghost theme-primary-text" 
+              onClick={signOutUser}
+            >
+              Sign out & Check later
+            </button>
           </div>
-        </div>  
+        </div>
+        
+        <p className="small help-text">
+          Need help? Contact support@gmaconnect.org.au
+        </p>
       </div>
+    </div>
   );
 }

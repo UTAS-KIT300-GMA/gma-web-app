@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -13,8 +13,34 @@ import {
   Handshake,
   Users,
   Bell,
+  Trash2,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  writeBatch,
+  type Timestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+
+type AppNotification = {
+  id: string;
+  kind?: string;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt?: Timestamp;
+  data?: Record<string, string>;
+};
 
 /**
  * @summary Returns the correct CSS class string for a NavLink based on its active state.
@@ -27,9 +53,15 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
  * @summary Renders the main application shell with a collapsible sidebar and role-aware navigation.
  */
 export function AppLayout() {
-  const { profile, signOutUser } = useAuth();
+  const { user, profile, signOutUser } = useAuth();
   const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const notificationPanelRef = useRef<HTMLDivElement | null>(null);
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
 
   const location = useLocation();
 
@@ -42,8 +74,11 @@ export function AppLayout() {
     if (location.pathname.includes("events/approval")) return "Approve Events";
     if (location.pathname.includes("analytics")) return "Analytics";
     if (location.pathname.includes("users")) return "Users";
+    if (location.pathname.includes("settings")) return "Settings";
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
+    if (location.pathname.includes("settings")) return "Settings";
+    if (location.pathname.includes("learning")) return "Learning Content";
     return "Dashboard";
   };
 
@@ -54,6 +89,142 @@ export function AppLayout() {
   // Add state for active role to support with admin "view as partner" toggle in the future
   const [viewAsPartner, setViewAsPartner] = useState(false);
   const effectiveIsAdmin = isAdmin && !viewAsPartner;
+  const unreadCount = useMemo(
+    () => notifications.filter((item) => !item.read).length,
+    [notifications],
+  );
+
+  useEffect(() => {
+  const settingsRef = doc(db, "adminSettings", "platform");
+
+  const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+    if (!snapshot.exists()) {
+      setMaintenanceEnabled(false);
+      setMaintenanceMessage("");
+      return;
+    }
+
+    const data = snapshot.data();
+
+    setMaintenanceEnabled(Boolean(data.maintenanceNoticeEnabled));
+    setMaintenanceMessage(data.maintenanceNotice || "");
+  });
+
+  return () => unsubscribe();
+}, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setNotificationLoading(true);
+    const notifQuery = query(
+      collection(db, "users", user.uid, "notifications"),
+      orderBy("createdAt", "desc"),
+      limit(20),
+    );
+
+    const unsubscribe = onSnapshot(
+      notifQuery,
+      (snap) => {
+        const rows: AppNotification[] = snap.docs.map((item) => ({
+          id: item.id,
+          ...(item.data() as Omit<AppNotification, "id">),
+        }));
+        setNotifications(rows);
+        setNotificationLoading(false);
+      },
+      () => setNotificationLoading(false),
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target || !notificationPanelRef.current) return;
+      if (!notificationPanelRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showNotifications]);
+
+  async function markAllNotificationsRead() {
+    if (!user) return;
+    const unread = notifications.filter((item) => !item.read);
+    if (unread.length === 0) return;
+
+    const batch = writeBatch(db);
+    unread.forEach((item) => {
+      batch.update(doc(db, "users", user.uid, "notifications", item.id), {
+        read: true,
+        readAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+
+  async function openNotification(item: AppNotification) {
+    if (!user) return;
+
+    if (!item.read) {
+      await updateDoc(doc(db, "users", user.uid, "notifications", item.id), {
+        read: true,
+        readAt: serverTimestamp(),
+      });
+    }
+
+    const { kind } = item;
+
+    if (effectiveIsAdmin) {
+      if (kind === "event_submitted_for_review") {
+        navigate("/admin/events/approval");
+      } else if (kind === "event_reminder_5days" || kind === "event_reminder_3days") {
+        navigate("/admin/events/manage?view=upcoming");
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_partner") {
+        navigate("/admin/events/manage");
+      } else {
+        navigate("/admin/dashboard");
+      }
+    } else {
+      if (kind === "partner_approval_result") {
+        navigate("/partner/dashboard");
+      } else if (
+        kind === "event_approval_result" ||
+        kind === "event_reminder_5days" ||
+        kind === "event_reminder_3days" ||
+        kind === "partner_sponsor_payment"
+      ) {
+        navigate("/partner/events/manage");
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_admin") {
+        navigate("/partner/events/manage");
+      } else {
+        navigate("/partner/dashboard");
+      }
+    }
+    setShowNotifications(false);
+  }
+
+  async function deleteNotification(notificationId: string) {
+    if (!user) return;
+    await deleteDoc(
+      doc(db, "users", user.uid, "notifications", notificationId),
+    );
+  }
+
+  async function clearAllNotifications() {
+    if (!user || notifications.length === 0) return;
+    const batch = writeBatch(db);
+    notifications.forEach((item) => {
+      batch.delete(doc(db, "users", user.uid, "notifications", item.id));
+    });
+    await batch.commit();
+  }
 
   return (
     <div
@@ -101,7 +272,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-            {!effectiveIsAdmin && (
+          {!effectiveIsAdmin && (
             <NavLink to="/partner/events/manage" className={linkClass}>
               <span className="sidebar-link-icon">
                 <CalendarDays size={20} strokeWidth={2.2} />
@@ -125,6 +296,15 @@ export function AppLayout() {
                 <CircleCheckBig size={20} strokeWidth={2.2} />
               </span>
               {sidebarExpanded && <span>Approve Events</span>}
+            </NavLink>
+          )}
+
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/learning/publication" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <BookOpen size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Learning Content</span>}
             </NavLink>
           )}
 
@@ -155,16 +335,14 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          <a
-            className="sidebar-link sidebar-link-muted"
-            href="#settings"
-            onClick={(e) => e.preventDefault()}
-          >
-            <span className="sidebar-link-icon">
-              <Settings size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Settings</span>}
-          </a>
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/settings" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Settings size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Settings</span>}
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -199,6 +377,14 @@ export function AppLayout() {
 
       {/* Main content area with topbar */}
       <main className="app-main">
+
+        {maintenanceEnabled && maintenanceMessage && (
+       <div className="global-maintenance-banner">
+       <Bell size={18} />
+       <span>{maintenanceMessage}</span>
+       </div>
+      )}
+
         <header className="app-topbar">
           <div className="app-topbar-left">
             <div className="dashboard-title">
@@ -223,13 +409,87 @@ export function AppLayout() {
               </button>
             )}
 
-            <button
-              className="dashboard-icon-btn"
-              type="button"
-              aria-label="Notifications"
-            >
-              <Bell size={24} strokeWidth={1.7} />
-            </button>
+            <div className="notification-wrap" ref={notificationPanelRef}>
+              <button
+                className="dashboard-icon-btn"
+                type="button"
+                aria-label="Notifications"
+                onClick={() => setShowNotifications((prev) => !prev)}
+              >
+                <Bell size={24} strokeWidth={1.7} />
+                {unreadCount > 0 && (
+                  <span className="notification-badge">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="notification-panel">
+                  <div className="notification-panel-head">
+                    <strong>Notifications</strong>
+                    <div className="notification-head-actions">
+                      <button
+                        type="button"
+                        className="notification-mark-all"
+                        onClick={markAllNotificationsRead}
+                      >
+                        Mark all as read
+                      </button>
+                      <button
+                        type="button"
+                        className="notification-clear-all"
+                        onClick={clearAllNotifications}
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  </div>
+
+                  {notificationLoading ? (
+                    <div className="notification-empty">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="notification-empty">
+                      No notifications yet.
+                    </div>
+                  ) : (
+                    <ul className="notification-list">
+                      {notifications.map((item) => (
+                        <li key={item.id}>
+                          <div
+                            className={`notification-item ${item.read ? "" : "unread"}`}
+                          >
+                            <button
+                              type="button"
+                              className="notification-item-content"
+                              onClick={() => openNotification(item)}
+                            >
+                              <div className="notification-item-title">
+                                {item.title}
+                              </div>
+                              <div className="notification-item-body">
+                                {item.body}
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              className="notification-delete-btn"
+                              aria-label="Delete notification"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteNotification(item.id);
+                              }}
+                            >
+                              <Trash2 size={14} strokeWidth={2} />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* User's role and name added here */}
             <div className="dashboard-userbox">

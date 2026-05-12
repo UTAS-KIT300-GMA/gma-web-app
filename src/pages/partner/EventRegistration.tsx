@@ -15,6 +15,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { Eye, MapPin, Tag } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
 import {
+  notifyAdminsEventSubmitted,
+  notifyUsersEventEdited,
+  getEventInterestedUserIds,
+} from "../../services/notificationService";
+import {
   CATEGORIES,
   type Category,
   type EventRecord,
@@ -75,8 +80,8 @@ export function EventRegistrationPage() {
     lng: number;
   } | null>(null);
   const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
-  const [totalTickets, setTotalTickets] =
-    useState<EventRecord["totalTickets"]>(50);
+  const [eventDuration, setEventDuration] = useState<string>("");
+  const [totalTickets, setTotalTickets] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState<string>("");
   const [existingImage, setExistingImage] = useState<EventRecord["image"]>("");
@@ -160,7 +165,8 @@ export function EventRegistrationPage() {
         }
 
         setDateTime(toDateTimeLocalString(data.dateTime));
-        setTotalTickets(data.totalTickets || 50);
+        setEventDuration((data as any).eventDuration || "");
+        setTotalTickets(data.totalTickets ? String(data.totalTickets) : "");
         setExistingImage(data.image || "");
         setImageName(data.image ? "Current image" : "");
         setInterestTags(data.interestTags || []);
@@ -182,7 +188,8 @@ export function EventRegistrationPage() {
     setAddress("");
     setCoordinates(null);
     setDateTime("");
-    setTotalTickets(50);
+    setEventDuration("");
+    setTotalTickets("");
     setImageName("");
     setImageFile(null);
     setExistingImage("");
@@ -210,7 +217,8 @@ export function EventRegistrationPage() {
         ? new GeoPoint(coordinates.lat, coordinates.lng)
         : null,
       dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
-      totalTickets,
+      eventDuration,
+      totalTickets: Number(totalTickets),
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
       ticketAccess,
@@ -247,6 +255,7 @@ export function EventRegistrationPage() {
     if (!title.trim()) missing.push("Title");
     if (!description.trim()) missing.push("Description");
     if (!dateTime) missing.push("Start date & time");
+    if (!eventDuration.trim()) missing.push("Event duration");
     if (!address.trim()) missing.push("Address");
     if (!imageFile && !existingImage) missing.push("Event image");
     if (selectedCategories.length === 0) missing.push("At least one category");
@@ -258,20 +267,54 @@ export function EventRegistrationPage() {
       );
     }
 
+    if (!totalTickets || Number(totalTickets) < 1) {
+      missing.push("Total tickets");
+    }
+
     try {
-      const eventData = await buildEventData("pending");
+      const eventData = await buildEventData(isAdmin ? "approved" : "pending");
+      const partnerLabel =
+        profile?.orgName ||
+        `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+        user.email ||
+        "A partner";
       if (draftId) {
         await updateDoc(doc(db, "events", draftId), eventData);
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, profile?.id ?? "");
+        }
+
+        if (isAdmin) {
+          getEventInterestedUserIds(draftId)
+            .then((attendeeIds) => {
+              if (attendeeIds.length > 0) {
+                notifyUsersEventEdited(
+                  attendeeIds,
+                  draftId,
+                  title.trim(),
+                ).catch(console.error);
+              }
+            })
+            .catch(console.error);
+        }
       } else {
-        await addDoc(collection(db, "events"), {
+        const newDoc = await addDoc(collection(db, "events"), {
           ...eventData,
           ticketsSold: 0,
           createdAt: Timestamp.now(),
         });
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel, profile?.id ?? "");
+        }
       }
       alert(
-        "✅ Event submitted successfully! GMA admin will review your event before publishing.",
+        isAdmin
+          ? "✅ Event updated and published successfully!"
+          : "✅ Event submitted successfully! GMA admin will review your event before publishing.",
       );
+
       resetForm();
     } catch (err) {
       console.log(err);
@@ -317,11 +360,6 @@ export function EventRegistrationPage() {
       alert("❌ Failed to submit event");
     }
   }
-
-  /**
-   * @summary Placeholder handler for the save-draft action (not yet implemented).
-   */
-  function handleMockSaveDraft() {}
 
   /**
    * @summary Validates the selected image file size and stores it in component state.
@@ -416,6 +454,10 @@ export function EventRegistrationPage() {
                 <div className="inline-icon-input-content">
                   <EventLocationInput
                     initialAddress={address}
+                    onAddressChange={(value) => {
+                      setAddress(value);
+                      setCoordinates(null);
+                    }}
                     onLocationSelect={(location: EventLocation) => {
                       setAddress(location.displayAddress);
                       setCoordinates({
@@ -464,12 +506,38 @@ export function EventRegistrationPage() {
             </label>
 
             <label className="field">
+              <span>Event duration</span>
+
+              <select
+                value={eventDuration}
+                onChange={(e) => setEventDuration(e.target.value)}
+              >
+                <option value="">Select duration</option>
+                <option value="30 minutes">30 minutes</option>
+                <option value="1 hour">1 hour</option>
+                <option value="2 hours">2 hours</option>
+                <option value="3 hours">3 hours</option>
+                <option value="Half day">Half day</option>
+                <option value="Full day">Full day</option>
+                <option value="Multiple days">Multiple days</option>
+              </select>
+            </label>
+
+            <label className="field">
               <span>Total tickets</span>
               <input
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={totalTickets}
-                onChange={(e) => setTotalTickets(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (/^\d*$/.test(value)) {
+                    setTotalTickets(value);
+                  }
+                }}
+                placeholder="Enter total tickets"
               />
             </label>
           </div>
@@ -561,16 +629,18 @@ export function EventRegistrationPage() {
             <span>Show preview</span>
           </button>
 
-          <button
-            type="button"
-            className="btn-secondary event-action-btn"
-            onClick={handleSaveDraft}
-          >
-            Save draft
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              className="btn-secondary event-action-btn"
+              onClick={handleSaveDraft}
+            >
+              Save draft
+            </button>
+          )}
 
           <button type="submit" className="btn-primary event-action-btn">
-            Submit event
+            {isAdmin ? "Save and publish" : "Submit event"}
           </button>
         </div>
       </form>

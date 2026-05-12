@@ -89,7 +89,7 @@ login card, logo area, and decorative background treatment.
 }
 
 .verify-info-box {
-  background: rgba(241, 203, 95, 0.85);  
+  background: rgba(241, 203, 95, 0.85);
   color: #2b0f1d;
   border-radius: 12px;
   padding: 12px 14px;
@@ -103,17 +103,19 @@ login card, logo area, and decorative background treatment.
 }
 
 .status-icon {
-  font-size: 2rem;
+  font-size: 2.8rem;
   line-height: 1;
   margin-bottom: 0.75rem;
+  color: #4b0d2a;
 }
 
 .verify-button-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;   /* tighter spacing */
+  gap: 6px;
 }
+
 .verify-btn {
   width: 240px;
   min-width: 240px;
@@ -124,4 +126,46 @@ login card, logo area, and decorative background treatment.
   background: #fff;
   color: #4b1832;
   border: 1px solid #ddd2ca;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #a42169;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.terms-modal {
+  background: #fff;
+  color: #400f32;
+  max-width: 520px;
+  width: 100%;
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+}
+
+.terms-modal h2 {
+  margin-top: 0;
+}
+
+.terms-modal ol {
+  padding-left: 1.25rem;
+  line-height: 1.7;
 }
