@@ -282,7 +282,7 @@ export function EventRegistrationPage() {
         await updateDoc(doc(db, "events", draftId), eventData);
 
         if (!isAdmin) {
-          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, , profile?.id ?? "");
+          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, profile?.id ?? "");
         }
 
         if (isAdmin) {
