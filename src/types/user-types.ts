@@ -48,6 +48,9 @@ export interface UserProfile {
   // --- Workflow & Extras ---
   selectedTags?: string[];     // Interests (Migrant) or Categories (Partner)
   updatedAt?: Timestamp;       // Tracks last profile edit
+  notificationPreferences?: {  //Event approval notifications setting
+    eventApprovalResults?: boolean;
+  };
   fcmTokens?: string[];
   fcmTokenUpdatedAt?: Timestamp;
-}
+} 

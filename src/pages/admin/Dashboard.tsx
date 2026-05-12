@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
+import { checkAndSendEventReminders } from "../../services/notificationService";
 //import { colors } from "../theme";
 
 type FilterKey = "week" | "month" | "year";
@@ -94,6 +96,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<StatCard[]>(mockStats);
   const [registeredUsers, setRegisteredUsers] = useState(0);
 
+  const reminderSent = useRef(false);
+  useEffect(() => {
+    if (reminderSent.current) return;
+    reminderSent.current = true;
+    checkAndSendEventReminders().catch(console.error);
+  }, []);
+
   useEffect(() => {
   // Fetches the total number of events from Firestore
   const unsubscribeTotal = onSnapshot(collection(db, "events"), (snapshot) => {
@@ -186,16 +195,29 @@ export default function AdminDashboard() {
           <div className="stat-label">Users registered for events</div>
         </article>
 
-        {stats.map((stat) => (
-          <article
-            key={stat.label}
-            className={`stat-card dashboard-stat-card ${stat.accent ? "accent" : ""}`}
-          >
-            <span className="dashboard-stat-title">{stat.label}</span>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-label">{stat.hint}</div>
-          </article>
-        ))}
+        {stats.map((stat) => {
+          const card = (
+            <article
+              key={stat.label}
+              className={`stat-card dashboard-stat-card ${stat.accent ? "accent" : ""}${stat.label === "Upcoming Events" ? " clickable" : ""}`}
+            >
+              <span className="dashboard-stat-title">{stat.label}</span>
+              <div className="stat-value">{stat.value}</div>
+              <div className="stat-label">{stat.hint}</div>
+            </article>
+          );
+          return stat.label === "Upcoming Events" ? (
+            <Link
+              key={stat.label}
+              to="/admin/events/manage?view=upcoming"
+              className="dashboard-stat-link"
+            >
+              {card}
+            </Link>
+          ) : (
+            card
+          );
+        })}
       </section>
 
       <section className="dashboard-main-grid">

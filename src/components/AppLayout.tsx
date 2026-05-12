@@ -14,6 +14,7 @@ import {
   Users,
   Bell,
   Trash2,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -33,6 +34,7 @@ import { db } from "../firebase";
 
 type AppNotification = {
   id: string;
+  kind?: string;
   title: string;
   body: string;
   read: boolean;
@@ -72,9 +74,11 @@ export function AppLayout() {
     if (location.pathname.includes("events/approval")) return "Approve Events";
     if (location.pathname.includes("analytics")) return "Analytics";
     if (location.pathname.includes("users")) return "Users";
+    if (location.pathname.includes("settings")) return "Settings";
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
     if (location.pathname.includes("settings")) return "Settings";
+    if (location.pathname.includes("learning")) return "Learning Content";
     return "Dashboard";
   };
 
@@ -175,30 +179,42 @@ export function AppLayout() {
       });
     }
 
-    const eventId = item.data?.eventId;
-    if (eventId && effectiveIsAdmin) {
-      navigate("/admin/events/approval");
-      setShowNotifications(false);
-      return;
-    }
-
-    if (eventId && !effectiveIsAdmin) {
-      navigate("/partner/events/manage");
-      setShowNotifications(false);
-      return;
-    }
+    const { kind } = item;
 
     if (effectiveIsAdmin) {
-      navigate("/admin/dashboard");
+      if (kind === "event_submitted_for_review") {
+        navigate("/admin/events/approval");
+      } else if (kind === "event_reminder_5days" || kind === "event_reminder_3days") {
+        navigate("/admin/events/manage?view=upcoming");
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_partner") {
+        navigate("/admin/events/manage");
+      } else {
+        navigate("/admin/dashboard");
+      }
     } else {
-      navigate("/partner/dashboard");
+      if (kind === "partner_approval_result") {
+        navigate("/partner/dashboard");
+      } else if (
+        kind === "event_approval_result" ||
+        kind === "event_reminder_5days" ||
+        kind === "event_reminder_3days" ||
+        kind === "partner_sponsor_payment"
+      ) {
+        navigate("/partner/events/manage");
+      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_admin") {
+        navigate("/partner/events/manage");
+      } else {
+        navigate("/partner/dashboard");
+      }
     }
     setShowNotifications(false);
   }
 
   async function deleteNotification(notificationId: string) {
     if (!user) return;
-    await deleteDoc(doc(db, "users", user.uid, "notifications", notificationId));
+    await deleteDoc(
+      doc(db, "users", user.uid, "notifications", notificationId),
+    );
   }
 
   async function clearAllNotifications() {
@@ -256,7 +272,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-            {!effectiveIsAdmin && (
+          {!effectiveIsAdmin && (
             <NavLink to="/partner/events/manage" className={linkClass}>
               <span className="sidebar-link-icon">
                 <CalendarDays size={20} strokeWidth={2.2} />
@@ -280,6 +296,15 @@ export function AppLayout() {
                 <CircleCheckBig size={20} strokeWidth={2.2} />
               </span>
               {sidebarExpanded && <span>Approve Events</span>}
+            </NavLink>
+          )}
+
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/learning/publication" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <BookOpen size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Learning Content</span>}
             </NavLink>
           )}
 
@@ -352,7 +377,7 @@ export function AppLayout() {
 
       {/* Main content area with topbar */}
       <main className="app-main">
-        
+
         {maintenanceEnabled && maintenanceMessage && (
        <div className="global-maintenance-banner">
        <Bell size={18} />
@@ -424,19 +449,27 @@ export function AppLayout() {
                   {notificationLoading ? (
                     <div className="notification-empty">Loading...</div>
                   ) : notifications.length === 0 ? (
-                    <div className="notification-empty">No notifications yet.</div>
+                    <div className="notification-empty">
+                      No notifications yet.
+                    </div>
                   ) : (
                     <ul className="notification-list">
                       {notifications.map((item) => (
                         <li key={item.id}>
-                          <div className={`notification-item ${item.read ? "" : "unread"}`}>
+                          <div
+                            className={`notification-item ${item.read ? "" : "unread"}`}
+                          >
                             <button
                               type="button"
                               className="notification-item-content"
                               onClick={() => openNotification(item)}
                             >
-                              <div className="notification-item-title">{item.title}</div>
-                              <div className="notification-item-body">{item.body}</div>
+                              <div className="notification-item-title">
+                                {item.title}
+                              </div>
+                              <div className="notification-item-body">
+                                {item.body}
+                              </div>
                             </button>
                             <button
                               type="button"

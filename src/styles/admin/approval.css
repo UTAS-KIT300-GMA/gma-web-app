@@ -3,6 +3,19 @@ approval.css
 Styles for approval workflow UI including approval cards, approval lists,
 action areas, and review input sections.
 */
+.approval-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.approval-page-header h1 {
+  margin-bottom: 0.25rem;
+}
+
 .approval-list {
   list-style: none;
   padding: 0;

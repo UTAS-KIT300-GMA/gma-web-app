@@ -7,6 +7,11 @@ import {
   getRegistrationCount,
   type PartnerEventRow,
 } from "../../services/partnerEventService";
+import {
+  notifyUsersEventCancelled,
+  notifyAdminsEventCancelled,
+  getEventInterestedUserIds,
+} from "../../services/notificationService";
 import { useAuth } from "../../hooks/useAuth";
 import { EventPreviewModal } from "../../components/EventPreviewModal";
 import { Link } from "react-router-dom";
@@ -157,12 +162,18 @@ export function EventManagePage() {
   }, [user, profile]);
 
   async function handleDelete(eventId: string, title: string) {
-    const ok = window.confirm(`Delete "${title}"? This cannot be undone.`);
+    const ok = window.confirm(`Delete "${title}"? This cannot be undone. All users booked or bookmarked this event will be notified.`);
     if (!ok) return;
 
     setBusyId(eventId);
 
     try {
+      const partnerLabel = profile?.orgName || `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || "A partner";
+      const interestedIds = await getEventInterestedUserIds(eventId);
+      if (interestedIds.length > 0) {
+        await notifyUsersEventCancelled(interestedIds, eventId, title);
+      }
+      await notifyAdminsEventCancelled(eventId, title, partnerLabel);
       await deletePartnerEvent(eventId);
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
     } catch (error) {

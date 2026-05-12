@@ -21,6 +21,8 @@ export default function AddUserPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole | "">("");
+  const [orgName, setOrgName] = useState("");
+  const [abn, setAbn] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -77,6 +79,8 @@ export default function AddUserPage() {
         phoneNumber,
         password,
         photoURL,
+        orgName,
+        abn,
       });
 
       alert("User created successfully.");
@@ -209,7 +213,31 @@ export default function AddUserPage() {
                   <option value="general">General User</option>
                 </select>
               </div>
+              {role === "partner" && (
+                <>
+                  <div className="user-management-field">
+                    <label>Organisation Name</label>
+                    <input
+                      type="text"
+                      className="user-management-input"
+                      placeholder="Enter organisation name"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                    />
+                  </div>
 
+                  <div className="user-management-field">
+                    <label>ABN</label>
+                    <input
+                      type="text"
+                      className="user-management-input"
+                      placeholder="Enter ABN"
+                      value={abn}
+                      onChange={(e) => setAbn(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
               <div className="user-management-field">
                 <label>Date of Birth *</label>
                 <input
@@ -264,11 +292,6 @@ export default function AddUserPage() {
           </div>
 
           <div className="add-user-footer">
-            <label className="add-user-checkbox">
-              <input type="checkbox" defaultChecked />
-              <span>Send email confirmation to the user</span>
-            </label>
-
             <div className="user-management-form-actions">
               <Link to="/admin/users" className="user-management-btn secondary">
                 Cancel
