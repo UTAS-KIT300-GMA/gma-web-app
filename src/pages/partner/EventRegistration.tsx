@@ -268,7 +268,7 @@ export function EventRegistrationPage() {
     }
 
     try {
-      const eventData = await buildEventData("pending");
+      const eventData = await buildEventData(isAdmin ? "approved" : "pending");
       const partnerLabel =
         profile?.orgName ||
         `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
@@ -276,17 +276,29 @@ export function EventRegistrationPage() {
         "A partner";
       if (draftId) {
         await updateDoc(doc(db, "events", draftId), eventData);
-        await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel);
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel);
+        }
       } else {
         const newDoc = await addDoc(collection(db, "events"), {
           ...eventData,
           ticketsSold: 0,
           createdAt: Timestamp.now(),
         });
-        await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel);
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(
+            newDoc.id,
+            title.trim(),
+            partnerLabel,
+          );
+        }
       }
       alert(
-        "✅ Event submitted successfully! GMA admin will review your event before publishing.",
+        isAdmin
+          ? "✅ Event updated and published successfully!"
+          : "✅ Event submitted successfully! GMA admin will review your event before publishing.",
       );
       resetForm();
     } catch (err) {
@@ -605,16 +617,18 @@ export function EventRegistrationPage() {
             <span>Show preview</span>
           </button>
 
-          <button
-            type="button"
-            className="btn-secondary event-action-btn"
-            onClick={handleSaveDraft}
-          >
-            Save draft
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              className="btn-secondary event-action-btn"
+              onClick={handleSaveDraft}
+            >
+              Save draft
+            </button>
+          )}
 
           <button type="submit" className="btn-primary event-action-btn">
-            Submit event
+            {isAdmin ? "Save and publish" : "Submit event"}
           </button>
         </div>
       </form>

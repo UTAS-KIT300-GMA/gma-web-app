@@ -195,6 +195,15 @@ export default function AppRoutes() {
         />
 
         <Route
+          path="admin/events/manage/:eventId"
+          element={
+            <RoleGate roles={["admin"]}>
+              <EventRegistrationPage />
+            </RoleGate>
+          }
+        />
+
+        <Route
           path="admin/events/approval"
           element={
             <RoleGate roles={["admin"]}>
