@@ -261,14 +261,19 @@ export function EventRegistrationPage() {
     if (selectedCategories.length === 0) missing.push("At least one category");
     if (interestTags.length === 0) missing.push("At least one interest tag");
 
+    const ticketsNum = Number(totalTickets);
+    if (
+      !totalTickets.trim() ||
+      !Number.isFinite(ticketsNum) ||
+      ticketsNum < 1
+    ) {
+      missing.push("Total tickets (at least 1)");
+    }
+
     if (missing.length > 0) {
       return alert(
         `Please complete the following before submitting:\n\n• ${missing.join("\n• ")}`,
       );
-    }
-
-    if (!totalTickets || Number(totalTickets) < 1) {
-      missing.push("Total tickets");
     }
 
     try {
