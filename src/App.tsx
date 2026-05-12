@@ -26,6 +26,7 @@ import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
+import AdminSettingsPage from "./pages/admin/AdminSettings";
 
 import React from "react";
 import type { UserProfile } from "./types/user-types.ts";
@@ -221,6 +222,16 @@ export default function AppRoutes() {
         />
 
         <Route
+          path="admin/settings"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AdminSettingsPage />
+            </RoleGate>
+          }
+/>
+
+
+        <Route
           path="admin/partners/manage"
           element={
             <RoleGate roles={["admin"]}>
@@ -238,7 +249,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-
+     
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

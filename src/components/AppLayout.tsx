@@ -58,6 +58,8 @@ export function AppLayout() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
 
   const location = useLocation();
 
@@ -72,6 +74,7 @@ export function AppLayout() {
     if (location.pathname.includes("users")) return "Users";
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
+    if (location.pathname.includes("settings")) return "Settings";
     return "Dashboard";
   };
 
@@ -86,6 +89,25 @@ export function AppLayout() {
     () => notifications.filter((item) => !item.read).length,
     [notifications],
   );
+
+  useEffect(() => {
+  const settingsRef = doc(db, "adminSettings", "platform");
+
+  const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+    if (!snapshot.exists()) {
+      setMaintenanceEnabled(false);
+      setMaintenanceMessage("");
+      return;
+    }
+
+    const data = snapshot.data();
+
+    setMaintenanceEnabled(Boolean(data.maintenanceNoticeEnabled));
+    setMaintenanceMessage(data.maintenanceNotice || "");
+  });
+
+  return () => unsubscribe();
+}, []);
 
   useEffect(() => {
     if (!user) return;
@@ -288,16 +310,14 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          <a
-            className="sidebar-link sidebar-link-muted"
-            href="#settings"
-            onClick={(e) => e.preventDefault()}
-          >
-            <span className="sidebar-link-icon">
-              <Settings size={20} strokeWidth={2.2} />
-            </span>
-            {sidebarExpanded && <span>Settings</span>}
-          </a>
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/settings" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Settings size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Settings</span>}
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -332,6 +352,14 @@ export function AppLayout() {
 
       {/* Main content area with topbar */}
       <main className="app-main">
+        
+        {maintenanceEnabled && maintenanceMessage && (
+       <div className="global-maintenance-banner">
+       <Bell size={18} />
+       <span>{maintenanceMessage}</span>
+       </div>
+      )}
+
         <header className="app-topbar">
           <div className="app-topbar-left">
             <div className="dashboard-title">
