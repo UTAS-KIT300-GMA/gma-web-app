@@ -65,7 +65,7 @@ export function ApplicationPage() {
 
   return (
     <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
+      <form className="login-card application-form" onSubmit={handleSubmit}>
         <h2>Partner Application</h2>
         <p className="muted">Step 2: Tell us about your organization</p>
         
@@ -104,15 +104,15 @@ export function ApplicationPage() {
             <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, Suburb, State, Postcode" required />
           </label>
 
-          <hr style={{ margin: "20px 0", borderTop: "1px solid #eee" }} />
+          <hr className="application-divider" />
 
           {/* --- Representative Details --- */}
-          <div style={{ display: "flex", gap: "10px" }}>
-            <label className="field" style={{ flex: 1 }}>
+          <div className="name-row">
+            <label className="field">
               <span>First Name</span>
               <input value={firstName} onChange={e => setFirstName(e.target.value)} required />
             </label>
-            <label className="field" style={{ flex: 1 }}>
+            <label className="field">
               <span>Last Name</span>
               <input value={lastName} onChange={e => setLastName(e.target.value)} required />
             </label>
@@ -129,7 +129,7 @@ export function ApplicationPage() {
           </label>
         </div>
 
-        <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: "20px" }}>
+        <button type="submit" className="btn-primary application-submit-btn" disabled={loading}>
           {loading ? "Submitting..." : "Submit for Approval"}
         </button>
       </form>

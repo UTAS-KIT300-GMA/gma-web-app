@@ -45,7 +45,7 @@ login card, logo area, and decorative background treatment.
 }
 
 .login-logo {
-  object-fit: contain;
+  width: 140px;
 }
 
 .login-card {
@@ -61,4 +61,67 @@ login card, logo area, and decorative background treatment.
   margin: 0 0 1rem;
   line-height: 1.45;
   text-align: center;
+}
+.login-actions-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.login-actions-centered .login-btn {
+  min-width: 120px;
+}
+
+.forgot-password-btn {
+  background: transparent;
+  border: none;
+  color: #2b0f1d;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.forgot-password-btn:hover {
+  text-decoration: underline;
+}
+
+.verify-info-box {
+  background: rgba(241, 203, 95, 0.85);  
+  color: #2b0f1d;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 16px 0 20px;
+  text-align: center;
+}
+
+.verify-info-box .small {
+  margin: 0;
+  color: #2b0f1d;
+}
+
+.status-icon {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.verify-button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;   /* tighter spacing */
+}
+.verify-btn {
+  width: 240px;
+  min-width: 240px;
+}
+
+.verify-btn-light {
+  width: 240px;
+  background: #fff;
+  color: #4b1832;
+  border: 1px solid #ddd2ca;
 }

@@ -67,33 +67,31 @@ export function VerifyEmailPage() {
               We sent a verification link to:<br />
               <strong>{user?.email}</strong>
             </p>
+      <div className="verify-info-box">
+        <p className="small">
+          Waiting for verification... Once you click the link in your email,
+          <strong> this page will update automatically.</strong>
+        </p>
+      </div>
 
-            <div className="alert info">
-              <p className="small">
-                Waiting for verification... Once you click the link in your email, 
-                <strong> this page will update automatically.</strong>
-              </p>
-            </div>
+    <div className="verify-button-group">
+      <button
+        className="btn-primary verify-btn"
+        onClick={handleResend}
+        disabled={sending}
+      >
+          {sending ? "Sending..." : "Resend Email"}
+      </button>
 
-            <button 
-              className="btn-outline full-width" 
-              onClick={handleResend} 
-              disabled={sending}
-            >
-              {sending ? "Sending..." : "Resend Email"}
-            </button>
-
-            <div className="verify-actions">
-                <button
-                  className="btn-secondary verify-btn"
-                  onClick={async () => {
-                    await signOutUser();
-                  }}
-                >
-                  Sign out & Check later
-                </button>
-            </div>
-
+      <button
+        className="btn-outline verify-btn-light"
+        onClick={async () => {
+          await signOutUser();
+        }}
+      >
+        Sign out & Check later
+      </button>
+    </div>
             <p className="verify-support">
               Need help? Contact{" "}
               <a href="mailto:contact@guessmyaccent.com.au">

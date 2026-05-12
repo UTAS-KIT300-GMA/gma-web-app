@@ -112,11 +112,14 @@ export function LoginPage() {
           </div>
 
           
-          <div className="login-row">  
+          <div className="login-actions-centered">
             <button type="submit" className="btn-primary login-btn" disabled={busy}>
               {busy ? "Signing in..." : "Log in"}
             </button>
-            <span className="forgot-password">Forgot password?</span>
+
+            <button type="button" className="forgot-password-btn">
+              Forgot password?
+            </button>
           </div>
 
           {view === "partner" && (

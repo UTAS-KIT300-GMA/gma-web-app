@@ -687,3 +687,31 @@ Partner event creation and submission UI
     transform: scale(0.68);
   }
 }
+
+.application-form .form-fields {
+  gap: 10px;
+}
+
+.application-form .field {
+  margin-bottom: 0.6rem;
+}
+
+.application-divider {
+  margin: 6px 0 8px;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.application-form .name-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.application-form .name-row .field {
+  flex: 1;
+}
+
+.application-submit-btn {
+  margin-top: 16px;
+}
