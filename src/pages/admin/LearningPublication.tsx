@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Eye,
   FileImage,
@@ -8,7 +9,11 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { createLearningContent } from "../../services/learningService";
+import {
+  createLearningContent,
+  getLearningContentById,
+  updateLearningContent,
+} from "../../services/learningService";
 import {
   uploadImageToCloudinary,
   uploadVideoToCloudinary,
@@ -21,6 +26,9 @@ import "../../styles/admin/learning-publication.css";
 
 export function LearningPublicationPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { learningId } = useParams<{ learningId?: string }>();
+  const isEditing = Boolean(learningId);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -33,14 +41,80 @@ export function LearningPublicationPage() {
     useState<LearningCategory>("connect");
   const [interestTags, setInterestTags] = useState<string[]>([]);
 
+  const [existingCloudinaryPublicId, setExistingCloudinaryPublicId] =
+    useState("");
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState("");
+  const [loadingExisting, setLoadingExisting] = useState(false);
+
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  useEffect(() => {
+    async function loadExistingLearningContent() {
+      if (!learningId) return;
+
+      setLoadingExisting(true);
+
+      try {
+        const existing = await getLearningContentById(learningId);
+
+        if (!existing) {
+          alert("Learning content not found.");
+          navigate("/admin/events/manage");
+          return;
+        }
+
+        const data = existing as {
+          title?: string;
+          description?: string;
+          duration?: string;
+          accessType?: "free" | "paid";
+          cloudinaryPublicId?: string;
+          fileId?: string;
+          thumbnailUrl?: string;
+          category?: LearningCategory;
+          interestTags?: string[];
+        };
+
+        setTitle(data.title || "");
+        setDescription(data.description || "");
+        setDuration(data.duration || "");
+        setAccessType(data.accessType || "free");
+        setFileId(data.fileId || "");
+        setExistingCloudinaryPublicId(data.cloudinaryPublicId || "");
+        setExistingThumbnailUrl(data.thumbnailUrl || "");
+        setSelectedCategory(data.category || "connect");
+        setInterestTags(data.interestTags || []);
+      } catch (error) {
+        console.error("Failed to load learning content:", error);
+        alert("Failed to load learning content.");
+      } finally {
+        setLoadingExisting(false);
+      }
+    }
+
+    loadExistingLearningContent();
+  }, [learningId, navigate]);
 
   function toggleTag(key: string) {
     setInterestTags((prev) =>
       prev.includes(key) ? prev.filter((tag) => tag !== key) : [...prev, key],
     );
+  }
+
+  function resetForm() {
+    setTitle("");
+    setDescription("");
+    setDuration("");
+    setAccessType("free");
+    setFileId("");
+    setVideoFile(null);
+    setThumbnailFile(null);
+    setSelectedCategory("connect");
+    setInterestTags([]);
+    setExistingCloudinaryPublicId("");
+    setExistingThumbnailUrl("");
   }
 
   async function publishLearningContent() {
@@ -56,7 +130,7 @@ export function LearningPublicationPage() {
       return;
     }
 
-    if (!videoFile) {
+    if (!videoFile && !existingCloudinaryPublicId) {
       alert("Please upload a video.");
       return;
     }
@@ -70,15 +144,17 @@ export function LearningPublicationPage() {
       setSaving(true);
       setUploadingVideo(true);
 
-      const uploadedPublicId = await uploadVideoToCloudinary(videoFile);
+      const uploadedPublicId = videoFile
+        ? await uploadVideoToCloudinary(videoFile)
+        : existingCloudinaryPublicId;
 
       const uploadedThumbnailUrl = thumbnailFile
         ? await uploadImageToCloudinary(thumbnailFile)
-        : "";
+        : existingThumbnailUrl;
 
       setUploadingVideo(false);
 
-      await createLearningContent({
+      const learningPayload = {
         title,
         description,
         duration,
@@ -89,21 +165,29 @@ export function LearningPublicationPage() {
         category: selectedCategory,
         categories: [selectedCategory],
         interestTags,
-        status: "published",
-        createdBy: user.uid,
-      });
+        status: "published" as const,
+      };
 
-      alert("Learning content published successfully.");
+      if (isEditing && learningId) {
+        await updateLearningContent(learningId, learningPayload);
+      } else {
+        await createLearningContent({
+          ...learningPayload,
+          createdBy: user.uid,
+        });
+      }
 
-      setTitle("");
-      setDescription("");
-      setDuration("");
-      setAccessType("free");
-      setFileId("");
-      setVideoFile(null);
-      setThumbnailFile(null);
-      setSelectedCategory("connect");
-      setInterestTags([]);
+      alert(
+        isEditing
+          ? "Learning content updated successfully."
+          : "Learning content published successfully.",
+      );
+
+      resetForm();
+
+      if (isEditing) {
+        navigate("/admin/events/manage");
+      }
     } catch (error) {
       console.error("Failed to publish learning content:", error);
       alert(
@@ -122,13 +206,25 @@ export function LearningPublicationPage() {
     await publishLearningContent();
   }
 
+  if (loadingExisting) {
+    return (
+      <section className="page-section user-management-page">
+        <p>Loading learning content...</p>
+      </section>
+    );
+  }
+
   return (
     <section className="page-section user-management-page">
       <div className="user-header">
         <div>
-          <h1 className="user-title">Learning Content Publication</h1>
+          <h1 className="user-title">
+            {isEditing ? "Edit Learning Content" : "Learning Content Publication"}
+          </h1>
           <p className="user-subtitle">
-            Upload, preview, and publish learning content for general app users.
+            {isEditing
+              ? "Update existing learning content for general app users."
+              : "Upload, preview, and publish learning content for general app users."}
           </p>
         </div>
       </div>
@@ -170,7 +266,11 @@ export function LearningPublicationPage() {
 
                 <UploadCloud size={30} />
                 <span>
-                  {videoFile ? videoFile.name : "Drag & drop your video here"}
+                  {videoFile
+                    ? videoFile.name
+                    : existingCloudinaryPublicId
+                      ? "Current video kept unless replaced"
+                      : "Drag & drop your video here"}
                 </span>
                 <small>or click to browse</small>
                 <em>MP4, MOV or WEBM recommended</em>
@@ -206,7 +306,9 @@ export function LearningPublicationPage() {
                 <span>
                   {thumbnailFile
                     ? thumbnailFile.name
-                    : "Drag & drop your image here"}
+                    : existingThumbnailUrl
+                      ? "Current thumbnail kept unless replaced"
+                      : "Drag & drop your image here"}
                 </span>
                 <small>or click to browse</small>
                 <em>PNG, JPG or WEBP recommended</em>
@@ -319,17 +421,8 @@ export function LearningPublicationPage() {
               <button
                 type="button"
                 className="user-management-btn secondary"
-                onClick={() => {
-                  setTitle("");
-                  setDescription("");
-                  setDuration("");
-                  setAccessType("free");
-                  setFileId("");
-                  setVideoFile(null);
-                  setThumbnailFile(null);
-                  setSelectedCategory("connect");
-                  setInterestTags([]);
-                }}
+                onClick={resetForm}
+                disabled={saving}
               >
                 Cancel
               </button>
@@ -338,6 +431,7 @@ export function LearningPublicationPage() {
                 type="button"
                 className="user-management-btn secondary"
                 onClick={() => setIsPreviewOpen(true)}
+                disabled={saving}
               >
                 <Eye size={16} />
                 Show Preview
@@ -352,8 +446,12 @@ export function LearningPublicationPage() {
                 {uploadingVideo
                   ? "Uploading Content..."
                   : saving
-                    ? "Publishing..."
-                    : "Publish Content"}
+                    ? isEditing
+                      ? "Updating..."
+                      : "Publishing..."
+                    : isEditing
+                      ? "Update Content"
+                      : "Publish Content"}
               </button>
             </div>
           </div>
@@ -368,8 +466,11 @@ export function LearningPublicationPage() {
           description,
           duration,
           accessType,
-          cloudinaryPublicId: videoFile?.name || "",
-          thumbnailUrl: thumbnailFile ? URL.createObjectURL(thumbnailFile) : "",
+          cloudinaryPublicId:
+            videoFile?.name || existingCloudinaryPublicId || "",
+          thumbnailUrl: thumbnailFile
+            ? URL.createObjectURL(thumbnailFile)
+            : existingThumbnailUrl,
           fileId,
         }}
       />

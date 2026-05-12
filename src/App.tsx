@@ -248,6 +248,14 @@ export default function AppRoutes() {
           }
         />
       </Route>
+      <Route
+        path="admin/learning/publication/:learningId"
+        element={
+          <RoleGate roles={["admin"]}>
+            <LearningPublicationPage />
+          </RoleGate>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
