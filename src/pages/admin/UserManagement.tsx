@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Pencil, Trash2, Mail, Upload } from "lucide-react";
+import { Pencil, UserX, Mail, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../../styles/admin/user-management.css";
 import type {
@@ -8,7 +8,7 @@ import type {
   AccountStatus,
 } from "../../types/user-types";
 import {
-  deleteUserProfile,
+  deactivateUserProfile,
   getUsers,
   updateUserProfile,
 } from "../../services/userManagementService";
@@ -197,27 +197,36 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleDelete = async (user: UserProfile) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${getDisplayName(user)}?`,
+  const handleDeactivate = async (user: UserProfile) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to deactivate ${getDisplayName(user)}?`,
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await deactivateUserProfile(user.id);
+
+    setUsers((prev) =>
+      prev.map((item) =>
+        item.id === user.id
+          ? { ...item, partnerApprovalStatus: "rejected" }
+          : item,
+      ),
     );
 
-    if (!confirmed) return;
-
-    try {
-      await deleteUserProfile(user.id);
-
-      setUsers((prev) => prev.filter((item) => item.id !== user.id));
-
-      if (selectedUser?.id === user.id) {
-        setSelectedUser(null);
-        setIsEditOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      alert("Failed to delete user.");
+    if (selectedUser?.id === user.id) {
+      setSelectedUser((prev) =>
+        prev ? { ...prev, partnerApprovalStatus: "rejected" } : prev,
+      );
     }
-  };
+
+    alert("User deactivated successfully.");
+  } catch (error) {
+    console.error("Failed to deactivate user:", error);
+    alert("Failed to deactivate user.");
+  }
+};
 
   const resetFormToSelectedUser = () => {
     if (!selectedUser) return;
@@ -391,9 +400,9 @@ export default function UserManagementPage() {
                         <button
                           type="button"
                           className="user-management-icon-btn danger"
-                          onClick={() => handleDelete(user)}
+                          onClick={() => handleDeactivate(user)}
                         >
-                          <Trash2 className="user-action-icon" />
+                          <UserX className="user-action-icon" />
                         </button>
                       </div>
                     </td>

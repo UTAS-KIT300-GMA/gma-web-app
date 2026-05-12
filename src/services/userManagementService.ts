@@ -3,7 +3,6 @@ import {
   getDocs,
   doc,
   updateDoc,
-  deleteDoc,
   orderBy,
   query,
 } from "firebase/firestore";
@@ -31,13 +30,16 @@ export const updateUserProfile = async (
     partnerApprovalStatus: AccountStatus;
     phoneNumber: string;
     photoURL: string;
-  }>
+  }>,
 ): Promise<void> => {
   const userRef = doc(db, "users", userId);
   await updateDoc(userRef, data);
 };
 
-export const deleteUserProfile = async (userId: string): Promise<void> => {
+export const deactivateUserProfile = async (userId: string): Promise<void> => {
   const userRef = doc(db, "users", userId);
-  await deleteDoc(userRef);
+
+  await updateDoc(userRef, {
+    partnerApprovalStatus: "rejected",
+  });
 };
