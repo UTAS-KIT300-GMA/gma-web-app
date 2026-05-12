@@ -281,6 +281,15 @@ export function AppLayout() {
             </NavLink>
           )}
 
+          {!effectiveIsAdmin && (
+            <NavLink to="/partner/settings" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <Settings size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Settings</span>}
+            </NavLink>
+          )}
+
           {effectiveIsAdmin && (
             <NavLink to="/admin/events/manage" className={linkClass}>
               <span className="sidebar-link-icon">

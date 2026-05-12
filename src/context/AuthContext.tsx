@@ -88,16 +88,24 @@ function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
     missionStatement: data.missionStatement as string | undefined,
     socials: data.socials as UserProfile["socials"],
     selectedTags: data.selectedTags as string[] | undefined,
-    notificationPreferences:  // validation of notification setting
-      typeof data.notificationPreferences === "object" && data.notificationPreferences !== null
-        ? {
-            eventApprovalResults:
-              typeof (data.notificationPreferences as Record<string, unknown>).eventApprovalResults ===
-              "boolean"
-                ? (data.notificationPreferences as Record<string, unknown>).eventApprovalResults
-                : false,
-          }
-        : { eventApprovalResults: false },     
+    notificationPreferences: (() => {
+      const raw = data.notificationPreferences;
+      if (typeof raw !== "object" || raw === null) {
+        return {
+          eventApprovalResults: false,
+          eventReminder5Days: true,
+          eventReminder3Days: true,
+        };
+      }
+      const n = raw as Record<string, unknown>;
+      const asBool = (v: unknown, fallback: boolean) =>
+        typeof v === "boolean" ? v : fallback;
+      return {
+        eventApprovalResults: asBool(n.eventApprovalResults, false),
+        eventReminder5Days: asBool(n.eventReminder5Days, true),
+        eventReminder3Days: asBool(n.eventReminder3Days, true),
+      };
+    })(),
   }; 
 }
 

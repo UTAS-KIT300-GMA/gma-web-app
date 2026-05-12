@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { doc, updateDoc } from "firebase/firestore";
+import { AlarmClock, Bell, CalendarClock, Loader2 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { db } from "../../firebase";
+import "../../styles/partner/settings.css";
 
 export default function SettingsP() {
   const { user, profile } = useAuth();
@@ -11,9 +13,10 @@ export default function SettingsP() {
 
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusKind, setStatusKind] = useState<"ok" | "err" | null>(null);
 
   useEffect(() => {
-    setEventApprovalNotifications( // Default true so notification is on and partner can turn off if needed
+    setEventApprovalNotifications(
       profile?.notificationPreferences?.eventApprovalResults ?? true,
     );
     setEventReminder5Days(
@@ -24,28 +27,29 @@ export default function SettingsP() {
     );
   }, [profile]);
 
-  async function handleToggle(type: 'approval' | '5days' | '3days') {
+  async function handleToggle(type: "approval" | "5days" | "3days") {
     if (!user) return;
 
     let nextValue: boolean;
     let key: string;
 
-    if (type === 'approval') {
+    if (type === "approval") {
       nextValue = !eventApprovalNotifications;
       setEventApprovalNotifications(nextValue);
-      key = 'eventApprovalResults';
-    } else if (type === '5days') {
+      key = "eventApprovalResults";
+    } else if (type === "5days") {
       nextValue = !eventReminder5Days;
       setEventReminder5Days(nextValue);
-      key = 'eventReminder5Days';
+      key = "eventReminder5Days";
     } else {
       nextValue = !eventReminder3Days;
       setEventReminder3Days(nextValue);
-      key = 'eventReminder3Days';
+      key = "eventReminder3Days";
     }
 
     setSaving(true);
     setStatusMessage(null);
+    setStatusKind(null);
 
     try {
       await updateDoc(doc(db, "users", user.uid), {
@@ -54,85 +58,115 @@ export default function SettingsP() {
           [key]: nextValue,
         },
       });
-      setStatusMessage("Notification settings saved.");
+      setStatusMessage("Your preferences were saved.");
+      setStatusKind("ok");
     } catch (error) {
       console.error("Failed to save notification settings", error);
-      setStatusMessage("Unable to save settings. Please try again.");
-      // Revert the changes if needed
-      if (type === 'approval') {
-        setEventApprovalNotifications(profile?.notificationPreferences?.eventApprovalResults ?? true);
-      } else if (type === '5days') {
-        setEventReminder5Days(profile?.notificationPreferences?.eventReminder5Days ?? true);
-      } else if (type === '3days'){
-        setEventReminder3Days(profile?.notificationPreferences?.eventReminder3Days ?? true);
+      setStatusMessage("Could not save settings. Please try again.");
+      setStatusKind("err");
+      if (type === "approval") {
+        setEventApprovalNotifications(
+          profile?.notificationPreferences?.eventApprovalResults ?? true,
+        );
+      } else if (type === "5days") {
+        setEventReminder5Days(
+          profile?.notificationPreferences?.eventReminder5Days ?? true,
+        );
+      } else {
+        setEventReminder3Days(
+          profile?.notificationPreferences?.eventReminder3Days ?? true,
+        );
       }
     } finally {
       setSaving(false);
     }
   }
 
-  return (  //basic layout and styling for testing.  Update once proven it works
-    <div className="settings-page">
-      <div className="page-header">
-        <h1>Notification Settings</h1>
-        <p>Select your settings:.</p>
+  const rows: {
+    toggle: "approval" | "5days" | "3days";
+    icon: ReactNode;
+    title: string;
+    body: string;
+  }[] = [
+    {
+      toggle: "approval",
+      icon: <Bell size={22} strokeWidth={2} aria-hidden />,
+      title: "Event approval notifications",
+      body: "Get notified when the review team approves or rejects an event you submitted.",
+    },
+    {
+      toggle: "5days",
+      icon: <CalendarClock size={22} strokeWidth={2} aria-hidden />,
+      title: "Reminder: 5 days before",
+      body: "Receive a heads-up when an approved event is one week away.",
+    },
+    {
+      toggle: "3days",
+      icon: <AlarmClock size={22} strokeWidth={2} aria-hidden />,
+      title: "Reminder: 3 days before",
+      body: "A second reminder as the event date approaches.",
+    },
+  ];
+
+  return (
+    <div className="partner-settings-page">
+      <header className="partner-settings-hero">
+        <h1>Notification settings</h1>
+        <p>
+          Choose how GMA Connect reaches you about your events. You can change these
+          any time; updates apply to future notifications only.
+        </p>
+      </header>
+
+      <div className="partner-settings-panel" role="region" aria-label="Notification preferences">
+        {rows.map((row) => {
+          const checked =
+            row.toggle === "approval"
+              ? eventApprovalNotifications
+              : row.toggle === "5days"
+                ? eventReminder5Days
+                : eventReminder3Days;
+          return (
+            <div key={row.toggle} className="partner-settings-row">
+              <div className="partner-settings-row-head">
+                <span className="partner-settings-row-icon">{row.icon}</span>
+                <div className="partner-settings-row-text">
+                  <h2>{row.title}</h2>
+                  <p>{row.body}</p>
+                </div>
+              </div>
+              <label className="partner-settings-switch">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={saving}
+                  onChange={() => void handleToggle(row.toggle)}
+                  aria-label={row.title}
+                />
+                <span className="partner-settings-switch-track" />
+                <span className="partner-settings-switch-thumb" />
+              </label>
+            </div>
+          );
+        })}
+
+        <div className="partner-settings-footer">
+          {saving && (
+            <div className="partner-settings-saving">
+              <Loader2 size={16} strokeWidth={2.2} aria-hidden />
+              <span>Saving…</span>
+            </div>
+          )}
+          {statusMessage && !saving && (
+            <p
+              className={`partner-settings-status partner-settings-status--${statusKind === "ok" ? "ok" : "err"}`}
+              role="status"
+            >
+              {statusMessage}
+            </p>
+          )}
+        </div>
       </div>
-
-      <section className="settings-card">
-        <div className="settings-row">
-          <div>
-            <h2>Event approval notifications</h2>
-            <p>Receive notifications whenever an event is approved or rejected by the review team.</p>
-          </div>
-
-          <label className="switch-field">
-            <input
-              type="checkbox"
-              checked={eventApprovalNotifications}
-              disabled={saving}
-              onChange={() => handleToggle('approval')}
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
-
-        <div className="settings-row">
-          <div>
-            <h2>Event reminder (5 days before)</h2>
-            <p>Receive a reminder when your event is coming up in 5 days.</p>
-          </div>
-
-          <label className="switch-field">
-            <input
-              type="checkbox"
-              checked={eventReminder5Days}
-              disabled={saving}
-              onChange={() => handleToggle('5days')}
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
-
-        <div className="settings-row">
-          <div>
-            <h2>Event reminder (3 days before)</h2>
-            <p>Receive a reminder when your event is starting in 3 days.</p>
-          </div>
-
-          <label className="switch-field">
-            <input
-              type="checkbox"
-              checked={eventReminder3Days}
-              disabled={saving}
-              onChange={() => handleToggle('3days')}
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
-
-        {statusMessage && <p className="settings-status">{statusMessage}</p>}
-      </section>
     </div>
   );
 }
-
