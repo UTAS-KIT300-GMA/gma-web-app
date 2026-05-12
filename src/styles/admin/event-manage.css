@@ -4,6 +4,10 @@ Styles for event management pages including event action controls,
 event rows, and event thumbnail presentation.
 */
 
+.event-manage-tabs {
+  margin-bottom: 1.5rem;
+}
+
 .event-manage-controls {
   display: flex;
   gap: 1rem;

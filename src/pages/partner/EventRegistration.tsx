@@ -14,7 +14,11 @@ import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import { Eye, MapPin, Tag } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
-import { notifyAdminsEventSubmitted } from "../../services/notificationService";
+import {
+  notifyAdminsEventSubmitted,
+  notifyUsersEventEdited,
+  getEventInterestedUserIds,
+} from "../../services/notificationService";
 import {
   CATEGORIES,
   type Category,
@@ -268,7 +272,7 @@ export function EventRegistrationPage() {
     }
 
     try {
-      const eventData = await buildEventData("pending");
+      const eventData = await buildEventData(isAdmin ? "approved" : "pending");
       const partnerLabel =
         profile?.orgName ||
         `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
@@ -276,18 +280,41 @@ export function EventRegistrationPage() {
         "A partner";
       if (draftId) {
         await updateDoc(doc(db, "events", draftId), eventData);
-        await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, profile?.id ?? "");
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, , profile?.id ?? "");
+        }
+
+        if (isAdmin) {
+          getEventInterestedUserIds(draftId)
+            .then((attendeeIds) => {
+              if (attendeeIds.length > 0) {
+                notifyUsersEventEdited(
+                  attendeeIds,
+                  draftId,
+                  title.trim(),
+                ).catch(console.error);
+              }
+            })
+            .catch(console.error);
+        }
       } else {
         const newDoc = await addDoc(collection(db, "events"), {
           ...eventData,
           ticketsSold: 0,
           createdAt: Timestamp.now(),
         });
-        await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel, profile?.id ?? "");
+
+        if (!isAdmin) {
+          await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel, profile?.id ?? "");
+        }
       }
       alert(
-        "✅ Event submitted successfully! GMA admin will review your event before publishing.",
+        isAdmin
+          ? "✅ Event updated and published successfully!"
+          : "✅ Event submitted successfully! GMA admin will review your event before publishing.",
       );
+
       resetForm();
     } catch (err) {
       console.log(err);
@@ -424,10 +451,7 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <div
-                  className="inline-icon-input-content"
-                  style={{ width: "100%" }}
-                >
+                <div className="inline-icon-input-content">
                   <EventLocationInput
                     initialAddress={address}
                     onAddressChange={(value) => {
@@ -605,16 +629,18 @@ export function EventRegistrationPage() {
             <span>Show preview</span>
           </button>
 
-          <button
-            type="button"
-            className="btn-secondary event-action-btn"
-            onClick={handleSaveDraft}
-          >
-            Save draft
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              className="btn-secondary event-action-btn"
+              onClick={handleSaveDraft}
+            >
+              Save draft
+            </button>
+          )}
 
           <button type="submit" className="btn-primary event-action-btn">
-            Submit event
+            {isAdmin ? "Save and publish" : "Submit event"}
           </button>
         </div>
       </form>

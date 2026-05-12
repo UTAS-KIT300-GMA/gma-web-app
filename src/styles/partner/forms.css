@@ -168,6 +168,10 @@ Partner event creation and submission UI
   background: #fff;
 }
 
+.inline-icon-input-content {
+  width: 100%;
+}
+
 .input-with-inline-icon svg {
   color: var(--gma-muted);
   flex-shrink: 0;
