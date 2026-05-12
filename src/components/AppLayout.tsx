@@ -14,6 +14,7 @@ import {
   Users,
   Bell,
   Trash2,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -73,6 +74,7 @@ export function AppLayout() {
     if (location.pathname.includes("users")) return "Users";
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
+    if (location.pathname.includes("learning")) return "Learning Content";
     return "Dashboard";
   };
 
@@ -187,7 +189,9 @@ export function AppLayout() {
 
   async function deleteNotification(notificationId: string) {
     if (!user) return;
-    await deleteDoc(doc(db, "users", user.uid, "notifications", notificationId));
+    await deleteDoc(
+      doc(db, "users", user.uid, "notifications", notificationId),
+    );
   }
 
   async function clearAllNotifications() {
@@ -245,7 +249,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-            {!effectiveIsAdmin && (
+          {!effectiveIsAdmin && (
             <NavLink to="/partner/events/manage" className={linkClass}>
               <span className="sidebar-link-icon">
                 <CalendarDays size={20} strokeWidth={2.2} />
@@ -269,6 +273,15 @@ export function AppLayout() {
                 <CircleCheckBig size={20} strokeWidth={2.2} />
               </span>
               {sidebarExpanded && <span>Approve Events</span>}
+            </NavLink>
+          )}
+
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/learning/publication" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <BookOpen size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Learning Content</span>}
             </NavLink>
           )}
 
@@ -407,19 +420,27 @@ export function AppLayout() {
                   {notificationLoading ? (
                     <div className="notification-empty">Loading...</div>
                   ) : notifications.length === 0 ? (
-                    <div className="notification-empty">No notifications yet.</div>
+                    <div className="notification-empty">
+                      No notifications yet.
+                    </div>
                   ) : (
                     <ul className="notification-list">
                       {notifications.map((item) => (
                         <li key={item.id}>
-                          <div className={`notification-item ${item.read ? "" : "unread"}`}>
+                          <div
+                            className={`notification-item ${item.read ? "" : "unread"}`}
+                          >
                             <button
                               type="button"
                               className="notification-item-content"
                               onClick={() => openNotification(item)}
                             >
-                              <div className="notification-item-title">{item.title}</div>
-                              <div className="notification-item-body">{item.body}</div>
+                              <div className="notification-item-title">
+                                {item.title}
+                              </div>
+                              <div className="notification-item-body">
+                                {item.body}
+                              </div>
                             </button>
                             <button
                               type="button"
