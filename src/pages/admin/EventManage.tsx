@@ -13,6 +13,11 @@ import { Search } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import type { EventRecord } from "../../types/event-types";
+import {
+  getEventInterestedUserIds,
+  notifyPartnerEventCancelled,
+  notifyUsersEventCancelled,
+} from "../../services/notificationService";
 
 type ContentTab = "events" | "learning";
 
@@ -63,7 +68,6 @@ function canManageEvent(
 export function EventManagePage() {
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === "admin";
-
   const [activeTab, setActiveTab] = useState<ContentTab>("events");
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [learningVideos, setLearningVideos] = useState<LearningVideoRecord[]>(
@@ -214,13 +218,21 @@ export function EventManagePage() {
 
   async function onDeleteEvent(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
-
-    const ok = window.confirm(`Delete "${ev.title}"? This cannot be undone.`);
+    const ok = window.confirm(
+      `Delete "${ev.title}"? This cannot be undone. All users booked or bookmarked this event will be notified of the cancellation.`,
+    );
     if (!ok) return;
 
     setBusyId(ev.eventId);
 
     try {
+      const attendeeIds = await getEventInterestedUserIds(ev.eventId);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventCancelled(attendeeIds, ev.eventId, ev.title);
+      }
+      if (ev.submittedBy) {
+        await notifyPartnerEventCancelled(ev.submittedBy, ev.eventId, ev.title);
+      }
       await deleteDoc(doc(db, "events", ev.eventId));
       await load();
     } catch {
@@ -270,7 +282,6 @@ export function EventManagePage() {
           >
             Events
           </button>
-
           <button
             type="button"
             className={`event-manage-tab ${activeTab === "learning" ? "active" : ""}`}
@@ -368,20 +379,16 @@ export function EventManagePage() {
                         <div className="approval-img-placeholder" />
                       )}
                     </div>
-
                     <div className="approval-content event-manage-content">
                       <div className="approval-head">
                         <h3>{ev.title}</h3>
                         <span className="muted">{formatWhen(ev.dateTime)}</span>
                       </div>
-
                       <p className="approval-desc">{ev.description}</p>
 
                       <p className="muted small capitalize">
                         {ev.address} · {ev.category}
-                        {ev.eventApprovalStatus
-                          ? ` · ${ev.eventApprovalStatus}`
-                          : ""}
+                        {ev.eventApprovalStatus ? ` · ${ev.eventApprovalStatus}` : ""}
                       </p>
 
                       {allowed && (
@@ -399,7 +406,7 @@ export function EventManagePage() {
                             disabled={busyId === ev.eventId}
                             onClick={() => onDeleteEvent(ev)}
                           >
-                            {busyId === ev.eventId ? "Deleting…" : "Delete"}
+                            {busyId === ev.eventId ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                       )}
@@ -464,7 +471,7 @@ export function EventManagePage() {
                       disabled={busyId === item.id}
                       onClick={() => onDeleteLearning(item)}
                     >
-                      {busyId === item.id ? "Deleting…" : "Delete"}
+                      {busyId === item.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>

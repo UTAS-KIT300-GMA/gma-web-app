@@ -22,6 +22,7 @@ import { AnalyticsPage } from "./pages/admin/Analytics";
 import { EventApprovalPage } from "./pages/admin/EventApproval";
 import { AdminApprovalPage } from "./pages/admin/AdminApproval";
 import { EventManagePage as AdminEventManagePage } from "./pages/admin/EventManage";
+import { AdminEventEditPage } from "./pages/admin/EventEdit";
 import { PendingApprovalPage } from "./pages/admin/PendingApproval";
 import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
@@ -190,6 +191,15 @@ export default function AppRoutes() {
           element={
             <RoleGate roles={["admin"]}>
               <AdminEventManagePage />
+            </RoleGate>
+          }
+        />
+
+        <Route
+          path="admin/events/edit/:eventId"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AdminEventEditPage />
             </RoleGate>
           }
         />
