@@ -28,6 +28,7 @@ import AdminDashboardPage from "./pages/admin/Dashboard";
 import UserManagementPage from "./pages/admin/UserManagement";
 import AddUserPage from "./pages/admin/AddUser";
 import { LearningPublicationPage } from "./pages/admin/LearningPublication";
+import AdminSettingsPage from "./pages/admin/AdminSettings";
 
 import React from "react";
 import type { UserProfile } from "./types/user-types.ts";
@@ -239,6 +240,16 @@ export default function AppRoutes() {
             </RoleGate>
           }
         />
+
+        <Route
+          path="admin/settings"
+          element={
+            <RoleGate roles={["admin"]}>
+              <AdminSettingsPage />
+            </RoleGate>
+          }
+/>
+
 
         <Route
           path="admin/partners/manage"
