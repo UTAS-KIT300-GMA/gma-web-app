@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   collection,
   deleteDoc,
@@ -13,8 +13,14 @@ import { Search } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import type { EventRecord } from "../../types/event-types";
+import {
+  getEventInterestedUserIds,
+  notifyPartnerEventCancelled,
+  notifyUsersEventCancelled,
+} from "../../services/notificationService";
+import { UpcomingEventsView } from "./EventListNoti";
 
-type ContentTab = "events" | "learning";
+type ContentTab = "events" | "learning" | "upcoming";
 
 type LearningVideoRecord = {
   id: string;
@@ -63,8 +69,11 @@ function canManageEvent(
 export function EventManagePage() {
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === "admin";
-
-  const [activeTab, setActiveTab] = useState<ContentTab>("events");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialView = searchParams.get("view");
+  const [activeTab, setActiveTab] = useState<ContentTab>(
+    initialView === "upcoming" && isAdmin ? "upcoming" : "events",
+  );
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [learningVideos, setLearningVideos] = useState<LearningVideoRecord[]>(
     [],
@@ -174,7 +183,9 @@ export function EventManagePage() {
     const source =
       activeTab === "events"
         ? events.map((event) => event.category).filter(Boolean)
-        : learningVideos.map((item) => item.category).filter(Boolean);
+        : activeTab === "learning"
+          ? learningVideos.map((item) => item.category).filter(Boolean)
+          : [];
 
     return ["all", ...Array.from(new Set(source))];
   }, [activeTab, events, learningVideos]);
@@ -214,13 +225,21 @@ export function EventManagePage() {
 
   async function onDeleteEvent(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
-
-    const ok = window.confirm(`Delete "${ev.title}"? This cannot be undone.`);
+    const ok = window.confirm(
+      `Delete "${ev.title}"? This cannot be undone. All users booked or bookmarked this event will be notified of the cancellation.`,
+    );
     if (!ok) return;
 
     setBusyId(ev.eventId);
 
     try {
+      const attendeeIds = await getEventInterestedUserIds(ev.eventId);
+      if (attendeeIds.length > 0) {
+        await notifyUsersEventCancelled(attendeeIds, ev.eventId, ev.title);
+      }
+      if (ev.submittedBy) {
+        await notifyPartnerEventCancelled(ev.submittedBy, ev.eventId, ev.title);
+      }
       await deleteDoc(doc(db, "events", ev.eventId));
       await load();
     } catch {
@@ -265,71 +284,86 @@ export function EventManagePage() {
             className={`event-manage-tab ${activeTab === "events" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("events");
+              setSearchParams({});
               setFilterCategory("all");
             }}
           >
             Events
           </button>
-
           <button
             type="button"
             className={`event-manage-tab ${activeTab === "learning" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("learning");
+              setSearchParams({});
               setFilterStatus("all");
               setFilterCategory("all");
             }}
           >
             Learning Content
           </button>
+          <button
+            type="button"
+            className={`event-manage-tab ${activeTab === "upcoming" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("upcoming");
+              setSearchParams({ view: "upcoming" });
+              setFilterStatus("all");
+              setFilterCategory("all");
+            }}
+          >
+            Upcoming Events
+          </button>
         </div>
       )}
 
-      <div className="event-manage-controls">
-        <div className="event-manage-search">
-          <Search className="search-icon" size={16} />
-          <input
-            type="text"
-            placeholder={
-              activeTab === "events"
-                ? "Search by title, description or location..."
-                : "Search learning title, description or Cloudinary ID..."
-            }
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {activeTab !== "upcoming" && (
+        <div className="event-manage-controls">
+          <div className="event-manage-search">
+            <Search className="search-icon" size={16} />
+            <input
+              type="text"
+              placeholder={
+                activeTab === "events"
+                  ? "Search by title, description or location..."
+                  : "Search learning title, description or Cloudinary ID..."
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <div className="event-manage-filters">
-          {activeTab === "events" && (
+          <div className="event-manage-filters">
+            {activeTab === "events" && (
+              <select
+                aria-label="Filter events by status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            )}
+
             <select
-              aria-label="Filter events by status"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              aria-label="Filter by category"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
             >
-              <option value="all">All statuses</option>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              {categories.map((cat) => (
+                <option key={String(cat)} value={String(cat)}>
+                  {cat === "all"
+                    ? "All categories"
+                    : String(cat).charAt(0).toUpperCase() + String(cat).slice(1)}
+                </option>
+              ))}
             </select>
-          )}
-
-          <select
-            aria-label="Filter by category"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            {categories.map((cat) => (
-              <option key={String(cat)} value={String(cat)}>
-                {cat === "all"
-                  ? "All categories"
-                  : String(cat).charAt(0).toUpperCase() + String(cat).slice(1)}
-              </option>
-            ))}
-          </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div className="alert error" role="alert">
@@ -341,6 +375,8 @@ export function EventManagePage() {
         <div className="centered">
           <div className="spinner" />
         </div>
+      ) : activeTab === "upcoming" ? (
+        <UpcomingEventsView />
       ) : activeTab === "events" ? (
         filteredEvents.length === 0 ? (
           <p>No events to show.</p>
@@ -368,20 +404,16 @@ export function EventManagePage() {
                         <div className="approval-img-placeholder" />
                       )}
                     </div>
-
                     <div className="approval-content event-manage-content">
                       <div className="approval-head">
                         <h3>{ev.title}</h3>
                         <span className="muted">{formatWhen(ev.dateTime)}</span>
                       </div>
-
                       <p className="approval-desc">{ev.description}</p>
 
                       <p className="muted small capitalize">
                         {ev.address} · {ev.category}
-                        {ev.eventApprovalStatus
-                          ? ` · ${ev.eventApprovalStatus}`
-                          : ""}
+                        {ev.eventApprovalStatus ? ` · ${ev.eventApprovalStatus}` : ""}
                       </p>
 
                       {allowed && (
@@ -399,7 +431,7 @@ export function EventManagePage() {
                             disabled={busyId === ev.eventId}
                             onClick={() => onDeleteEvent(ev)}
                           >
-                            {busyId === ev.eventId ? "Deleting…" : "Delete"}
+                            {busyId === ev.eventId ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                       )}
@@ -464,7 +496,7 @@ export function EventManagePage() {
                       disabled={busyId === item.id}
                       onClick={() => onDeleteLearning(item)}
                     >
-                      {busyId === item.id ? "Deleting…" : "Delete"}
+                      {busyId === item.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>

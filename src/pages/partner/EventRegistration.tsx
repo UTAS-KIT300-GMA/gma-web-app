@@ -14,7 +14,11 @@ import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import { Eye, MapPin, Tag } from "lucide-react";
 import { INTEREST_TAG_OPTIONS } from "../../constants/interests";
-import { notifyAdminsEventSubmitted } from "../../services/notificationService";
+import {
+  notifyAdminsEventSubmitted,
+  notifyUsersEventEdited,
+  getEventInterestedUserIds,
+} from "../../services/notificationService";
 import {
   CATEGORIES,
   type Category,
@@ -280,6 +284,20 @@ export function EventRegistrationPage() {
         if (!isAdmin) {
           await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel);
         }
+
+        if (isAdmin) {
+          getEventInterestedUserIds(draftId)
+            .then((attendeeIds) => {
+              if (attendeeIds.length > 0) {
+                notifyUsersEventEdited(
+                  attendeeIds,
+                  draftId,
+                  title.trim(),
+                ).catch(console.error);
+              }
+            })
+            .catch(console.error);
+        }
       } else {
         const newDoc = await addDoc(collection(db, "events"), {
           ...eventData,
@@ -300,6 +318,7 @@ export function EventRegistrationPage() {
           ? "✅ Event updated and published successfully!"
           : "✅ Event submitted successfully! GMA admin will review your event before publishing.",
       );
+
       resetForm();
     } catch (err) {
       console.log(err);
@@ -436,10 +455,7 @@ export function EventRegistrationPage() {
               <span>Address</span>
               <div className="input-with-inline-icon">
                 <MapPin size={16} strokeWidth={2} />
-                <div
-                  className="inline-icon-input-content"
-                  style={{ width: "100%" }}
-                >
+                <div className="inline-icon-input-content">
                   <EventLocationInput
                     initialAddress={address}
                     onAddressChange={(value) => {
