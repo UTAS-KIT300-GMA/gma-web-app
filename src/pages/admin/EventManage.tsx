@@ -419,7 +419,7 @@ export function EventManagePage() {
                       {allowed && (
                         <div className="approval-actions event-manage-actions">
                           <Link
-                            to={`/partner/events/register/${ev.eventId}`}
+                            to={`/admin/events/manage/${ev.eventId}`}
                             className="btn-secondary"
                           >
                             Edit
