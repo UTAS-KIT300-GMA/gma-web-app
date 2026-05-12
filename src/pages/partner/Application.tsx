@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import { normalisePhone } from "../../utils/validation";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { createInitialProfile } from "../../services/authService";
@@ -43,6 +43,14 @@ export function ApplicationPage() {
 
     setLoading(true);
 
+    const { value: formattedPhone, error: phoneError } = normalisePhone(phoneNumber);
+
+    if (phoneError) {
+      setError(phoneError);
+      setLoading(false);
+      return;
+    }
+
     try {
       await createInitialProfile(user, {
         email: user.email!,
@@ -54,8 +62,9 @@ export function ApplicationPage() {
         firstName,
         lastName,
         position,
-        phoneNumber,
+        phoneNumber: formattedPhone!,
       });
+      
 
       // Trigger the "Traffic Controller" to move them to the Pending screen
       navigate("/pending-approval");
@@ -71,7 +80,7 @@ export function ApplicationPage() {
 
   return (
     <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
+      <form className="login-card application-form" onSubmit={handleSubmit}>
         <h2>Partner Application</h2>
         <p className="muted">Step 2: Tell us about your organization</p>
 
@@ -82,9 +91,9 @@ export function ApplicationPage() {
         )}
 
         <div className="form-fields">
-          {/* --- Organization Details --- */}
+          {/* --- Organisation Details --- */}
           <label className="field">
-            <span>Organization Name</span>
+            <span>Organisation Name</span>
             <input
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
@@ -93,7 +102,7 @@ export function ApplicationPage() {
           </label>
 
           <label className="field">
-            <span>Organization Type</span>
+            <span>Organisation Type</span>
             <select
               value={orgType}
               onChange={(e) => setOrgType(e.target.value)}
@@ -132,11 +141,11 @@ export function ApplicationPage() {
             />
           </label>
 
-          <hr style={{ margin: "20px 0", borderTop: "1px solid #eee" }} />
+          <hr className="application-divider" />
 
           {/* --- Representative Details --- */}
-          <div style={{ display: "flex", gap: "10px" }}>
-            <label className="field" style={{ flex: 1 }}>
+          <div className="name-row">
+            <label className="field">
               <span>First Name</span>
               <input
                 value={firstName}
@@ -144,7 +153,7 @@ export function ApplicationPage() {
                 required
               />
             </label>
-            <label className="field" style={{ flex: 1 }}>
+            <label className="field">
               <span>Last Name</span>
               <input
                 value={lastName}
@@ -177,9 +186,8 @@ export function ApplicationPage() {
 
         <button
           type="submit"
-          className="btn-primary"
+          className="btn-primary application-submit-btn"
           disabled={loading}
-          style={{ marginTop: "20px" }}
         >
           {loading ? "Submitting..." : "Submit for Approval"}
         </button>

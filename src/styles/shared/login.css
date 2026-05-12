@@ -45,7 +45,7 @@ login card, logo area, and decorative background treatment.
 }
 
 .login-logo {
-  object-fit: contain;
+  width: 140px;
 }
 
 .login-card {
@@ -62,11 +62,74 @@ login card, logo area, and decorative background treatment.
   line-height: 1.45;
   text-align: center;
 }
+.login-actions-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.login-actions-centered .login-btn {
+  min-width: 120px;
+}
+
+.login-page .small.muted {
+  margin-top: 40px;
+  margin-bottom: 0;
+
+  
+}
+
+.forgot-password-link {
+  background: transparent;
+  text-decoration: underline;
+  border: none;
+  color: var(--gma-primary-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.status-icon {
+  margin-bottom: 0.75rem;
+  color: #4b0d2a;
+}
+
+.verify-button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.verify-btn {
+  background-color: var(--gma-gold);
+  width: 240px;
+  min-width: 240px;
+}
+
+.btn-primary.verify-btn:hover {
+  background: var(--gma-primary-dark);
+  color: var(--gma-card);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.verify-btn-light {
+  width: 240px;
+  background: #fff;
+  color: #4b1832;
+  border: 1px solid #ddd2ca;
+  border-radius: 12px;
+  font-weight: 700;
+}
 
 .link-button {
   background: none;
   border: none;
-  color: #a42169;
+  color: var(--gma-primary);
   text-decoration: underline;
   cursor: pointer;
   padding: 0;

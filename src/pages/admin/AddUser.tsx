@@ -4,6 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import "../../styles/admin/user-management.css";
 import { createUserProfile } from "../../services/addUserService";
 import type { UserRole } from "../../types/user-types";
+import {
+  validateEmail,
+  validatePassword,
+  normalisePhone,
+} from "../../utils/validation";
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -57,14 +62,36 @@ export default function AddUserPage() {
       return;
     }
 
-    if (password.length < 8) {
-      alert("Password must be at least 8 characters.");
+    const emailError = validateEmail(email);
+
+    if (emailError) {
+      alert(emailError);
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      alert(passwordError);
       return;
     }
 
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
+    }
+
+    let formattedPhone = "";
+
+    if (phoneNumber.trim()) {
+      const phoneResult = normalisePhone(phoneNumber);
+
+      if (phoneResult.error) {
+        alert(phoneResult.error);
+        return;
+      }
+
+      formattedPhone = phoneResult.value!;
     }
 
     try {
@@ -76,7 +103,7 @@ export default function AddUserPage() {
         email,
         role,
         dateOfBirth,
-        phoneNumber,
+        phoneNumber: formattedPhone,
         password,
         photoURL,
         orgName,
@@ -285,8 +312,8 @@ export default function AddUserPage() {
             <div className="add-user-help-note">
               <Info size={16} />
               <span>
-                Password should be at least 8 characters and include letters and
-                numbers.
+                Password must be 10–64 characters and include uppercase, lowercase,
+                number, and special character.
               </span>
             </div>
           </div>
