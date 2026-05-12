@@ -62,12 +62,14 @@ checkbox rows, form actions, alert messages, and event creation UI.
 }
 
 .form-actions {
+  display: flex;
+  justify-content: center;
   margin-top: 0.5rem;
 }
 
 .form-actions .btn-primary {
   width: auto;
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .alert {
@@ -85,6 +87,11 @@ checkbox rows, form actions, alert messages, and event creation UI.
 .alert.ok {
   background: #e8f5e9;
   color: #1b5e20;
+}
+
+.alert.warning {
+  background: #f8e6cb;
+  color: #cdab00;
 }
 
 /*
@@ -690,4 +697,32 @@ Partner event creation and submission UI
   .mobile-preview-phone {
     transform: scale(0.68);
   }
+}
+
+.application-form .form-fields {
+  gap: 10px;
+}
+
+.application-form .field {
+  margin-bottom: 0.6rem;
+}
+
+.application-divider {
+  margin: 6px 0 8px;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.application-form .name-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.application-form .name-row .field {
+  flex: 1;
+}
+
+.application-submit-btn {
+  margin-top: 16px;
 }

@@ -149,7 +149,7 @@
 .small.muted a {
   color: #8f1e5d;
   font-weight: 700;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .small.muted a:hover {
@@ -196,4 +196,130 @@
   .forgot-password {
     font-size: 0.9rem;
   }
+}
+
+.verify-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.verify-btn {
+  width: auto;
+  min-width: 240px;
+  background: #f1cb5f;
+  color: #2b0f1d;
+}
+
+.verify-btn:hover {
+  background: #f1cb5f;
+  color: #2b0f1d;
+  filter: brightness(0.98);
+}
+
+.verify-support {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--gma-primary-dark);
+}
+
+.verify-support a {
+  color: var(--gma-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.register-actions .btn-primary {
+  width: auto;
+  min-width: 180px;
+}
+
+.register-footer {
+  margin-top: 1.2rem;
+  text-align: center;
+}
+
+.login-actions-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.login-actions-centered .login-btn {
+  width: 200px;
+  padding: 12px 0;
+}
+
+.forgot-password-btn {
+  background: transparent;
+  border: none;
+  color: #2b0f1d;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.forgot-password-btn:hover {
+  text-decoration: underline;
+}
+
+.status-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  color: #4b0d2a;
+}
+
+.verify-info-box {
+  background: rgba(241, 203, 95, 0.82);
+  color: #2b0f1d;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 16px 0 18px;
+  text-align: center;
+}
+
+.verify-info-box .small {
+  margin: 0;
+  color: #2b0f1d;
+}
+
+.verify-button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0.5rem;
+}
+
+.verify-button-group .verify-btn,
+.verify-button-group .verify-btn-light {
+  width: 240px;
+  min-width: 240px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verify-btn-light {
+  background: #fff;
+  color: #4b1832;
+  border: 1px solid #ddd2ca;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.verify-support {
+  margin-top: 12px;
+
 }
