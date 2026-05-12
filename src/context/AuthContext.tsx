@@ -88,8 +88,17 @@ function parseProfile(id: string, data: Record<string, unknown>): UserProfile {
     missionStatement: data.missionStatement as string | undefined,
     socials: data.socials as UserProfile["socials"],
     selectedTags: data.selectedTags as string[] | undefined,
-    updatedAt: parseTimestamp(data.updatedAt),     
-  };
+    notificationPreferences:  // validation of notification setting
+      typeof data.notificationPreferences === "object" && data.notificationPreferences !== null
+        ? {
+            eventApprovalResults:
+              typeof (data.notificationPreferences as Record<string, unknown>).eventApprovalResults ===
+              "boolean"
+                ? (data.notificationPreferences as Record<string, unknown>).eventApprovalResults
+                : false,
+          }
+        : { eventApprovalResults: false },     
+  }; 
 }
 
 /**

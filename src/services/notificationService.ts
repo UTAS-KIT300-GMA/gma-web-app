@@ -49,7 +49,7 @@ let swRegistrationPromise: Promise<ServiceWorkerRegistration> | null = null;
 
 /**
  * @summary Registers the Firebase Messaging service worker if not already registered, and returns the registration.
- * This is needed to get the FCM token for push notifications. We register it at the root scope ("/") so it can handle notifications on all pages, 
+ * This is needed to get the FCM token for push notifications. We register it at the root scope ("/") so it can handle notifications on all pages,
  * and to ensure it works even if the user registers for notifications from a non-root page.
  */
 async function ensureMessagingServiceWorker(): Promise<ServiceWorkerRegistration> {
@@ -145,7 +145,11 @@ export async function notifyAdminsEventSubmitted(
   eventId: string,
   eventTitle: string,
   partnerName: string,
+  adminId: string,
 ): Promise<void> {
+  const isNotificationOn = await checkNotificationSetting(adminId);
+  if (!isNotificationOn) return
+
   const adminIds = await getAdminUserIds();
   await queueNotification({
     kind: "event_submitted_for_review",
@@ -218,6 +222,9 @@ export async function notifyPartnerApprovalDecision(
   partnerId: string,
   approved: boolean,
 ): Promise<void> {
+  const isNotificationOn = await checkNotificationSetting(partnerId);
+  if (!isNotificationOn) return
+
   await queueNotification({
     kind: "partner_approval_result",
     title: approved ? "Application approved!" : "Application not approved",
@@ -226,6 +233,18 @@ export async function notifyPartnerApprovalDecision(
       : "Your partner application wasn't approved this time. Contact support if you have any questions.",
     targetUserIds: [partnerId],
   });
+}
+
+export async function checkNotificationSetting(userId: string): Promise<boolean> {
+  const userDoc = await getDoc(doc(db, "users", userId));
+
+  const preferences = userDoc.exists()
+      ? (userDoc.data()?.notificationPreferences as
+          | { eventApprovalResults?: boolean }
+          | undefined)
+      : undefined;
+
+  return !!preferences?.eventApprovalResults
 }
 
 /**
@@ -238,6 +257,10 @@ export async function notifyPartnerEventDecision(
   approved: boolean,
   rejectionReason?: string,
 ): Promise<void> {
+
+  const isNotificationOn = await checkNotificationSetting(partnerId);
+  if (!isNotificationOn) return
+
   await queueNotification({
     kind: "event_approval_result",
     title: approved ? "Event approved!" : "Event rejected.",

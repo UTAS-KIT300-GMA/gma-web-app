@@ -282,7 +282,7 @@ export function EventRegistrationPage() {
         await updateDoc(doc(db, "events", draftId), eventData);
 
         if (!isAdmin) {
-          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel);
+          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, , profile?.id ?? "");
         }
 
         if (isAdmin) {
@@ -306,11 +306,7 @@ export function EventRegistrationPage() {
         });
 
         if (!isAdmin) {
-          await notifyAdminsEventSubmitted(
-            newDoc.id,
-            title.trim(),
-            partnerLabel,
-          );
+          await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel, profile?.id ?? "");
         }
       }
       alert(

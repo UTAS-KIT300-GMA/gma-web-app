@@ -72,6 +72,7 @@ export function AppLayout() {
     if (location.pathname.includes("events/approval")) return "Approve Events";
     if (location.pathname.includes("analytics")) return "Analytics";
     if (location.pathname.includes("users")) return "Users";
+    if (location.pathname.includes("settings")) return "Settings";
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
     if (location.pathname.includes("learning")) return "Learning Content";
@@ -312,16 +313,12 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          <a
-            className="sidebar-link sidebar-link-muted"
-            href="#settings"
-            onClick={(e) => e.preventDefault()}
-          >
+          <NavLink to="/partner/settings" className={linkClass}>
             <span className="sidebar-link-icon">
               <Settings size={20} strokeWidth={2.2} />
             </span>
             {sidebarExpanded && <span>Settings</span>}
-          </a>
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer">
