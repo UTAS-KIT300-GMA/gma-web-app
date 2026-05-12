@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   collection,
   deleteDoc,
@@ -18,8 +18,9 @@ import {
   notifyPartnerEventCancelled,
   notifyUsersEventCancelled,
 } from "../../services/notificationService";
+import { UpcomingEventsView } from "./EventListNoti";
 
-type ContentTab = "events" | "learning";
+type ContentTab = "events" | "learning" | "upcoming";
 
 type LearningVideoRecord = {
   id: string;
@@ -68,7 +69,11 @@ function canManageEvent(
 export function EventManagePage() {
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === "admin";
-  const [activeTab, setActiveTab] = useState<ContentTab>("events");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialView = searchParams.get("view");
+  const [activeTab, setActiveTab] = useState<ContentTab>(
+    initialView === "upcoming" && isAdmin ? "upcoming" : "events",
+  );
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [learningVideos, setLearningVideos] = useState<LearningVideoRecord[]>(
     [],
@@ -178,7 +183,9 @@ export function EventManagePage() {
     const source =
       activeTab === "events"
         ? events.map((event) => event.category).filter(Boolean)
-        : learningVideos.map((item) => item.category).filter(Boolean);
+        : activeTab === "learning"
+          ? learningVideos.map((item) => item.category).filter(Boolean)
+          : [];
 
     return ["all", ...Array.from(new Set(source))];
   }, [activeTab, events, learningVideos]);
@@ -277,6 +284,7 @@ export function EventManagePage() {
             className={`event-manage-tab ${activeTab === "events" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("events");
+              setSearchParams({});
               setFilterCategory("all");
             }}
           >
@@ -287,60 +295,75 @@ export function EventManagePage() {
             className={`event-manage-tab ${activeTab === "learning" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("learning");
+              setSearchParams({});
               setFilterStatus("all");
               setFilterCategory("all");
             }}
           >
             Learning Content
           </button>
+          <button
+            type="button"
+            className={`event-manage-tab ${activeTab === "upcoming" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("upcoming");
+              setSearchParams({ view: "upcoming" });
+              setFilterStatus("all");
+              setFilterCategory("all");
+            }}
+          >
+            Upcoming Events
+          </button>
         </div>
       )}
 
-      <div className="event-manage-controls">
-        <div className="event-manage-search">
-          <Search className="search-icon" size={16} />
-          <input
-            type="text"
-            placeholder={
-              activeTab === "events"
-                ? "Search by title, description or location..."
-                : "Search learning title, description or Cloudinary ID..."
-            }
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {activeTab !== "upcoming" && (
+        <div className="event-manage-controls">
+          <div className="event-manage-search">
+            <Search className="search-icon" size={16} />
+            <input
+              type="text"
+              placeholder={
+                activeTab === "events"
+                  ? "Search by title, description or location..."
+                  : "Search learning title, description or Cloudinary ID..."
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <div className="event-manage-filters">
-          {activeTab === "events" && (
+          <div className="event-manage-filters">
+            {activeTab === "events" && (
+              <select
+                aria-label="Filter events by status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            )}
+
             <select
-              aria-label="Filter events by status"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              aria-label="Filter by category"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
             >
-              <option value="all">All statuses</option>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              {categories.map((cat) => (
+                <option key={String(cat)} value={String(cat)}>
+                  {cat === "all"
+                    ? "All categories"
+                    : String(cat).charAt(0).toUpperCase() + String(cat).slice(1)}
+                </option>
+              ))}
             </select>
-          )}
-
-          <select
-            aria-label="Filter by category"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            {categories.map((cat) => (
-              <option key={String(cat)} value={String(cat)}>
-                {cat === "all"
-                  ? "All categories"
-                  : String(cat).charAt(0).toUpperCase() + String(cat).slice(1)}
-              </option>
-            ))}
-          </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div className="alert error" role="alert">
@@ -352,6 +375,8 @@ export function EventManagePage() {
         <div className="centered">
           <div className="spinner" />
         </div>
+      ) : activeTab === "upcoming" ? (
+        <UpcomingEventsView />
       ) : activeTab === "events" ? (
         filteredEvents.length === 0 ? (
           <p>No events to show.</p>
