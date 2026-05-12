@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerPartner } from "../../services/authService";
+import { validateEmail, validatePassword } from "../../utils/validation";
 
 /**
  * @summary Renders the registration interface for Stage 1 of the partner onboarding process.
@@ -29,12 +30,20 @@ export function RegisterPage() {
       return setError("You must accept the Terms & Conditions.");
     }
 
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
+    const emailError =validateEmail(email);
+
+    if (emailError) {
+      return setError(emailError);
     }
 
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters.");
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      return setError(passwordError);
+    }
+
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match.");
     }
 
     setLoading(true);
@@ -98,7 +107,7 @@ export function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
+                placeholder="10–64 chars, upper/lowercase, number, symbol"
                 required
                 disabled={loading}
               />
