@@ -117,15 +117,15 @@ export function LoginPage() {
               {busy ? "Signing in..." : "Log in"}
             </button>
 
-            <button type="button" className="forgot-password-btn">
+            <div className="forgot-password-link">
               Forgot password?
-            </button>
+            </div>
           </div>
 
           {view === "partner" && (
             <p className="small muted">
               New Partner?{" "}
-              <Link to="/register?view=partner">Create an Account</Link>
+              <Link className="link-button" to="/register?view=partner">Create an Account</Link>
             </p>
           )}
         </form>

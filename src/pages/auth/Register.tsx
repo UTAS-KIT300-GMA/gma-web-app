@@ -149,7 +149,7 @@ export function RegisterPage() {
             </button>
           </div>
 
-          <p className="auth-footer">
+          <p className="small muted">
             Already have an account? <Link to="/login">Log in here</Link>
           </p>
         </form>

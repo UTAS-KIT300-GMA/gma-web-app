@@ -74,37 +74,25 @@ login card, logo area, and decorative background treatment.
   min-width: 120px;
 }
 
-.forgot-password-btn {
+.login-page .small.muted {
+  margin-top: 40px;
+  margin-bottom: 0;
+
+  
+}
+
+.forgot-password-link {
   background: transparent;
+  text-decoration: underline;
   border: none;
-  color: #2b0f1d;
-  font-size: 0.95rem;
+  color: var(--gma-primary-dark);
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
 }
 
-.forgot-password-btn:hover {
-  text-decoration: underline;
-}
-
-.verify-info-box {
-  background: rgba(241, 203, 95, 0.85);
-  color: #2b0f1d;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin: 16px 0 20px;
-  text-align: center;
-}
-
-.verify-info-box .small {
-  margin: 0;
-  color: #2b0f1d;
-}
-
 .status-icon {
-  font-size: 2.8rem;
-  line-height: 1;
   margin-bottom: 0.75rem;
   color: #4b0d2a;
 }
@@ -117,8 +105,16 @@ login card, logo area, and decorative background treatment.
 }
 
 .verify-btn {
+  background-color: var(--gma-gold);
   width: 240px;
   min-width: 240px;
+}
+
+.btn-primary.verify-btn:hover {
+  background: var(--gma-primary-dark);
+  color: var(--gma-card);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .verify-btn-light {
@@ -133,7 +129,7 @@ login card, logo area, and decorative background treatment.
 .link-button {
   background: none;
   border: none;
-  color: #a42169;
+  color: var(--gma-primary);
   text-decoration: underline;
   cursor: pointer;
   padding: 0;

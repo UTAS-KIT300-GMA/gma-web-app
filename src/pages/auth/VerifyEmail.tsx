@@ -2,6 +2,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { sendEmailVerification } from "firebase/auth";
 import { useState, useEffect } from "react";
 import { auth } from "../../firebase";
+import { Send } from "lucide-react";
 
 /**
  * @summary Renders the Stage 1 verification interface and handles automatic polling for email status changes.
@@ -61,44 +62,47 @@ export function VerifyEmailPage() {
       <div className="login-inner centered-text">
         <div className="login-card">
           <div className="centered">
-            <div className="status-icon">📧</div>
+            <Send className="status-icon" size={40} />
             <h1 className="title-spacing">Verify your email</h1>
             <p className="login-sub">
-              We sent a verification link to:<br />
+              We sent a verification link to:
+              <br />
               <strong>{user?.email}</strong>
             </p>
-      <div className="verify-info-box">
-        <p className="small">
-          Waiting for verification... Once you click the link in your email,
-          <strong> this page will update automatically.</strong>
-        </p>
-      </div>
 
-      <div className="verify-button-group">
-        <button
-          className="btn-primary verify-btn"
-          onClick={handleResend}
-          disabled={sending}
-        >
-          {sending ? "Sending..." : "Resend Email"}
-        </button>
+            <div className="alert warning left-text">
+              <strong>Status: Waiting for verification</strong>
+              <p className="small status-detail">
+                Once you click the link in your email, this page will update
+                automatically.
+              </p>
+            </div>
 
-        <button
-          className="btn-outline verify-btn-light"
-          onClick={async () => {
-            await signOutUser();
-          }}
-        >
-          Sign out & Check later
-        </button>
-      </div>
+            <div className="verify-button-group">
+              <button
+                className="btn-primary verify-btn"
+                onClick={handleResend}
+                disabled={sending}
+              >
+                {sending ? "Sending..." : "Resend Email"}
+              </button>
 
-      <p className="verify-support">
-        Need help? Contact{" "}
-        <a href="mailto:contact@guessmyaccent.com.au">
-          contact@guessmyaccent.com.au
-        </a>
-      </p>
+              <button
+                className="btn-outline verify-btn-light"
+                onClick={async () => {
+                  await signOutUser();
+                }}
+              >
+                Sign out & Check later
+              </button>
+            </div>
+
+            <p className="verify-support">
+              Need help? Contact{" "}
+              <a href="mailto:contact@guessmyaccent.com.au">
+                contact@guessmyaccent.com.au
+              </a>
+            </p>
           </div>
         </div>
       </div>

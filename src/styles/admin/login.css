@@ -149,7 +149,7 @@
 .small.muted a {
   color: #8f1e5d;
   font-weight: 700;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .small.muted a:hover {

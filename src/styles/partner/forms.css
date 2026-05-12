@@ -62,12 +62,14 @@ checkbox rows, form actions, alert messages, and event creation UI.
 }
 
 .form-actions {
+  display: flex;
+  justify-content: center;
   margin-top: 0.5rem;
 }
 
 .form-actions .btn-primary {
   width: auto;
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .alert {
@@ -85,6 +87,11 @@ checkbox rows, form actions, alert messages, and event creation UI.
 .alert.ok {
   background: #e8f5e9;
   color: #1b5e20;
+}
+
+.alert.warning {
+  background: #f8e6cb;
+  color: #cdab00;
 }
 
 /*

@@ -82,9 +82,9 @@ export function ApplicationPage() {
         )}
 
         <div className="form-fields">
-          {/* --- Organization Details --- */}
+          {/* --- Organisation Details --- */}
           <label className="field">
-            <span>Organization Name</span>
+            <span>Organisation Name</span>
             <input
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
@@ -93,7 +93,7 @@ export function ApplicationPage() {
           </label>
 
           <label className="field">
-            <span>Organization Type</span>
+            <span>Organisation Type</span>
             <select
               value={orgType}
               onChange={(e) => setOrgType(e.target.value)}
