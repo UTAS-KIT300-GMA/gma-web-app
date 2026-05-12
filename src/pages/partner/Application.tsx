@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import { normalisePhone } from "../../utils/validation";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { createInitialProfile } from "../../services/authService";
@@ -43,6 +43,14 @@ export function ApplicationPage() {
 
     setLoading(true);
 
+    const { value: formattedPhone, error: phoneError } = normalisePhone(phoneNumber);
+
+    if (phoneError) {
+      setError(phoneError);
+      setLoading(false);
+      return;
+    }
+
     try {
       await createInitialProfile(user, {
         email: user.email!,
@@ -54,8 +62,9 @@ export function ApplicationPage() {
         firstName,
         lastName,
         position,
-        phoneNumber,
+        phoneNumber: formattedPhone!,
       });
+      
 
       // Trigger the "Traffic Controller" to move them to the Pending screen
       navigate("/pending-approval");
