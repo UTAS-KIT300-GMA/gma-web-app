@@ -70,7 +70,7 @@ export function AppLayout() {
    */
   const pageTitle = () => {
     if (location.pathname.includes("dashboard")) return "Dashboard";
-    if (location.pathname.includes("events/manage")) return "Manage Events";
+    if (location.pathname.includes("events/manage")) return "Manage Content";
     if (location.pathname.includes("events/approval")) return "Approve Events";
     if (location.pathname.includes("analytics")) return "Analytics";
     if (location.pathname.includes("users")) return "Users";
@@ -78,7 +78,7 @@ export function AppLayout() {
     if (location.pathname.includes("partners")) return "Manage Partners";
     if (location.pathname.includes("events/register")) return "Create Event";
     if (location.pathname.includes("settings")) return "Settings";
-    if (location.pathname.includes("learning")) return "Learning Content";
+    if (location.pathname.includes("learning")) return "Create Content";
     return "Dashboard";
   };
 
@@ -87,31 +87,30 @@ export function AppLayout() {
   const isAdmin = profile?.role === "admin";
 
   // Add state for active role to support with admin "view as partner" toggle in the future
-  const [viewAsPartner, setViewAsPartner] = useState(false);
-  const effectiveIsAdmin = isAdmin && !viewAsPartner;
+  const effectiveIsAdmin = isAdmin;
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.read).length,
     [notifications],
   );
 
   useEffect(() => {
-  const settingsRef = doc(db, "adminSettings", "platform");
+    const settingsRef = doc(db, "adminSettings", "platform");
 
-  const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
-    if (!snapshot.exists()) {
-      setMaintenanceEnabled(false);
-      setMaintenanceMessage("");
-      return;
-    }
+    const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        setMaintenanceEnabled(false);
+        setMaintenanceMessage("");
+        return;
+      }
 
-    const data = snapshot.data();
+      const data = snapshot.data();
 
-    setMaintenanceEnabled(Boolean(data.maintenanceNoticeEnabled));
-    setMaintenanceMessage(data.maintenanceNotice || "");
-  });
+      setMaintenanceEnabled(Boolean(data.maintenanceNoticeEnabled));
+      setMaintenanceMessage(data.maintenanceNotice || "");
+    });
 
-  return () => unsubscribe();
-}, []);
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -184,9 +183,16 @@ export function AppLayout() {
     if (effectiveIsAdmin) {
       if (kind === "event_submitted_for_review") {
         navigate("/admin/events/approval");
-      } else if (kind === "event_reminder_5days" || kind === "event_reminder_3days") {
+      } else if (
+        kind === "event_reminder_5days" ||
+        kind === "event_reminder_3days"
+      ) {
         navigate("/admin/events/manage?view=upcoming");
-      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_partner") {
+      } else if (
+        kind === "event_edited" ||
+        kind === "event_cancelled" ||
+        kind === "event_cancelled_by_partner"
+      ) {
         navigate("/admin/events/manage");
       } else {
         navigate("/admin/dashboard");
@@ -201,7 +207,11 @@ export function AppLayout() {
         kind === "partner_sponsor_payment"
       ) {
         navigate("/partner/events/manage");
-      } else if (kind === "event_edited" || kind === "event_cancelled" || kind === "event_cancelled_by_admin") {
+      } else if (
+        kind === "event_edited" ||
+        kind === "event_cancelled" ||
+        kind === "event_cancelled_by_admin"
+      ) {
         navigate("/partner/events/manage");
       } else {
         navigate("/partner/dashboard");
@@ -263,6 +273,15 @@ export function AppLayout() {
             {sidebarExpanded && <span>Dashboard</span>}
           </NavLink>
 
+          {effectiveIsAdmin && (
+            <NavLink to="/admin/learning/publication" className={linkClass}>
+              <span className="sidebar-link-icon">
+                <BookOpen size={20} strokeWidth={2.2} />
+              </span>
+              {sidebarExpanded && <span>Create Content</span>}
+            </NavLink>
+          )}
+
           {!effectiveIsAdmin && (
             <NavLink to="/partner/events/register" className={linkClass}>
               <span className="sidebar-link-icon">
@@ -295,7 +314,7 @@ export function AppLayout() {
               <span className="sidebar-link-icon">
                 <CalendarDays size={20} strokeWidth={2.2} />
               </span>
-              {sidebarExpanded && <span>Manage Events</span>}
+              {sidebarExpanded && <span>Manage Content</span>}
             </NavLink>
           )}
 
@@ -308,14 +327,7 @@ export function AppLayout() {
             </NavLink>
           )}
 
-          {effectiveIsAdmin && (
-            <NavLink to="/admin/learning/publication" className={linkClass}>
-              <span className="sidebar-link-icon">
-                <BookOpen size={20} strokeWidth={2.2} />
-              </span>
-              {sidebarExpanded && <span>Learning Content</span>}
-            </NavLink>
-          )}
+          
 
           {effectiveIsAdmin && (
             <NavLink to="/admin/analytics" className={linkClass}>
@@ -386,13 +398,12 @@ export function AppLayout() {
 
       {/* Main content area with topbar */}
       <main className="app-main">
-
         {maintenanceEnabled && maintenanceMessage && (
-       <div className="global-maintenance-banner">
-       <Bell size={18} />
-       <span>{maintenanceMessage}</span>
-       </div>
-      )}
+          <div className="global-maintenance-banner">
+            <Bell size={18} />
+            <span>{maintenanceMessage}</span>
+          </div>
+        )}
 
         <header className="app-topbar">
           <div className="app-topbar-left">
@@ -402,22 +413,6 @@ export function AppLayout() {
           </div>
 
           <div className="app-topbar-right">
-            {/* Admin "View as Partner" toggle button, here only needs isAdmin for the switch view button to work */}
-            {isAdmin && (
-              <button
-                className="btn-primary switch-view-btn"
-                type="button"
-                onClick={() => {
-                  setViewAsPartner((prev) => !prev);
-                  navigate(
-                    viewAsPartner ? "/admin/dashboard" : "/partner/dashboard",
-                  );
-                }}
-              >
-                {viewAsPartner ? "Admin View" : "Partner View"}
-              </button>
-            )}
-
             <div className="notification-wrap" ref={notificationPanelRef}>
               <button
                 className="dashboard-icon-btn"

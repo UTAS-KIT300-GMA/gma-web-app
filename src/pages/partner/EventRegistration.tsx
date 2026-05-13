@@ -57,6 +57,54 @@ function toDateTimeLocalString(ts?: Timestamp | null): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function getDurationMinutes(duration: string): number | null {
+  switch (duration) {
+    case "30 minutes":
+      return 30;
+    case "1 hour":
+      return 60;
+    case "2 hours":
+      return 120;
+    case "3 hours":
+      return 180;
+    case "Half day":
+      return 240;
+    case "Full day":
+      return 480;
+    default:
+      return null;
+  }
+}
+
+function getCalculatedEndDate(
+  startDateTime: string,
+  duration: string,
+): Date | null {
+  const durationMinutes = getDurationMinutes(duration);
+
+  if (!startDateTime || !durationMinutes) return null;
+
+  const start = new Date(startDateTime);
+  if (Number.isNaN(start.getTime())) return null;
+
+  return new Date(start.getTime() + durationMinutes * 60 * 1000);
+}
+
+function formatEndTimeLabel(startDateTime: string, duration: string): string {
+  const end = getCalculatedEndDate(startDateTime, duration);
+
+  if (!end) return "Select a start time and duration first";
+
+  return end.toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 /**
  * @summary Renders the event creation form allowing partners to draft and submit events for admin review.
  */
@@ -82,6 +130,7 @@ export function EventRegistrationPage() {
   const [dateTime, setDateTime] = useState<string>(""); // UI string for datetime-local
   const [eventDuration, setEventDuration] = useState<string>("");
   const [totalTickets, setTotalTickets] = useState<string>("");
+  const [maxTicketsPerUser, setMaxTicketsPerUser] = useState<string>("1");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState<string>("");
   const [existingImage, setExistingImage] = useState<EventRecord["image"]>("");
@@ -128,6 +177,8 @@ export function EventRegistrationPage() {
   }, [imageFile]);
 
   const activeImageSource = imagePreviewUrl || existingImage;
+  const calculatedEndDate = getCalculatedEndDate(dateTime, eventDuration);
+  const endTimeLabel = formatEndTimeLabel(dateTime, eventDuration);
 
   useEffect(() => {
     async function loadExistingEvent() {
@@ -167,6 +218,11 @@ export function EventRegistrationPage() {
         setDateTime(toDateTimeLocalString(data.dateTime));
         setEventDuration((data as any).eventDuration || "");
         setTotalTickets(data.totalTickets ? String(data.totalTickets) : "");
+        setMaxTicketsPerUser(
+          (data as any).maxTicketsPerUser
+            ? String((data as any).maxTicketsPerUser)
+            : "1",
+        );
         setExistingImage(data.image || "");
         setImageName(data.image ? "Current image" : "");
         setInterestTags(data.interestTags || []);
@@ -190,6 +246,7 @@ export function EventRegistrationPage() {
     setDateTime("");
     setEventDuration("");
     setTotalTickets("");
+    setMaxTicketsPerUser("1");
     setImageName("");
     setImageFile(null);
     setExistingImage("");
@@ -219,6 +276,11 @@ export function EventRegistrationPage() {
       dateTime: dateTime ? Timestamp.fromDate(new Date(dateTime)) : null,
       eventDuration,
       totalTickets: Number(totalTickets),
+      eventCapacity: Number(totalTickets),
+      endDateTime: calculatedEndDate
+        ? Timestamp.fromDate(calculatedEndDate)
+        : null,
+      maxTicketsPerUser: Number(maxTicketsPerUser),
       image: imageBase64,
       type: ticketAccess === "free_for_all" ? "free" : "paid",
       ticketAccess,
@@ -269,6 +331,26 @@ export function EventRegistrationPage() {
     ) {
       missing.push("Total tickets (at least 1)");
     }
+    const maxTicketsPerUserNum = Number(maxTicketsPerUser);
+    if (
+      !maxTicketsPerUser.trim() ||
+      !Number.isFinite(maxTicketsPerUserNum) ||
+      maxTicketsPerUserNum < 1
+    ) {
+      missing.push("Tickets per user (at least 1)");
+    }
+
+    if (
+      Number.isFinite(ticketsNum) &&
+      Number.isFinite(maxTicketsPerUserNum) &&
+      maxTicketsPerUserNum > ticketsNum
+    ) {
+      missing.push("Tickets per user cannot be greater than event capacity");
+    }
+
+    if (!calculatedEndDate && eventDuration !== "Multiple days") {
+      missing.push("Valid end time");
+    }
 
     if (missing.length > 0) {
       return alert(
@@ -287,7 +369,12 @@ export function EventRegistrationPage() {
         await updateDoc(doc(db, "events", draftId), eventData);
 
         if (!isAdmin) {
-          await notifyAdminsEventSubmitted(draftId, title.trim(), partnerLabel, profile?.id ?? "");
+          await notifyAdminsEventSubmitted(
+            draftId,
+            title.trim(),
+            partnerLabel,
+            profile?.id ?? "",
+          );
         }
 
         if (isAdmin) {
@@ -311,7 +398,12 @@ export function EventRegistrationPage() {
         });
 
         if (!isAdmin) {
-          await notifyAdminsEventSubmitted(newDoc.id, title.trim(), partnerLabel, profile?.id ?? "");
+          await notifyAdminsEventSubmitted(
+            newDoc.id,
+            title.trim(),
+            partnerLabel,
+            profile?.id ?? "",
+          );
         }
       }
       alert(
@@ -524,12 +616,21 @@ export function EventRegistrationPage() {
                 <option value="3 hours">3 hours</option>
                 <option value="Half day">Half day</option>
                 <option value="Full day">Full day</option>
-                <option value="Multiple days">Multiple days</option>
               </select>
             </label>
 
             <label className="field">
-              <span>Total tickets</span>
+              <span>End time</span>
+              <input
+                type="text"
+                value={endTimeLabel}
+                readOnly
+                aria-readonly="true"
+              />
+            </label>
+
+            <label className="field">
+              <span>Event capacity</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -542,7 +643,25 @@ export function EventRegistrationPage() {
                     setTotalTickets(value);
                   }
                 }}
-                placeholder="Enter total tickets"
+                placeholder="Enter event capacity"
+              />
+            </label>
+
+            <label className="field">
+              <span>Tickets per user</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={maxTicketsPerUser}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (/^\d*$/.test(value)) {
+                    setMaxTicketsPerUser(value);
+                  }
+                }}
+                placeholder="e.g. 1"
               />
             </label>
           </div>

@@ -3,8 +3,10 @@ import { Pencil, Eye, Trash2, Search, X } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import {
   deletePartnerEvent,
+  getEventAttendees,
   getPartnerEvents,
   getRegistrationCount,
+  type EventAttendeeRow,
   type PartnerEventRow,
 } from "../../services/partnerEventService";
 import {
@@ -134,6 +136,13 @@ export function EventManagePage() {
     null,
   );
   const [showPreview, setShowPreview] = useState(false);
+  const [attendeeModalEvent, setAttendeeModalEvent] =
+    useState<PartnerEventRow | null>(null);
+  const [attendees, setAttendees] = useState<EventAttendeeRow[]>([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [registrationCounts, setRegistrationCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     async function loadEvents() {
@@ -150,6 +159,19 @@ export function EventManagePage() {
 
         const rows = await getPartnerEvents(partnerId);
         setEvents(rows);
+        const counts: Record<string, number> = {};
+
+        await Promise.all(
+          rows.map(async (event) => {
+            const attendees = await getEventAttendees(event.id);
+            counts[event.id] = attendees.reduce(
+              (sum, attendee) => sum + attendee.ticketsOrdered,
+              0,
+            );
+          }),
+        );
+
+        setRegistrationCounts(counts);
       } catch (error) {
         console.error("Failed to load partner events:", error);
         setEvents([]);
@@ -162,13 +184,18 @@ export function EventManagePage() {
   }, [user, profile]);
 
   async function handleDelete(eventId: string, title: string) {
-    const ok = window.confirm(`Delete "${title}"? This cannot be undone. All users booked or bookmarked this event will be notified.`);
+    const ok = window.confirm(
+      `Delete "${title}"? This cannot be undone. All users booked or bookmarked this event will be notified.`,
+    );
     if (!ok) return;
 
     setBusyId(eventId);
 
     try {
-      const partnerLabel = profile?.orgName || `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || "A partner";
+      const partnerLabel =
+        profile?.orgName ||
+        `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+        "A partner";
       const interestedIds = await getEventInterestedUserIds(eventId);
       if (interestedIds.length > 0) {
         await notifyUsersEventCancelled(interestedIds, eventId, title);
@@ -271,6 +298,22 @@ export function EventManagePage() {
       return 0;
     });
   }, [events, eventStatus, dateRange, searchTerm, sortKey, sortDirection]);
+
+  async function openAttendeesModal(event: PartnerEventRow) {
+    setAttendeeModalEvent(event);
+    setAttendees([]);
+    setAttendeesLoading(true);
+
+    try {
+      const rows = await getEventAttendees(event.id);
+      setAttendees(rows);
+    } catch (error) {
+      console.error("Failed to load attendees:", error);
+      alert("❌ Failed to load attendees.");
+    } finally {
+      setAttendeesLoading(false);
+    }
+  }
 
   return (
     <div className="page dashboard-page partner-events-page">
@@ -454,10 +497,18 @@ export function EventManagePage() {
                       </td>
 
                       <td>
-                        <span className="partner-events-registrations">
-                          <strong>{getRegistrationCount(event)}</strong>
+                        <button
+                          type="button"
+                          className="partner-events-registrations partner-events-registrations-btn"
+                          onClick={() => openAttendeesModal(event)}
+                          title="View attendees"
+                        >
+                          <strong>
+                            {registrationCounts[event.id] ??
+                              getRegistrationCount(event)}
+                          </strong>
                           <span>/ {event.totalTickets ?? 0}</span>
-                        </span>
+                        </button>
                       </td>
 
                       <td>
@@ -533,6 +584,63 @@ export function EventManagePage() {
         }
         actionLabel="Close"
       />
+      {attendeeModalEvent && (
+        <div
+          className="attendee-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="attendee-modal-card">
+            <div className="attendee-modal-header">
+              <div>
+                <h2>Attendees</h2>
+                <p>
+                  {attendeeModalEvent.title || "Selected event"} ·{" "}
+                  {attendees.reduce(
+                    (sum, attendee) => sum + attendee.ticketsOrdered,
+                    0,
+                  )}{" "}
+                  / {attendeeModalEvent.totalTickets ?? 0} registered
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="attendee-modal-close"
+                onClick={() => {
+                  setAttendeeModalEvent(null);
+                  setAttendees([]);
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="attendee-modal-body">
+              {attendeesLoading ? (
+                <p className="attendee-empty">Loading attendees...</p>
+              ) : attendees.length === 0 ? (
+                <p className="attendee-empty">
+                  No attendees found for this event.
+                </p>
+              ) : (
+                <ul className="attendee-list">
+                  {attendees.map((attendee) => (
+                    <li key={`${attendee.userId}-${attendee.email}`}>
+                      <div>
+                        <strong>{attendee.name}</strong>
+                        {attendee.email && <span>{attendee.email}</span>}
+                      </div>
+
+                      <em>{attendee.ticketsOrdered} ticket(s)</em>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
