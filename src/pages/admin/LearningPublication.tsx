@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { EventRegistrationPage } from "../partner/EventRegistration";
 import {
   Eye,
   FileImage,
@@ -29,6 +30,9 @@ export function LearningPublicationPage() {
   const navigate = useNavigate();
   const { learningId } = useParams<{ learningId?: string }>();
   const isEditing = Boolean(learningId);
+  const [contentType, setContentType] = useState<"event" | "learning">(
+    isEditing ? "learning" : "event",
+  );
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -205,6 +209,31 @@ export function LearningPublicationPage() {
     event.preventDefault();
     await publishLearningContent();
   }
+  if (contentType === "event" && !isEditing) {
+    return (
+      <section className="page-section user-management-page">
+        <div className="event-manage-tabs">
+          <button
+            type="button"
+            className="event-manage-tab active"
+            onClick={() => setContentType("event")}
+          >
+            Event
+          </button>
+
+          <button
+            type="button"
+            className="event-manage-tab"
+            onClick={() => setContentType("learning")}
+          >
+            Learning Content
+          </button>
+        </div>
+
+        <EventRegistrationPage />
+      </section>
+    );
+  }
 
   if (loadingExisting) {
     return (
@@ -218,8 +247,29 @@ export function LearningPublicationPage() {
     <section className="page-section user-management-page">
       <div className="user-header">
         <div>
+          {!isEditing && (
+            <div className="event-manage-tabs">
+              <button
+                type="button"
+                className={`event-manage-tab ${contentType === "event" ? "active" : ""}`}
+                onClick={() => setContentType("event")}
+              >
+                Event
+              </button>
+
+              <button
+                type="button"
+                className={`event-manage-tab ${contentType === "learning" ? "active" : ""}`}
+                onClick={() => setContentType("learning")}
+              >
+                Learning Content
+              </button>
+            </div>
+          )}
           <h1 className="user-title">
-            {isEditing ? "Edit Learning Content" : "Learning Content Publication"}
+            {isEditing
+              ? "Edit Learning Content"
+              : "Learning Content Publication"}
           </h1>
           <p className="user-subtitle">
             {isEditing
