@@ -9,6 +9,7 @@ import { LoginPage } from "./pages/auth/Login";
 import { RegisterPage } from "./pages/auth/Register";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmail";
 import { LandingPage } from "./pages/auth/Landing";
+import { ForgotPasswordPage } from "./pages/auth/ForgotPassword";
 
 // Partner pages
 import PartnerDashboardPage from "./pages/partner/Dashboard";
@@ -104,6 +105,7 @@ export default function AppRoutes() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/AdminApproval" element={<AdminApprovalPage />} />
 
       {/* Protected routes - only accessible if logged in, cases to handle:

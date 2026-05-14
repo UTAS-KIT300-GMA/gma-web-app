@@ -117,9 +117,9 @@ export function LoginPage() {
               {busy ? "Signing in..." : "Log in"}
             </button>
 
-            <div className="forgot-password-link">
+            <Link to="/forgot-password" className="forgot-password-link">
               Forgot password?
-            </div>
+            </Link>
           </div>
 
           {view === "partner" && (
