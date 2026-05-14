@@ -10,7 +10,7 @@ import {
   Bell,
 } from "lucide-react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db, } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import "../../styles/admin/user-management.css";
 import "../../styles/admin/settings.css";
@@ -23,6 +23,8 @@ type AdminSettingsForm = {
   maintenanceNoticeEnabled: boolean;
   maintenanceNotice: string;
   adminNotes: string;
+  termsPolicyFileName: string;
+  termsPolicyFileURL: string;
 };
 
 const defaultSettings: AdminSettingsForm = {
@@ -34,6 +36,8 @@ const defaultSettings: AdminSettingsForm = {
   maintenanceNotice:
     "GMA Connect is currently undergoing scheduled maintenance. Some services may be temporarily unavailable.",
   adminNotes: "",
+  termsPolicyFileName: "",
+  termsPolicyFileURL: "",
 };
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -77,14 +81,12 @@ function SettingToggle({
           type="button"
           onClick={onToggle}
           aria-label={title}
-          className={`admin-toggle-btn ${
-            enabled ? "is-enabled" : "is-disabled"
-          }`}
+          className={`admin-toggle-btn ${enabled ? "is-enabled" : "is-disabled"
+            }`}
         >
           <span
-            className={`admin-toggle-knob ${
-              enabled ? "is-enabled" : "is-disabled"
-            }`}
+            className={`admin-toggle-knob ${enabled ? "is-enabled" : "is-disabled"
+              }`}
           />
         </button>
       </div>
@@ -95,6 +97,8 @@ function SettingToggle({
 export default function AdminSettingsPage() {
   const { user, profile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const termsFileInputRef = useRef<HTMLInputElement | null>(null);
+
 
   const loggedInName =
     `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
@@ -116,6 +120,7 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState("Checking");
   const [lastUpdated, setLastUpdated] = useState("");
+  const [uploadingTerms, setUploadingTerms] = useState(false);
 
   const profileImage = previewImage || settings.adminPhotoURL;
   const nameParts = splitName(settings.adminName);
@@ -210,6 +215,33 @@ export default function AdminSettingsPage() {
     event.target.value = "";
   };
 
+  const handleTermsPolicySelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setUploadingTerms(true);
+
+      const base64File = await readFileAsBase64(file);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      setSettings((prev) => ({
+        ...prev,
+        termsPolicyFileName: file.name,
+        termsPolicyFileURL: base64File,
+      }));
+    } catch (error) {
+      console.error("Failed to read terms/policies file:", error);
+      alert("Terms and Policies file could not be uploaded.");
+    } finally {
+      setUploadingTerms(false);
+      event.target.value = "";
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -223,6 +255,18 @@ export default function AdminSettingsPage() {
         },
         { merge: true },
       );
+
+      if (user?.uid) {
+        await setDoc(
+          doc(db, "users", user.uid),
+          {
+            firstName: nameParts.firstName,
+            lastName: nameParts.lastName,
+            photoURL: settings.adminPhotoURL,
+          },
+          { merge: true },
+        );
+      }
 
       setDatabaseStatus("Connected");
       setLastUpdated(new Date().toLocaleString());
@@ -302,6 +346,85 @@ export default function AdminSettingsPage() {
           <div className="stat-value">Active</div>
           <div className="stat-label">{loggedInEmail}</div>
         </article>
+      </section>
+
+      <section className="panel dashboard-panel">
+        <div className="dashboard-section-head">
+          <div>
+            <h2>Terms and Policies</h2>
+            <p className="muted small">
+              Upload the latest Terms and Policies document.
+            </p>
+          </div>
+
+          <Upload size={22} color="#7b295d" />
+        </div>
+
+        <div className="user-management-field">
+          <label>Terms and Policies File</label>
+
+          <input
+            ref={termsFileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            style={{ display: "none" }}
+            onChange={handleTermsPolicySelect}
+          />
+
+          <button
+            type="button"
+            className="user-management-btn secondary admin-upload-btn"
+            onClick={() => termsFileInputRef.current?.click()}
+            disabled={uploadingTerms}
+          >
+            <Upload
+              size={16}
+              className={uploadingTerms ? "upload-spin" : ""}
+            />
+            {uploadingTerms ? "Uploading File..." : "Upload Terms/Policies"}
+          </button>
+
+          <small className="muted">
+            {settings.termsPolicyFileName
+              ? `Current file: ${settings.termsPolicyFileName}`
+              : "No Terms and Policies file uploaded yet."}
+          </small>
+
+          {settings.termsPolicyFileURL && (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                marginTop: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <a
+                href={settings.termsPolicyFileURL}
+                target="_blank"
+                rel="noreferrer"
+                className="link-button"
+              >
+                View current document
+              </a>
+
+              <button
+                type="button"
+                className="user-management-btn secondary"
+                onClick={() =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    termsPolicyFileName: "",
+                    termsPolicyFileURL: "",
+                  }))
+                }
+              >
+                Remove File
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
       {saved && (

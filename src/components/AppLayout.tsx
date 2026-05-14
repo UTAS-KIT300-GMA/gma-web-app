@@ -502,7 +502,15 @@ export function AppLayout() {
                 <span>{roleLabel}</span>
               </div>
               <div className="dashboard-user-avatar">
-                <CircleUserRound size={32} strokeWidth={1} />
+                 {profile?.photoURL ? (
+    <img
+      src={profile.photoURL}
+      alt="Profile"
+      className="topbar-profile-img"
+    />
+  ) : (
+    <CircleUserRound size={32} strokeWidth={1} />
+  )}
               </div>
             </div>
           </div>

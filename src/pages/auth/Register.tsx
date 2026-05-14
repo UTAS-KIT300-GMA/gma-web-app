@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerPartner } from "../../services/authService";
 import { validateEmail, validatePassword } from "../../utils/validation";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 /**
  * @summary Renders the registration interface for Stage 1 of the partner onboarding process.
@@ -13,9 +15,27 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
+  const [termsURL, setTermsURL] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadTermsPolicy() {
+      try {
+        const settingsRef = doc(db, "adminSettings", "platform");
+        const settingsSnap = await getDoc(settingsRef);
+
+        if (settingsSnap.exists()) {
+          const data = settingsSnap.data();
+          setTermsURL(data.termsPolicyFileURL || "");
+        }
+      } catch (error) {
+        console.error("Failed to load Terms & Policies:", error);
+      }
+    }
+
+    loadTermsPolicy();
+  }, []);
 
   /**
    * @summary Processes account creation, validates passwords, and triggers email verification.
@@ -30,7 +50,7 @@ export function RegisterPage() {
       return setError("You must accept the Terms & Conditions.");
     }
 
-    const emailError =validateEmail(email);
+    const emailError = validateEmail(email);
 
     if (emailError) {
       return setError(emailError);
@@ -145,10 +165,21 @@ export function RegisterPage() {
                 <button
                   type="button"
                   className="link-button"
-                  onClick={() => setShowTerms(true)}
+                  onClick={() => {
+                    if (!termsURL) {
+                      alert("No Terms and Policies document has been uploaded yet.");
+                      return;
+                    }
+
+                    const link = document.createElement("a");
+                    link.href = termsURL;
+                    link.download = "GMA-Terms-and-Policies.pdf";
+                    link.click();
+                  }}
                 >
                   Terms & Conditions
                 </button>
+
               </span>
             </label>
           </div>
@@ -163,29 +194,6 @@ export function RegisterPage() {
           </p>
         </form>
       </div>
-      {showTerms && (
-        <div className="modal-backdrop">
-          <div className="terms-modal">
-            <h2>GMA Terms & Conditions</h2>
-
-            <ol>
-              <li>Users must use the platform respectfully.</li>
-              <li>Partners must provide accurate information.</li>
-              <li>GMA may moderate platform content.</li>
-              <li>User information may be stored for platform purposes.</li>
-              <li>Terms may change over time.</li>
-            </ol>
-
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => setShowTerms(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
