@@ -291,3 +291,23 @@ export default function AppRoutes() {
     </Routes>
   );
 }
+
+/**
+ * Currently seperate from App but can be added into app if needed using the below.
+ //  Move imports to the top of the page but keep seperate like the other sections above.
+import { loadStripe } from '@stripe/stripe-js';
+import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout';
+import CheckoutForm from './pages/partner/CheckoutForm';
+import Complete from './pages/partner/Complete';
+
+// Inside the component (after <AppLayout>):
+const stripePromise = loadStripe("pk_test_51TViqcIYjrJGebNUqweRV6GeraUfUTgYIl9hnSnP3t92HZIM4R5zPI7wtRX5WmKh3UvGFaTKmmc3XY2ER9Anu65600OphcIebo");
+
+// Wrap routes or specific components:
+ <CheckoutElementsProvider stripe={stripePromise} options={{  clientSecret, etc.  }}>
+ <Routes>
+    <Route path="/checkout" element={<CheckoutForm />} />
+    <Route path="/complete" element={<Complete />} />
+  </Routes>
+</CheckoutElementsProvider>
+ */
