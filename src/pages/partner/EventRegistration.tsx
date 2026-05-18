@@ -755,6 +755,16 @@ export function EventRegistrationPage() {
         </section>
 
         <div className="event-form-actions event-form-actions-inline">
+          {isAdmin && (
+            <button
+              type="button"
+              className="btn-outline event-action-btn"
+              onClick={() => navigate("/admin/events/manage")}
+            >
+              Cancel
+            </button>
+          )}
+
           <button
             type="button"
             className="btn-outline event-action-btn event-preview-btn"

@@ -26,10 +26,10 @@ event rows, and event thumbnail presentation.
   border-radius: var(--gma-radius);
   padding: 0.5rem 0.75rem;
   background: var(--gma-card);
+}
 
-  .search-icon {
-    margin-bottom: 4px;
-  }
+.event-manage-search .search-icon {
+  margin-bottom: 4px;
 }
 
 .event-manage-search input {
@@ -56,32 +56,52 @@ event rows, and event thumbnail presentation.
   background: var(--gma-card);
   color: var(--gma-text);
   cursor: pointer;
-
 }
 
 .approval-actions.event-manage-actions {
   display: flex;
   margin-top: auto;
-  margin-left: auto; /* push actions to the right */
-
-  .btn-secondary {
-    flex: 1;
-    text-align: center;
-    text-decoration: none;
-    padding: 0.45rem 0.75rem;
-    transition: none;
-
-    &:hover {
-      transform: none;
-      background-color: transparent;
-      border: 1.5px solid var(--gma-gold);
-      color: var(--gma-primary-dark);
-    }
-
-  }
-
-  .btn-danger {
-    flex: 1;
-  }
+  margin-left: auto;
 }
 
+.approval-actions.event-manage-actions .btn-secondary {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  padding: 0.45rem 0.75rem;
+  transition: none;
+}
+
+.approval-actions.event-manage-actions .btn-secondary:hover {
+  transform: none;
+  background-color: transparent;
+  border: 1.5px solid var(--gma-gold);
+  color: var(--gma-primary-dark);
+}
+
+.approval-actions.event-manage-actions .btn-danger {
+  flex: 1;
+}
+
+.learning-table-center {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.learning-table-center .partner-event-date,
+.learning-table-center .partner-event-categories {
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.learning-table-center .partner-event-status {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.learning-actions-center {
+  justify-content: center;
+  margin-left: 0;
+}

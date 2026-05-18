@@ -39,6 +39,7 @@ type AdminEventSortKey =
   | "organisation";
 
 type SortDirection = "asc" | "desc";
+type LearningSortKey = "content" | "category" | "access";
 
 type SubmitterInfo = {
   organisationName: string;
@@ -138,9 +139,14 @@ export function EventManagePage() {
 
   const initialView = searchParams.get("view");
 
-  const [activeTab, setActiveTab] = useState<ContentTab>(
-    initialView === "upcoming" && isAdmin ? "upcoming" : "events",
-  );
+  const [activeTab, setActiveTab] = useState<ContentTab>(() => {
+    if (!isAdmin) return "events";
+
+    if (initialView === "learning") return "learning";
+    if (initialView === "upcoming") return "upcoming";
+
+    return "events";
+  });
 
   const [events, setEvents] = useState<AdminEventRow[]>([]);
   const [registrationCounts, setRegistrationCounts] = useState<
@@ -159,6 +165,10 @@ export function EventManagePage() {
 
   const [sortKey, setSortKey] = useState<AdminEventSortKey>("dateTime");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [learningSortKey, setLearningSortKey] =
+    useState<LearningSortKey>("content");
+  const [learningSortDirection, setLearningSortDirection] =
+    useState<SortDirection>("asc");
 
   const loadEvents = useCallback(async () => {
     if (isAdmin) {
@@ -354,6 +364,21 @@ export function EventManagePage() {
     setSortDirection("asc");
   }
 
+  function handleLearningSort(key: LearningSortKey) {
+    if (learningSortKey === key) {
+      setLearningSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setLearningSortKey(key);
+    setLearningSortDirection("asc");
+  }
+
+  function getLearningSortLabel(key: LearningSortKey) {
+    if (learningSortKey !== key) return "↕";
+    return learningSortDirection === "asc" ? "↑" : "↓";
+  }
+
   function getSortLabel(key: AdminEventSortKey) {
     if (sortKey !== key) return "↕";
     return sortDirection === "asc" ? "↑" : "↓";
@@ -409,21 +434,44 @@ export function EventManagePage() {
       return 0;
     });
 
-  const filteredLearningVideos = learningVideos.filter((item) => {
-    const keyword = search.toLowerCase();
+  const filteredLearningVideos = [...learningVideos]
+    .filter((item) => {
+      const keyword = search.toLowerCase();
 
-    const matchesSearch =
-      !keyword ||
-      item.title?.toLowerCase().includes(keyword) ||
-      item.description?.toLowerCase().includes(keyword) ||
-      item.cloudinaryPublicId?.toLowerCase().includes(keyword);
+      const matchesSearch =
+        !keyword ||
+        item.title?.toLowerCase().includes(keyword) ||
+        item.description?.toLowerCase().includes(keyword) ||
+        item.cloudinaryPublicId?.toLowerCase().includes(keyword);
 
-    const matchesCategory =
-      filterCategory === "all" || item.category === filterCategory;
+      const matchesCategory =
+        filterCategory === "all" || item.category === filterCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let aValue: string | number = "";
+      let bValue: string | number = "";
 
+      if (learningSortKey === "content") {
+        aValue = a.title?.toLowerCase() || "";
+        bValue = b.title?.toLowerCase() || "";
+      }
+
+      if (learningSortKey === "category") {
+        aValue = a.category?.toLowerCase() || "";
+        bValue = b.category?.toLowerCase() || "";
+      }
+
+      if (learningSortKey === "access") {
+        aValue = a.accessType || "";
+        bValue = b.accessType || "";
+      }
+
+      if (aValue < bValue) return learningSortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return learningSortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
   async function onDeleteEvent(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
 
@@ -502,7 +550,7 @@ export function EventManagePage() {
             className={`event-manage-tab ${activeTab === "learning" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("learning");
-              setSearchParams({});
+              setSearchParams({ view: "learning" });
               setFilterCategory("all");
             }}
           >
@@ -741,65 +789,138 @@ export function EventManagePage() {
       ) : filteredLearningVideos.length === 0 ? (
         <p>No learning content to show.</p>
       ) : (
-        <ul className="approval-list">
-          {filteredLearningVideos.map((item) => (
-            <li key={item.id} className="approval-card event-manage-card">
-              <div className="approval-inner">
-                <div className="approval-img">
-                  {item.thumbnailUrl ? (
-                    <img
-                      src={item.thumbnailUrl}
-                      alt={item.title || "Learning content"}
-                      onError={(e) => (e.currentTarget.style.display = "none")}
-                    />
-                  ) : (
-                    <div className="approval-img-placeholder">
-                      Learning Video
-                    </div>
-                  )}
-                </div>
+        <div className="partner-events-table-wrap">
+          <table className="partner-events-table">
+            <thead>
+              <tr>
+                <th>
+                  <button
+                    type="button"
+                    className="partner-events-sort-btn"
+                    onClick={() => handleLearningSort("content")}
+                  >
+                    Learning Content {getLearningSortLabel("content")}
+                  </button>
+                </th>
 
-                <div className="approval-content event-manage-content">
-                  <div className="approval-head">
-                    <h3>{item.title || "Untitled learning content"}</h3>
-                    <span className="muted">{item.duration || "—"}</span>
-                  </div>
+                <th>Duration</th>
 
-                  <p className="approval-desc">{item.description}</p>
+                <th>
+                  <button
+                    type="button"
+                    className="partner-events-sort-btn"
+                    onClick={() => handleLearningSort("category")}
+                  >
+                    Category {getLearningSortLabel("category")}
+                  </button>
+                </th>
 
-                  <p className="muted small capitalize">
-                    Learning · {item.category || "No category"} ·{" "}
-                    {item.accessType === "paid" ? "Subscribers only" : "Free"}
-                  </p>
+                <th>
+                  <button
+                    type="button"
+                    className="partner-events-sort-btn"
+                    onClick={() => handleLearningSort("access")}
+                  >
+                    Access {getLearningSortLabel("access")}
+                  </button>
+                </th>
 
-                  {item.interestTags && item.interestTags.length > 0 && (
-                    <p className="muted small">
-                      Tags: {item.interestTags.join(", ")}
-                    </p>
-                  )}
+                <th>Actions</th>
+              </tr>
+            </thead>
 
-                  <div className="approval-actions event-manage-actions">
-                    <Link
-                      to={`/admin/learning/publication/${item.id}`}
-                      className="btn-secondary"
-                    >
-                      Edit
-                    </Link>
+            <tbody>
+              {filteredLearningVideos.map((item) => {
+                const category = item.category || "No category";
 
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      disabled={busyId === item.id}
-                      onClick={() => onDeleteLearning(item)}
-                    >
-                      {busyId === item.id ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      <div className="partner-event-cell">
+                        <div className="partner-event-thumb">
+                          {item.thumbnailUrl ? (
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={item.title || "Learning content"}
+                              onError={(e) =>
+                                (e.currentTarget.style.display = "none")
+                              }
+                            />
+                          ) : (
+                            <div className="partner-event-thumb-fallback">
+                              {(item.title || "L").charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="partner-event-info">
+                          <strong className="partner-event-title">
+                            {item.title || "Untitled learning content"}
+                          </strong>
+                          <span className="partner-event-location">
+                            {item.description || "No description provided"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="learning-table-center">
+                      <div className="partner-event-date">
+                        <strong>{item.duration || "—"}</strong>
+                      </div>
+                    </td>
+
+                    <td className="learning-table-center">
+                      <div className="partner-event-categories">
+                        <span className={mapCategoryClass(category)}>
+                          {category}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="learning-table-center">
+                      <span
+                        className={`partner-event-status ${
+                          item.accessType === "paid"
+                            ? "partner-event-status-pending"
+                            : "partner-event-status-approved"
+                        }`}
+                      >
+                        {item.accessType === "paid"
+                          ? "Subscribers only"
+                          : "Free"}
+                      </span>
+                    </td>
+
+                    <td className="learning-table-center">
+                      <div className="partner-events-actions learning-actions-center">
+                        <Link
+                          to={`/admin/learning/publication/${item.id}`}
+                          className="icon-action-btn"
+                          aria-label="Edit learning content"
+                          title="Edit"
+                        >
+                          <Pencil size={16} strokeWidth={2} />
+                        </Link>
+
+                        <button
+                          type="button"
+                          className="icon-action-btn danger"
+                          disabled={busyId === item.id}
+                          onClick={() => onDeleteLearning(item)}
+                          aria-label="Delete learning content"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} strokeWidth={2} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
