@@ -7,7 +7,7 @@ import {
   Timestamp,
   GeoPoint,
 } from "firebase/firestore";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { EventPreviewModal } from "../../components/EventPreviewModal";
 import { db } from "../../firebase";
@@ -111,6 +111,7 @@ function formatEndTimeLabel(startDateTime: string, duration: string): string {
 export function EventRegistrationPage() {
   const { user, profile } = useAuth();
   const { eventId } = useParams<{ eventId?: string }>();
+  const navigate = useNavigate();
   const isEditing = !!eventId;
   const isAdmin = profile?.role === "admin";
 
@@ -141,6 +142,7 @@ export function EventRegistrationPage() {
   const [loadingExisting, setLoadingExisting] = useState(false);
 
   const [showPreview, setShowPreview] = useState(false);
+  const [originalSubmittedBy, setOriginalSubmittedBy] = useState<string>("");
 
   /**
    * @summary Toggles an interest tag in or out of the selected tags list.
@@ -193,6 +195,7 @@ export function EventRegistrationPage() {
         }
 
         const data = snap.data() as EventRecord;
+        setOriginalSubmittedBy(data.submittedBy || "");
         const currentOwner = data.submittedBy;
         const currentUserId = profile?.partnerId ?? user.uid;
 
@@ -253,12 +256,16 @@ export function EventRegistrationPage() {
     setInterestTags([]);
     setTicketAccess("free_for_all");
     setShowPreview(false);
+    setOriginalSubmittedBy("");
   }
 
   async function buildEventData(
     status: EventRecord["eventApprovalStatus"],
   ): Promise<Partial<EventRecord>> {
-    const partnerId = profile?.partnerId ?? user?.uid ?? "";
+    const partnerId =
+      isAdmin && isEditing && originalSubmittedBy
+        ? originalSubmittedBy
+        : (profile?.partnerId ?? user?.uid ?? "");
     const imageBase64 = imageFile
       ? await readFileAsBase64(imageFile)
       : existingImage;
@@ -411,6 +418,10 @@ export function EventRegistrationPage() {
           ? "✅ Event updated and published successfully!"
           : "✅ Event submitted successfully! GMA admin will review your event before publishing.",
       );
+      if (isAdmin) {
+        navigate("/admin/events/manage");
+        return;
+      }
 
       resetForm();
     } catch (err) {

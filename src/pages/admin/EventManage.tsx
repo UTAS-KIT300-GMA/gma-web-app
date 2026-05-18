@@ -4,12 +4,13 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   where,
   type Timestamp,
 } from "firebase/firestore";
-import { Search } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import type { EventRecord } from "../../types/event-types";
@@ -18,9 +19,31 @@ import {
   notifyPartnerEventCancelled,
   notifyUsersEventCancelled,
 } from "../../services/notificationService";
+import {
+  getEventAttendees,
+  getRegistrationCount,
+} from "../../services/partnerEventService";
 import { UpcomingEventsView } from "./EventListNoti";
 
 type ContentTab = "events" | "learning" | "upcoming";
+
+type AdminEventRow = EventRecord & {
+  organisationName?: string;
+};
+
+type AdminEventSortKey =
+  | "event"
+  | "dateTime"
+  | "category"
+  | "registrations"
+  | "organisation";
+
+type SortDirection = "asc" | "desc";
+
+type SubmitterInfo = {
+  organisationName: string;
+  role?: string;
+};
 
 type LearningVideoRecord = {
   id: string;
@@ -66,15 +89,63 @@ function canManageEvent(
   return ev.submittedBy === uid;
 }
 
+function getCategoryLabels(event: AdminEventRow) {
+  const categories = [
+    ...(event.category ? [event.category] : []),
+    ...(event.categories ?? []),
+  ];
+
+  const cleaned = categories
+    .map((category) => String(category).trim())
+    .filter(Boolean);
+
+  const unique = [...new Set(cleaned)];
+
+  return unique.length ? unique : ["Uncategorised"];
+}
+
+function mapCategoryClass(category: string) {
+  const value = category.toLowerCase();
+
+  if (value.includes("connect") || value.includes("network")) {
+    return "partner-event-category connect";
+  }
+
+  if (
+    value.includes("growth") ||
+    value.includes("grow") ||
+    value.includes("workshop") ||
+    value.includes("career")
+  ) {
+    return "partner-event-category growth";
+  }
+
+  if (
+    value.includes("thrive") ||
+    value.includes("community") ||
+    value.includes("leadership")
+  ) {
+    return "partner-event-category thrive";
+  }
+
+  return "partner-event-category default";
+}
+
 export function EventManagePage() {
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
+
   const initialView = searchParams.get("view");
+
   const [activeTab, setActiveTab] = useState<ContentTab>(
     initialView === "upcoming" && isAdmin ? "upcoming" : "events",
   );
-  const [events, setEvents] = useState<EventRecord[]>([]);
+
+  const [events, setEvents] = useState<AdminEventRow[]>([]);
+  const [registrationCounts, setRegistrationCounts] = useState<
+    Record<string, number>
+  >({});
   const [learningVideos, setLearningVideos] = useState<LearningVideoRecord[]>(
     [],
   );
@@ -84,8 +155,10 @@ export function EventManagePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+
+  const [sortKey, setSortKey] = useState<AdminEventSortKey>("dateTime");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const loadEvents = useCallback(async () => {
     if (isAdmin) {
@@ -96,10 +169,71 @@ export function EventManagePage() {
 
       const snap = await getDocs(q);
 
-      const rows: EventRecord[] = snap.docs.map((d) => ({
+      const baseRows: AdminEventRow[] = snap.docs.map((d) => ({
         eventId: d.id,
-        ...(d.data() as Omit<EventRecord, "eventId">),
+        ...(d.data() as Omit<AdminEventRow, "eventId">),
       }));
+
+      const submitterIds = Array.from(
+        new Set(
+          baseRows
+            .map((event) => event.submittedBy)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+
+      const submitterMap = new Map<string, SubmitterInfo>();
+
+      await Promise.all(
+        submitterIds.map(async (submitterId) => {
+          try {
+            const userSnap = await getDoc(doc(db, "users", submitterId));
+
+            if (!userSnap.exists()) {
+              submitterMap.set(submitterId, {
+                organisationName: "Unknown organisation",
+              });
+              return;
+            }
+
+            const userData = userSnap.data();
+
+            const organisationName =
+              userData.orgName ||
+              userData.organisationName ||
+              userData.organizationName ||
+              userData.companyName ||
+              `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim() ||
+              userData.email ||
+              "Unknown organisation";
+
+            submitterMap.set(submitterId, {
+              organisationName,
+              role: userData.role,
+            });
+          } catch {
+            submitterMap.set(submitterId, {
+              organisationName: "Unknown organisation",
+            });
+          }
+        }),
+      );
+
+      const rows = baseRows.map((event) => {
+        const submitter = event.submittedBy
+          ? submitterMap.get(event.submittedBy)
+          : null;
+
+        const isAdminSubmitted =
+          submitter?.role === "admin" || !event.submittedBy;
+
+        return {
+          ...event,
+          organisationName: isAdminSubmitted
+            ? "Guess My Accent"
+            : submitter?.organisationName || "Unknown organisation",
+        };
+      });
 
       rows.sort((a, b) => {
         const ta = a.dateTime?.toMillis?.() ?? 0;
@@ -107,6 +241,26 @@ export function EventManagePage() {
         return tb - ta;
       });
 
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        rows.map(async (event) => {
+          try {
+            const attendees = await getEventAttendees(event.eventId);
+            counts[event.eventId] = attendees.reduce(
+              (sum, attendee) => sum + attendee.ticketsOrdered,
+              0,
+            );
+          } catch {
+            counts[event.eventId] = getRegistrationCount({
+              ...event,
+              id: event.eventId,
+            });
+          }
+        }),
+      );
+
+      setRegistrationCounts(counts);
       setEvents(rows);
       return;
     }
@@ -119,9 +273,9 @@ export function EventManagePage() {
 
       const snap = await getDocs(q);
 
-      const rows: EventRecord[] = snap.docs.map((d) => ({
+      const rows: AdminEventRow[] = snap.docs.map((d) => ({
         eventId: d.id,
-        ...(d.data() as Omit<EventRecord, "eventId">),
+        ...(d.data() as Omit<AdminEventRow, "eventId">),
       }));
 
       rows.sort((a, b) => {
@@ -190,23 +344,70 @@ export function EventManagePage() {
     return ["all", ...Array.from(new Set(source))];
   }, [activeTab, events, learningVideos]);
 
-  const filteredEvents = events.filter((ev) => {
-    const keyword = search.toLowerCase();
+  function handleEventSort(key: AdminEventSortKey) {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
 
-    const matchesSearch =
-      !keyword ||
-      ev.title?.toLowerCase().includes(keyword) ||
-      ev.description?.toLowerCase().includes(keyword) ||
-      ev.address?.toLowerCase().includes(keyword);
+    setSortKey(key);
+    setSortDirection("asc");
+  }
 
-    const matchesStatus =
-      filterStatus === "all" || ev.eventApprovalStatus === filterStatus;
+  function getSortLabel(key: AdminEventSortKey) {
+    if (sortKey !== key) return "↕";
+    return sortDirection === "asc" ? "↑" : "↓";
+  }
 
-    const matchesCategory =
-      filterCategory === "all" || ev.category === filterCategory;
+  const filteredEvents = [...events]
+    .filter((ev) => {
+      const keyword = search.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+      const matchesSearch =
+        !keyword ||
+        ev.title?.toLowerCase().includes(keyword) ||
+        ev.description?.toLowerCase().includes(keyword) ||
+        ev.address?.toLowerCase().includes(keyword) ||
+        ev.organisationName?.toLowerCase().includes(keyword);
+
+      const matchesCategory =
+        filterCategory === "all" || ev.category === filterCategory;
+
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let aValue: string | number = "";
+      let bValue: string | number = "";
+
+      if (sortKey === "event") {
+        aValue = a.title?.toLowerCase() || "";
+        bValue = b.title?.toLowerCase() || "";
+      }
+
+      if (sortKey === "dateTime") {
+        aValue = a.dateTime?.toMillis?.() ?? 0;
+        bValue = b.dateTime?.toMillis?.() ?? 0;
+      }
+
+      if (sortKey === "category") {
+        aValue = getCategoryLabels(a)[0].toLowerCase();
+        bValue = getCategoryLabels(b)[0].toLowerCase();
+      }
+
+      if (sortKey === "registrations") {
+        aValue = registrationCounts[a.eventId] ?? 0;
+        bValue = registrationCounts[b.eventId] ?? 0;
+      }
+
+      if (sortKey === "organisation") {
+        aValue = a.organisationName?.toLowerCase() || "";
+        bValue = b.organisationName?.toLowerCase() || "";
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
 
   const filteredLearningVideos = learningVideos.filter((item) => {
     const keyword = search.toLowerCase();
@@ -225,21 +426,26 @@ export function EventManagePage() {
 
   async function onDeleteEvent(ev: EventRecord) {
     if (!canManageEvent(ev, user?.uid, isAdmin)) return;
+
     const ok = window.confirm(
       `Delete "${ev.title}"? This cannot be undone. All users booked or bookmarked this event will be notified of the cancellation.`,
     );
+
     if (!ok) return;
 
     setBusyId(ev.eventId);
 
     try {
       const attendeeIds = await getEventInterestedUserIds(ev.eventId);
+
       if (attendeeIds.length > 0) {
         await notifyUsersEventCancelled(attendeeIds, ev.eventId, ev.title);
       }
+
       if (ev.submittedBy) {
         await notifyPartnerEventCancelled(ev.submittedBy, ev.eventId, ev.title);
       }
+
       await deleteDoc(doc(db, "events", ev.eventId));
       await load();
     } catch {
@@ -290,25 +496,25 @@ export function EventManagePage() {
           >
             Events
           </button>
+
           <button
             type="button"
             className={`event-manage-tab ${activeTab === "learning" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("learning");
               setSearchParams({});
-              setFilterStatus("all");
               setFilterCategory("all");
             }}
           >
             Learning Content
           </button>
+
           <button
             type="button"
             className={`event-manage-tab ${activeTab === "upcoming" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("upcoming");
               setSearchParams({ view: "upcoming" });
-              setFilterStatus("all");
               setFilterCategory("all");
             }}
           >
@@ -325,7 +531,7 @@ export function EventManagePage() {
               type="text"
               placeholder={
                 activeTab === "events"
-                  ? "Search by title, description or location..."
+                  ? "Search by title, description, location or organisation..."
                   : "Search learning title, description or Cloudinary ID..."
               }
               value={search}
@@ -334,20 +540,6 @@ export function EventManagePage() {
           </div>
 
           <div className="event-manage-filters">
-            {activeTab === "events" && (
-              <select
-                aria-label="Filter events by status"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">All statuses</option>
-                <option value="draft">Draft</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            )}
-
             <select
               aria-label="Filter by category"
               value={filterCategory}
@@ -357,7 +549,8 @@ export function EventManagePage() {
                 <option key={String(cat)} value={String(cat)}>
                   {cat === "all"
                     ? "All categories"
-                    : String(cat).charAt(0).toUpperCase() + String(cat).slice(1)}
+                    : String(cat).charAt(0).toUpperCase() +
+                      String(cat).slice(1)}
                 </option>
               ))}
             </select>
@@ -381,66 +574,169 @@ export function EventManagePage() {
         filteredEvents.length === 0 ? (
           <p>No events to show.</p>
         ) : (
-          <ul className="approval-list">
-            {filteredEvents.map((ev) => {
-              const allowed = canManageEvent(ev, user?.uid, isAdmin);
+          <div className="partner-events-table-wrap">
+            <table className="partner-events-table">
+              <thead>
+                <tr>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleEventSort("event")}
+                    >
+                      Event {getSortLabel("event")}
+                    </button>
+                  </th>
 
-              return (
-                <li
-                  key={ev.eventId}
-                  className="approval-card event-manage-card"
-                >
-                  <div className="approval-inner">
-                    <div className="approval-img">
-                      {ev.image ? (
-                        <img
-                          src={ev.image}
-                          alt={ev.title}
-                          onError={(e) =>
-                            (e.currentTarget.style.display = "none")
-                          }
-                        />
-                      ) : (
-                        <div className="approval-img-placeholder" />
-                      )}
-                    </div>
-                    <div className="approval-content event-manage-content">
-                      <div className="approval-head">
-                        <h3>{ev.title}</h3>
-                        <span className="muted">{formatWhen(ev.dateTime)}</span>
-                      </div>
-                      <p className="approval-desc">{ev.description}</p>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleEventSort("dateTime")}
+                    >
+                      Date &amp; Time {getSortLabel("dateTime")}
+                    </button>
+                  </th>
 
-                      <p className="muted small capitalize">
-                        {ev.address} · {ev.category}
-                        {ev.eventApprovalStatus ? ` · ${ev.eventApprovalStatus}` : ""}
-                      </p>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleEventSort("category")}
+                    >
+                      Category {getSortLabel("category")}
+                    </button>
+                  </th>
 
-                      {allowed && (
-                        <div className="approval-actions event-manage-actions">
-                          <Link
-                            to={`/admin/events/manage/${ev.eventId}`}
-                            className="btn-secondary"
-                          >
-                            Edit
-                          </Link>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleEventSort("registrations")}
+                    >
+                      Registrations {getSortLabel("registrations")}
+                    </button>
+                  </th>
 
-                          <button
-                            type="button"
-                            className="btn-danger"
-                            disabled={busyId === ev.eventId}
-                            onClick={() => onDeleteEvent(ev)}
-                          >
-                            {busyId === ev.eventId ? "Deleting..." : "Delete"}
-                          </button>
+                  <th>
+                    <button
+                      type="button"
+                      className="partner-events-sort-btn"
+                      onClick={() => handleEventSort("organisation")}
+                    >
+                      Organisation {getSortLabel("organisation")}
+                    </button>
+                  </th>
+
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredEvents.map((ev) => {
+                  const allowed = canManageEvent(ev, user?.uid, isAdmin);
+                  const categoryLabels = getCategoryLabels(ev);
+                  const formattedDate = formatWhen(ev.dateTime);
+                  const [datePart, ...timeParts] = formattedDate.split(",");
+
+                  return (
+                    <tr key={ev.eventId}>
+                      <td>
+                        <div className="partner-event-cell">
+                          <div className="partner-event-thumb">
+                            {ev.image ? (
+                              <img
+                                src={ev.image}
+                                alt={ev.title || "Event image"}
+                                onError={(e) =>
+                                  (e.currentTarget.style.display = "none")
+                                }
+                              />
+                            ) : (
+                              <div className="partner-event-thumb-fallback">
+                                {(ev.title || "E").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="partner-event-info">
+                            <strong className="partner-event-title">
+                              {ev.title || "Untitled event"}
+                            </strong>
+                            <span className="partner-event-location">
+                              {ev.address || "No location"}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                      </td>
+
+                      <td>
+                        <div className="partner-event-date">
+                          <strong>{datePart}</strong>
+                          <span>
+                            {timeParts.join(",").trim() || "Time not set"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="partner-event-categories">
+                          <span className={mapCategoryClass(categoryLabels[0])}>
+                            {categoryLabels[0]}
+                          </span>
+
+                          {categoryLabels.length > 1 && (
+                            <span className="partner-event-category more">
+                              +{categoryLabels.length - 1}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className="partner-events-registrations">
+                          <strong>{registrationCounts[ev.eventId] ?? 0}</strong>
+                          <span>/ {ev.totalTickets ?? 0}</span>
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong className="partner-event-title">
+                          {ev.organisationName || "Unknown organisation"}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {allowed && (
+                          <div className="partner-events-actions">
+                            <Link
+                              to={`/admin/events/manage/${ev.eventId}`}
+                              className="icon-action-btn"
+                              aria-label="Edit event"
+                              title="Edit"
+                            >
+                              <Pencil size={16} strokeWidth={2} />
+                            </Link>
+
+                            <button
+                              type="button"
+                              className="icon-action-btn danger"
+                              disabled={busyId === ev.eventId}
+                              onClick={() => onDeleteEvent(ev)}
+                              aria-label="Delete event"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} strokeWidth={2} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )
       ) : filteredLearningVideos.length === 0 ? (
         <p>No learning content to show.</p>
