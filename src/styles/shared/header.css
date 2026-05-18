@@ -29,6 +29,13 @@
 	margin-left: 24px;
 }
 
+.topbar-profile-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .header-toggle {
 	margin-left: auto;
 	display: flex;

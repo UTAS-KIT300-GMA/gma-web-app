@@ -10,6 +10,7 @@ import {
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   type User,
 } from "firebase/auth";
@@ -29,6 +30,7 @@ export type AuthState = {
   signIn: (email: string, password: string) => Promise<void>;
   signOutUser: () => Promise<void>;
   clearError: () => void;
+  resetPassword: (email: string) => Promise<void>;
 };
 
 /**
@@ -199,6 +201,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
+ * @summary Sends a password reset email.
+ * @param email User account email.
+ */
+const resetPassword = useCallback(async (email: string) => {
+  setError(null);
+
+  try {
+    await sendPasswordResetEmail(auth, email.trim());
+  } catch (e: any) {
+    const map: Record<string, string> = {
+      "auth/user-not-found": "No account found with this email.",
+      "auth/invalid-email": "Please enter a valid email address.",
+    };
+
+    const errorMessage =
+      map[e.code] || e.message || "Failed to send reset email.";
+
+    setError(errorMessage);
+    throw e;
+  }
+}, []);
+
+  /**
    * @summary Terminates the current session and clears local auth and profile state.
    */
   const signOutUser = useCallback(async () => {
@@ -225,8 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOutUser,
         clearError,
+        resetPassword,
       }),
-      [user, profile, loading, error, signIn, signOutUser, clearError]
+      [user, profile, loading, error, signIn, signOutUser, clearError, resetPassword,]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
