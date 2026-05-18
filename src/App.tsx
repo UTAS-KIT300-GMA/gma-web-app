@@ -250,8 +250,7 @@ export default function AppRoutes() {
               <AdminSettingsPage />
             </RoleGate>
           }
-/>
-
+        />
 
         <Route
           path="admin/partners/manage"
@@ -279,15 +278,15 @@ export default function AppRoutes() {
             </RoleGate>
           }
         />
+        <Route
+          path="admin/learning/publication/:learningId"
+          element={
+            <RoleGate roles={["admin"]}>
+              <LearningPublicationPage />
+            </RoleGate>
+          }
+        />
       </Route>
-      <Route
-        path="admin/learning/publication/:learningId"
-        element={
-          <RoleGate roles={["admin"]}>
-            <LearningPublicationPage />
-          </RoleGate>
-        }
-      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

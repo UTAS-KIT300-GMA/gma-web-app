@@ -65,7 +65,7 @@ export function LearningPublicationPage() {
 
         if (!existing) {
           alert("Learning content not found.");
-          navigate("/admin/events/manage");
+          navigate("/admin/events/manage?view=learning");
           return;
         }
 
@@ -189,9 +189,7 @@ export function LearningPublicationPage() {
 
       resetForm();
 
-      if (isEditing) {
-        navigate("/admin/events/manage");
-      }
+      navigate("/admin/events/manage?view=learning");
     } catch (error) {
       console.error("Failed to publish learning content:", error);
       alert(
@@ -471,7 +469,7 @@ export function LearningPublicationPage() {
               <button
                 type="button"
                 className="user-management-btn secondary"
-                onClick={resetForm}
+                onClick={() => navigate("/admin/events/manage?view=learning")}
                 disabled={saving}
               >
                 Cancel

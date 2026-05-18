@@ -377,12 +377,7 @@ export function EventManagePage() {
 
       <section className="panel dashboard-panel partner-events-table-panel">
         <div className="dashboard-section-head partner-events-table-head">
-          <div className="partner-events-heading-group">
-            <h2>My Events</h2>
-            <span className="partner-events-count-badge">
-              {filteredEvents.length}
-            </span>
-          </div>
+          
         </div>
 
         <div className="partner-events-table-wrap">
